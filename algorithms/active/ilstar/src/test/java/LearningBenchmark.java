@@ -10,16 +10,19 @@ import de.learnlib.filter.statistic.oracle.DFACounterOracle;
 import de.learnlib.oracle.equivalence.WpMethodEQOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
 import net.automatalib.automata.fsa.DFA;
+import net.automatalib.automata.fsa.MutableDFA;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.impl.Symbol;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+import java.util.HashSet;
+
 @Test
 public class LearningBenchmark {
-    private static final SimpleDFA example = new SimpleDFA();
-    private static final DFA<?, Symbol> targetDFA = example.getReferenceAutomaton();
-    private static final Alphabet<Symbol> alphabet = example.getAlphabet();
+    private static final MutableDFA<Integer, Symbol> targetDFA = SimpleDFA.constructMachine();
+    private static final Alphabet<Symbol> alphabet = SimpleDFA.createInputAlphabet();
     private static final MembershipOracle.DFAMembershipOracle<Symbol> dfaOracle = new SimulatorOracle.DFASimulatorOracle<>(targetDFA);
 
     public static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
@@ -70,6 +73,7 @@ public class LearningBenchmark {
     }
 
     public ObservationTable<Symbol, Boolean> learnIncremental(GenericObservationTable<Symbol, Boolean> startingOT) {
+        targetDFA.setAccepting(targetDFA.getState(Collections.singletonList(alphabet.getSymbol(0))), true);
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(dfaOracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);

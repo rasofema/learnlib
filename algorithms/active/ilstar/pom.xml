@@ -22,11 +22,12 @@ limitations under the License.
         <groupId>de.learnlib</groupId>
         <artifactId>learnlib-algorithms-active-parent</artifactId>
         <version>0.17.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>learnlib-ilstar</artifactId>
 
-    <name>LearnLib :: Algorithms :: NL*</name>
+    <name>LearnLib :: Algorithms :: IL*</name>
     <description>A variant of the L* algorithm for incremental model learning.</description>
 
     <dependencies>
