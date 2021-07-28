@@ -15,7 +15,7 @@ public class ExtensibleILStarDFA<I> extends ExtensibleLStarDFA<I> {
 
     @GenerateBuilder
     public ExtensibleILStarDFA(Alphabet<I> alphabet, MembershipOracle<I, Boolean> oracle, GenericObservationTable<I, Boolean> startingOT) {
-        super(alphabet, oracle, (List<Word<I>>) startingOT.getShortPrefixes(), startingOT.getSuffixes(), ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_FIRST);
+        super(alphabet, oracle, (List<Word<I>>) startingOT.getShortPrefixes(), startingOT.getSuffixes(), ObservationTableCEXHandlers.INCREMENTAL_LSTAR, ClosingStrategies.CLOSE_FIRST);
         this.table = startingOT;
     }
 

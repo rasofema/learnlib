@@ -76,6 +76,8 @@ public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
 
     List<List<Row<I>>> addShortPrefixes(List<? extends Word<I>> shortPrefixes, MembershipOracle<I, D> oracle);
 
+    List<List<Row<I>>> correctWord(Word<I> correctedWord, MembershipOracle<I, D> oracle);
+
     /**
      * Moves the specified rows to the set of short prefix rows. If some of the specified rows already are short prefix
      * rows, they are ignored (unless they do not have any contents, in which case they are completed).

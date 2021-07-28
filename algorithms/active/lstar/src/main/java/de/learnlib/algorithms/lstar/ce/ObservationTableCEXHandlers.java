@@ -58,6 +58,29 @@ public final class ObservationTableCEXHandlers {
 
             };
 
+    public static final ObservationTableCEXHandler<@Nullable Object, @Nullable Object> INCREMENTAL_LSTAR =
+        new ObservationTableCEXHandler<@Nullable Object, @Nullable Object>() {
+
+            @Override
+            public <RI, RD> List<List<Row<RI>>> handleCounterexample(DefaultQuery<RI, RD> ceQuery,
+                                                                     MutableObservationTable<RI, RD> table,
+                                                                     SuffixOutput<RI, RD> hypOutput,
+                                                                     MembershipOracle<RI, RD> oracle) {
+                return handleIncrementalLStar(ceQuery, table, oracle);
+            }
+
+            @Override
+            public boolean needsConsistencyCheck() {
+                return true;
+            }
+
+            @Override
+            public String toString() {
+                return "IncrementalLStar";
+            }
+
+        };
+
     public static final ObservationTableCEXHandler<@Nullable Object, @Nullable Object> SUFFIX1BY1 =
             new ObservationTableCEXHandler<@Nullable Object, @Nullable Object>() {
 
@@ -190,6 +213,19 @@ public final class ObservationTableCEXHandlers {
         List<Word<I>> prefixes = ceQuery.getInput().prefixes(false);
 
         return table.addShortPrefixes(prefixes, oracle);
+    }
+
+    public static <I, D> List<List<Row<I>>> handleIncrementalLStar(DefaultQuery<I, D> ceQuery,
+                                                               MutableObservationTable<I, D> table,
+                                                               MembershipOracle<I, D> oracle) {
+        LinkedList<Word<I>> prefixes = new LinkedList<>(ceQuery.getInput().prefixes(false));
+        List<List<Row<I>>> unclosed = table.addShortPrefixes(prefixes, oracle);
+
+        // The counter-example that we get is guaranteed to be incorrect,
+        // so correct any instances of it in our table.
+        table.correctWord(prefixes.peekLast(), oracle);
+
+        return unclosed;
     }
 
     public static <I, D> List<List<Row<I>>> handleSuffix1by1(DefaultQuery<I, D> ceQuery,

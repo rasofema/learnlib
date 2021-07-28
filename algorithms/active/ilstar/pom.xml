@@ -97,7 +97,13 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-reuse</artifactId>
+            <artifactId>learnlib-statistics</artifactId>
+            <version>0.15.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-serialization-dot</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

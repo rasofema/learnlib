@@ -15,15 +15,7 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
@@ -427,6 +419,31 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
                 unclosed.get(id - numSpRows).add(row);
             }
         }
+
+        return unclosed;
+    }
+
+    @Override
+    public List<List<Row<I>>> correctWord(Word<I> correctedWord, MembershipOracle<I, D> oracle) {
+        List<Row<I>> correctedRows = new LinkedList<>();
+        DefaultQuery<I, D> correctedQuery = new DefaultQuery<>(correctedWord);
+        for (RowImpl<I> row : allRows) {
+            if (row.getLabel().isPrefixOf(correctedWord)) {
+                for (Word<I> suffix : suffixes) {
+                    if (correctedWord.equals(row.getLabel().concat(suffix))) {
+                        if (correctedQuery.getOutput() == null) {
+                            oracle.processQuery(correctedQuery);
+                        }
+                        rowContents(row).set(suffixes.indexOf(suffix), correctedQuery.getOutput());
+                        correctedRows.add(row);
+                    }
+                }
+            }
+        }
+
+        // TODO: Correcting cells affects closedness - and maybe consistency.
+        //  Unclosed EQ classes need to be reported back to the algo.
+        List<List<Row<I>>> unclosed = new ArrayList<>();
 
         return unclosed;
     }
