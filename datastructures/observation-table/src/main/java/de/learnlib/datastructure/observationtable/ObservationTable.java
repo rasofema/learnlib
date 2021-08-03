@@ -15,10 +15,7 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import de.learnlib.api.AccessSequenceTransformer;
@@ -98,7 +95,7 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      * @return the short prefixes in the table
      */
     default Collection<Word<I>> getShortPrefixes() {
-        Collection<Row<I>> spRows = getShortPrefixRows();
+        Collection<Row<I, D>> spRows = getShortPrefixRows();
         return spRows.stream().map(Row::getLabel).collect(Collectors.toList());
 
     }
@@ -109,13 +106,13 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      * @return the long prefixes in the table
      */
     default Collection<Word<I>> getLongPrefixes() {
-        Collection<Row<I>> lpRows = getLongPrefixRows();
+        Collection<Row<I, D>> lpRows = getLongPrefixRows();
         return lpRows.stream().map(Row::getLabel).collect(Collectors.toList());
     }
 
-    Collection<Row<I>> getShortPrefixRows();
+    Collection<Row<I, D>> getShortPrefixRows();
 
-    Collection<Row<I>> getLongPrefixRows();
+    Collection<Row<I, D>> getLongPrefixRows();
 
     /**
      * Returns the specified row of the observation table.
@@ -128,10 +125,10 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      * @throws IndexOutOfBoundsException
      *         if {@code idx} is less than 0 or greater than {@code number of rows - 1}.
      */
-    Row<I> getRow(int idx);
+    Row<I, D> getRow(int idx);
 
-    default @Nullable Row<I> getRow(Word<I> prefix) {
-        for (Row<I> row : getAllRows()) {
+    default @Nullable Row<I, D> getRow(Word<I> prefix) {
+        for (Row<I, D> row : getAllRows()) {
             if (prefix.equals(row.getLabel())) {
                 return row;
             }
@@ -140,11 +137,11 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
         return null;
     }
 
-    default Collection<Row<I>> getAllRows() {
-        Collection<Row<I>> spRows = getShortPrefixRows();
-        Collection<Row<I>> lpRows = getLongPrefixRows();
+    default Collection<Row<I, D>> getAllRows() {
+        Collection<Row<I, D>> spRows = getShortPrefixRows();
+        Collection<Row<I, D>> lpRows = getLongPrefixRows();
 
-        List<Row<I>> result = new ArrayList<>(spRows.size() + lpRows.size());
+        List<Row<I, D>> result = new ArrayList<>(spRows.size() + lpRows.size());
         result.addAll(spRows);
         result.addAll(lpRows);
 
@@ -176,8 +173,6 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      * the upper bound for the (content ids of the table rows.
      *
      * @return the number of distinct rows
-     *
-     * @see Row#getRowContentId()
      */
     int numberOfDistinctRows();
 
@@ -185,23 +180,27 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
         return findUnclosedRow() == null;
     }
 
-    default @Nullable Row<I> findUnclosedRow() {
-        final boolean[] spContents = new boolean[numberOfDistinctRows()];
-
-        for (Row<I> spRow : getShortPrefixRows()) {
-            spContents[spRow.getRowContentId()] = true;
-        }
-
-        for (Row<I> lpRow : getLongPrefixRows()) {
-            if (!spContents[lpRow.getRowContentId()]) {
-                return lpRow;
+    // TODO: Lazy n^2 implementation, can probably make it 2n, something like that.
+    default @Nullable Row<I, D> findUnclosedRow() {
+        for (Row<I, D> lpRow : getLongPrefixRows()) {
+            RowContent<I, D> rowContent = lpRow.getRowContent();
+            if (rowContent != null) {
+                boolean foundSPRow = false;
+                for (Row<I, D> associatedRow : rowContent.getAssociatedRows()) {
+                    if (getShortPrefixRows().contains(associatedRow)) {
+                        foundSPRow = true;
+                    }
+                }
+                if (!foundSPRow) {
+                    return lpRow;
+                }
             }
         }
 
         return null;
     }
 
-    default @Nullable Word<I> findDistinguishingSuffix(Inconsistency<I> inconsistency) {
+    default @Nullable Word<I> findDistinguishingSuffix(Inconsistency<I, D> inconsistency) {
         int suffixIndex = findDistinguishingSuffixIndex(inconsistency);
         if (suffixIndex != NO_DISTINGUISHING_SUFFIX) {
             return null;
@@ -217,7 +216,7 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      *
      * @return the suffix distinguishing the contents of the two rows
      */
-    default @Nullable Word<I> findDistinguishingSuffix(Row<I> row1, Row<I> row2) {
+    default @Nullable Word<I> findDistinguishingSuffix(Row<I, D> row1, Row<I, D> row2) {
         int suffixIndex = findDistinguishingSuffixIndex(row1, row2);
         if (suffixIndex != NO_DISTINGUISHING_SUFFIX) {
             return null;
@@ -229,9 +228,9 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      * @return the suffix (column) index where the contents of the rows differ, or {@code #NO_DISTINGUISHING_SUFFIX} if
      * the contents of the rows are equal.
      */
-    default @Signed int findDistinguishingSuffixIndex(Inconsistency<I> inconsistency) {
-        Row<I> row1 = inconsistency.getFirstRow();
-        Row<I> row2 = inconsistency.getSecondRow();
+    default @Signed int findDistinguishingSuffixIndex(Inconsistency<I, D> inconsistency) {
+        Row<I, D> row1 = inconsistency.getFirstRow();
+        Row<I, D> row2 = inconsistency.getSecondRow();
         int symIdx = getInputAlphabet().getSymbolIndex(inconsistency.getSymbol());
 
         return findDistinguishingSuffixIndex(row1.getSuccessor(symIdx), row2.getSuccessor(symIdx));
@@ -246,7 +245,7 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      * @return the suffix (column) index where the contents of the rows differ, or {@code #NO_DISTINGUISHING_SUFFIX} if
      * the contents of the rows are equal.
      */
-    default @Signed int findDistinguishingSuffixIndex(Row<I> row1, Row<I> row2) {
+    default @Signed int findDistinguishingSuffixIndex(Row<I, D> row1, Row<I, D> row2) {
         for (int i = 0; i < getSuffixes().size(); i++) {
             if (!Objects.equals(cellContents(row1, i), cellContents(row2, i))) {
                 return i;
@@ -283,23 +282,24 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
         return findInconsistency() == null;
     }
 
-    default @Nullable Inconsistency<I> findInconsistency() {
-        @SuppressWarnings("unchecked")
-        final Row<I>[] canonicalRows = (Row<I>[]) new Row<?>[numberOfDistinctRows()];
+    // TODO: Probably could be improved with the new design.
+    //  Currently just uses the same overall algo.
+    default @Nullable Inconsistency<I, D> findInconsistency() {
+        final Map<RowContent<I, D>, Row<I, D>> canonicalRows = new HashMap<>();
         final Alphabet<I> alphabet = getInputAlphabet();
 
-        for (Row<I> spRow : getShortPrefixRows()) {
-            int contentId = spRow.getRowContentId();
+        for (Row<I, D> spRow : getShortPrefixRows()) {
+            RowContent<I, D> rowContent = spRow.getRowContent();
 
-            Row<I> canRow = canonicalRows[contentId];
-            if (canRow == null) {
-                canonicalRows[contentId] = spRow;
+            Row<I, D> canRow = canonicalRows.getOrDefault(rowContent, null);
+            if (!canonicalRows.containsKey(rowContent)) {
+                canonicalRows.put(rowContent, spRow);
                 continue;
             }
 
             for (int i = 0; i < alphabet.size(); i++) {
-                int spSuccContent = spRow.getSuccessor(i).getRowContentId();
-                int canSuccContent = canRow.getSuccessor(i).getRowContentId();
+                RowContent<I, D> spSuccContent = spRow.getSuccessor(i).getRowContent();
+                RowContent<I, D> canSuccContent = canRow.getSuccessor(i).getRowContent();
                 if (spSuccContent != canSuccContent) {
                     return new Inconsistency<>(canRow, spRow, alphabet.getSymbol(i));
                 }
@@ -309,14 +309,12 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
         return null;
     }
 
-    default Row<I> getRowSuccessor(Row<I> row, I sym) {
+    default Row<I, D> getRowSuccessor(Row<I, D> row, I sym) {
         return row.getSuccessor(getInputAlphabet().getSymbolIndex(sym));
     }
 
-    List<D> rowContents(Row<I> row);
-
-    default D cellContents(Row<I> row, int columnId) {
-        return rowContents(row).get(columnId);
+    default D cellContents(Row<I, D> row, int columnId) {
+        return row.getRowContent().get(columnId);
     }
 
 }

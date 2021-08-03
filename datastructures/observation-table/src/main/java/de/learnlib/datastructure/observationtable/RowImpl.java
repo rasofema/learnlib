@@ -18,14 +18,14 @@ package de.learnlib.datastructure.observationtable;
 import net.automatalib.commons.smartcollections.ResizingArrayStorage;
 import net.automatalib.words.Word;
 
-final class RowImpl<I> implements Row<I> {
+final class RowImpl<I, D> implements Row<I, D> {
 
     private final Word<I> label;
     private final int rowId;
 
-    private int rowContentId = -1;
+    private RowContent<I, D> rowContent;
     private int lpIndex;
-    private ResizingArrayStorage<RowImpl<I>> successors;
+    private ResizingArrayStorage<RowImpl<I, D>> successors;
 
     /**
      * Constructor for short label rows.
@@ -72,7 +72,7 @@ final class RowImpl<I> implements Row<I> {
     }
 
     @Override
-    public RowImpl<I> getSuccessor(int inputIdx) {
+    public RowImpl<I, D> getSuccessor(int inputIdx) {
         return successors.array[inputIdx];
     }
 
@@ -85,7 +85,7 @@ final class RowImpl<I> implements Row<I> {
      * @param succ
      *         the successor row
      */
-    void setSuccessor(int inputIdx, RowImpl<I> succ) {
+    void setSuccessor(int inputIdx, RowImpl<I, D> succ) {
         successors.array[inputIdx] = succ;
     }
 
@@ -100,18 +100,19 @@ final class RowImpl<I> implements Row<I> {
     }
 
     @Override
-    public int getRowContentId() {
-        return rowContentId;
+    public RowContent<I, D> getRowContent() {
+        return rowContent;
     }
 
     /**
      * Sets the ID of the row contents.
      *
-     * @param id
-     *         the contents id
+     * @param rowContent
+     *         the RowContent object
      */
-    void setRowContentId(int id) {
-        this.rowContentId = id;
+    void setRowContent(RowContent<I, D> rowContent) {
+        this.rowContent = rowContent;
+        this.rowContent.addAssociatedRow(this);
     }
 
     @Override
@@ -120,7 +121,7 @@ final class RowImpl<I> implements Row<I> {
     }
 
     boolean hasContents() {
-        return rowContentId != -1;
+        return rowContent != null;
     }
 
     int getLpIndex() {

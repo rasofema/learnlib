@@ -104,12 +104,12 @@ public class ClassicLStarMealy<I, O>
     }
 
     @Override
-    protected Void stateProperty(ObservationTable<I, @Nullable O> table, Row<I> stateRow) {
+    protected Void stateProperty(ObservationTable<I, @Nullable O> table, Row<I, @Nullable O> stateRow) {
         return null;
     }
 
     @Override
-    protected O transitionProperty(ObservationTable<I, @Nullable O> table, Row<I> stateRow, int inputIdx) {
+    protected O transitionProperty(ObservationTable<I, @Nullable O> table, Row<I, @Nullable O> stateRow, int inputIdx) {
         return table.cellContents(stateRow, inputIdx);
     }
 

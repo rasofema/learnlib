@@ -70,11 +70,11 @@ public class ObservationTableHTMLWriter<I, D> extends AbstractObservationTableWr
         out.append("\t</thead>").append(System.lineSeparator());
         out.append("\t<tbody>").append(System.lineSeparator());
 
-        for (Row<I> row : table.getShortPrefixRows()) {
+        for (Row<I, D> row : table.getShortPrefixRows()) {
             out.append("\t\t<tr class=\"short-prefix\"><td class=\"prefix\">")
                .append(wordToString.apply(row.getLabel()))
                .append("</td>");
-            for (D value : table.rowContents(row)) {
+            for (D value : row.getRowContent().getContents()) {
                 out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
             }
             out.append("</tr>").append(System.lineSeparator());
@@ -82,9 +82,9 @@ public class ObservationTableHTMLWriter<I, D> extends AbstractObservationTableWr
 
         out.append("\t\t<tr><td colspan=\"").append(Integer.toString(suffixes.size() + 1)).append("\"></td></tr>").append(System.lineSeparator());
 
-        for (Row<I> row : table.getLongPrefixRows()) {
+        for (Row<I, D> row : table.getLongPrefixRows()) {
             out.append("\t\t<tr class=\"long-prefix\"><td>").append(wordToString.apply(row.getLabel())).append("</td>");
-            for (D value : table.rowContents(row)) {
+            for (D value : row.getRowContent().getContents()) {
                 out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
             }
             out.append("</tr>").append(System.lineSeparator());

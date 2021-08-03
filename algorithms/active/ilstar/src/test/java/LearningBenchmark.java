@@ -1,5 +1,6 @@
 import de.learnlib.algorithms.ilstar.dfa.ExtensibleILStarDFA;
 import de.learnlib.algorithms.lstar.dfa.ClassicLStarDFA;
+import de.learnlib.algorithms.lstar.dfa.LStarDFAUtil;
 import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
@@ -12,6 +13,7 @@ import de.learnlib.oracle.membership.SimulatorOracle;
 import net.automatalib.automata.Automaton;
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.automata.fsa.MutableDFA;
+import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.impl.Symbol;
 import org.testng.Assert;
@@ -27,8 +29,8 @@ import java.util.LinkedList;
 
 @Test
 public class LearningBenchmark {
-    private static final MutableDFA<Integer, Symbol> targetDFA = SimpleDFA.constructMachine();
-    private static final Alphabet<Symbol> alphabet = SimpleDFA.createInputAlphabet();
+    private static final MutableDFA<Integer, Symbol> targetDFA = SimpleDFA2.constructMachine();
+    private static final Alphabet<Symbol> alphabet = SimpleDFA2.createInputAlphabet();
     private static final MembershipOracle.DFAMembershipOracle<Symbol> dfaOracle = new SimulatorOracle.DFASimulatorOracle<>(targetDFA);
 
     public static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
@@ -56,7 +58,7 @@ public class LearningBenchmark {
 
         DFA<?, Symbol> hyp = learner.getHypothesisModel();
 
-        Assert.assertEquals(hyp.size(), target.size());
+        Assert.assertEquals(hyp.size(), DFAs.minimize(target, alphabet).size());
         return cexCounter;
     }
 
@@ -79,10 +81,10 @@ public class LearningBenchmark {
 
     public OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnIncremental(GenericObservationTable<Symbol, Boolean> startingOT) {
         LinkedList<Symbol> accWord = new LinkedList<>();
-        accWord.add(alphabet.getSymbol(0));
-        accWord.add(alphabet.getSymbol(0));
-        accWord.add(alphabet.getSymbol(0));
-        targetDFA.setAccepting(targetDFA.getState(accWord), true);
+//        accWord.add(alphabet.getSymbol(0));
+//        accWord.add(alphabet.getSymbol(0));
+//        accWord.add(alphabet.getSymbol(0));
+        targetDFA.setAccepting(targetDFA.getState(accWord), false);
 
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(dfaOracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");

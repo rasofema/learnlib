@@ -44,59 +44,59 @@ public class ObservationTable<I> {
     private final Alphabet<I> alphabet;
     private final MembershipOracle<I, Boolean> oracle;
 
-    private final List<Row<I>> upperRows = new ArrayList<>();
-    private final List<Row<I>> allRows = new ArrayList<>();
+    private final List<Row<I, Boolean>> upperRows = new ArrayList<>();
+    private final List<Row<I, Boolean>> allRows = new ArrayList<>();
 
-    private final List<Row<I>> newUppers = new ArrayList<>();
-    private final List<Row<I>> newRows = new ArrayList<>();
+    private final List<Row<I, Boolean>> newUppers = new ArrayList<>();
+    private final List<Row<I, Boolean>> newRows = new ArrayList<>();
 
     private final List<Word<I>> suffixes = new ArrayList<>();
     private final Set<Word<I>> suffixSet = new HashSet<>();
 
-    private final List<Row<I>> upperPrimes = new ArrayList<>();
+    private final List<Row<I, Boolean>> upperPrimes = new ArrayList<>();
 
     public ObservationTable(Alphabet<I> alphabet, MembershipOracle<I, Boolean> oracle) {
         this.alphabet = alphabet;
         this.oracle = oracle;
     }
 
-    public List<List<Row<I>>> initialize() {
+    public List<List<Row<I, Boolean>>> initialize() {
         if (!suffixes.isEmpty()) {
             throw new IllegalStateException();
         }
 
-        Row<I> row = createRow(Word.epsilon());
+        Row<I, Boolean> row = createRow(Word.epsilon());
 
         makeUpper(row);
 
         return addSuffix(Word.epsilon());
     }
 
-    private Row<I> createRow(Word<I> prefix) {
-        Row<I> row = new Row<>(prefix);
+    private Row<I, Boolean> createRow(Word<I> prefix) {
+        Row<I, Boolean> row = new Row<>(prefix);
         allRows.add(row);
         newRows.add(row);
         return row;
     }
 
-    public List<List<Row<I>>> addSuffix(Word<I> suffixToAdd) {
+    public List<List<Row<I, Boolean>>> addSuffix(Word<I> suffixToAdd) {
         return addSuffixes(Collections.singletonList(suffixToAdd));
     }
 
-    private void makeUpper(Row<I> row) {
+    private void makeUpper(Row<I, Boolean> row) {
         makeUpper(Collections.singletonList(row));
     }
 
-    public List<List<Row<I>>> makeUpper(List<Row<I>> rows) {
-        List<Row<I>> newRows = new ArrayList<>(rows.size() * alphabet.size());
-        for (Row<I> row : rows) {
+    public List<List<Row<I, Boolean>>> makeUpper(List<Row<I, Boolean>> rows) {
+        List<Row<I, Boolean>> newRows = new ArrayList<>(rows.size() * alphabet.size());
+        for (Row<I, Boolean> row : rows) {
             makeShort(row);
             Word<I> prefix = row.getPrefix();
 
             for (int i = 0; i < alphabet.size(); i++) {
                 I sym = alphabet.getSymbol(i);
                 Word<I> newPrefix = prefix.append(sym);
-                Row<I> newRow = createRow(newPrefix);
+                Row<I, Boolean> newRow = createRow(newPrefix);
                 row.setSuccessorRow(i, newRow);
                 newRows.add(newRow);
             }
@@ -110,7 +110,7 @@ public class ObservationTable<I> {
 
         List<DefaultQuery<I, Boolean>> queries = new ArrayList<>(newRows.size() * numSuffixes);
 
-        for (Row<I> newRow : newRows) {
+        for (Row<I, Boolean> newRow : newRows) {
             for (Word<I> suffix : suffixes) {
                 queries.add(new DefaultQuery<>(newRow.getPrefix(), suffix));
             }
@@ -120,7 +120,7 @@ public class ObservationTable<I> {
 
         Iterator<DefaultQuery<I, Boolean>> queryIt = queries.iterator();
 
-        for (Row<I> newRow : newRows) {
+        for (Row<I, Boolean> newRow : newRows) {
             newRow.fetchContents(queryIt, 0, numSuffixes);
         }
 
@@ -128,7 +128,7 @@ public class ObservationTable<I> {
 
     }
 
-    public List<List<Row<I>>> addSuffixes(List<? extends Word<I>> suffixesToAdd) {
+    public List<List<Row<I, Boolean>>> addSuffixes(List<? extends Word<I>> suffixesToAdd) {
         List<Word<I>> newSuffixes = new ArrayList<>();
 
         // we change the suffix list afterwards
@@ -150,7 +150,7 @@ public class ObservationTable<I> {
 
         List<DefaultQuery<I, Boolean>> queries = new ArrayList<>(allRows.size() * numNewSuffixes);
 
-        for (Row<I> row : allRows) {
+        for (Row<I, Boolean> row : allRows) {
             Word<I> prefix = row.getPrefix();
             for (Word<I> suffix : newSuffixes) {
                 queries.add(new DefaultQuery<>(prefix, suffix));
@@ -161,23 +161,23 @@ public class ObservationTable<I> {
 
         Iterator<DefaultQuery<I, Boolean>> queryIt = queries.iterator();
 
-        for (Row<I> row : allRows) {
+        for (Row<I, Boolean> row : allRows) {
             row.fetchContents(queryIt, oldNumSuffixes, numNewSuffixes);
         }
 
         return updateMetadata();
     }
 
-    private void makeShort(Row<I> row) {
+    private void makeShort(Row<I, Boolean> row) {
         row.makeShort(upperRows.size(), alphabet.size());
         upperRows.add(row);
         newUppers.add(row);
     }
 
-    private List<List<Row<I>>> updateMetadata() {
+    private List<List<Row<I, Boolean>>> updateMetadata() {
 
         // Update coverage information
-        for (Row<I> row : allRows) {
+        for (Row<I, Boolean> row : allRows) {
             if (row.isShortPrefixRow()) {
                 if (row.isNew()) {
                     row.updateCovered(upperRows);
@@ -198,17 +198,17 @@ public class ObservationTable<I> {
 
         upperPrimes.clear();
 
-        Map<BitSet, List<Row<I>>> primeContents = new HashMap<>();
-        List<List<Row<I>>> allUnclosed = new ArrayList<>();
+        Map<BitSet, List<Row<I, Boolean>>> primeContents = new HashMap<>();
+        List<List<Row<I, Boolean>>> allUnclosed = new ArrayList<>();
 
-        for (Row<I> row : allRows) {
+        for (Row<I, Boolean> row : allRows) {
             boolean prime = row.checkPrime();
 
             if (prime) {
                 if (row.isShortPrefixRow()) {
                     upperPrimes.add(row);
                 } else {
-                    List<Row<I>> unclosedClass = primeContents.get(row.getContents());
+                    List<Row<I, Boolean>> unclosedClass = primeContents.get(row.getContents());
                     if (unclosedClass == null) {
                         unclosedClass = new ArrayList<>();
                         allUnclosed.add(unclosedClass);
@@ -226,19 +226,19 @@ public class ObservationTable<I> {
         return suffixes.get(suffixIdx);
     }
 
-    public List<Row<I>> getCoveredRows(Row<I> coveringRow) {
+    public List<Row<I, Boolean>> getCoveredRows(Row<I, Boolean> coveringRow) {
         return coveringRow.getCoveredRows();
     }
 
-    public Row<I> getUpperRow(int index) {
+    public Row<I, Boolean> getUpperRow(int index) {
         return upperRows.get(index);
     }
 
-    public List<Row<I>> getUpperRows() {
+    public List<Row<I, Boolean>> getUpperRows() {
         return upperRows;
     }
 
-    public List<Row<I>> getUpperPrimes() {
+    public List<Row<I, Boolean>> getUpperPrimes() {
         return upperPrimes;
     }
 
@@ -246,14 +246,14 @@ public class ObservationTable<I> {
         return upperRows.size();
     }
 
-    public @Nullable Inconsistency<I> findInconsistency() {
-        for (Row<I> row1 : upperRows) {
-            for (Row<I> row2 : row1.getCoveredRows()) {
+    public @Nullable Inconsistency<I, Boolean> findInconsistency() {
+        for (Row<I, Boolean> row1 : upperRows) {
+            for (Row<I, Boolean> row2 : row1.getCoveredRows()) {
                 assert row2.isShortPrefixRow();
 
                 for (int i = 0; i < alphabet.size(); i++) {
-                    Row<I> row1succ = row1.getSuccessorRow(i);
-                    Row<I> row2succ = row2.getSuccessorRow(i);
+                    Row<I, Boolean> row1succ = row1.getSuccessorRow(i);
+                    Row<I, Boolean> row2succ = row2.getSuccessorRow(i);
 
                     for (int j = 0; j < suffixes.size(); j++) {
                         if (!row1succ.getContent(j) && row2succ.getContent(j)) {

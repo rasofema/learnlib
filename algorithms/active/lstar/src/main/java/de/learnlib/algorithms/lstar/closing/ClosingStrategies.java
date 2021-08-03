@@ -45,11 +45,11 @@ public final class ClosingStrategies {
             new ClosingStrategy<@Nullable Object, @Nullable Object>() {
 
                 @Override
-                public <RI, RD> List<Row<RI>> selectClosingRows(List<List<Row<RI>>> unclosedClasses,
+                public <RI, RD> List<Row<RI, RD>> selectClosingRows(List<List<Row<RI, RD>>> unclosedClasses,
                                                                 ObservationTable<RI, RD> table,
                                                                 MembershipOracle<RI, RD> oracle) {
-                    List<Row<RI>> result = new ArrayList<>(unclosedClasses.size());
-                    for (List<Row<RI>> clazz : unclosedClasses) {
+                    List<Row<RI, RD>> result = new ArrayList<>(unclosedClasses.size());
+                    for (List<Row<RI, RD>> clazz : unclosedClasses) {
                         result.add(clazz.get(0));
                     }
                     return result;
@@ -69,15 +69,15 @@ public final class ClosingStrategies {
             new ClosingStrategy<@Nullable Object, @Nullable Object>() {
 
                 @Override
-                public <RI, RD> List<Row<RI>> selectClosingRows(List<List<Row<RI>>> unclosedClasses,
+                public <RI, RD> List<Row<RI, RD>> selectClosingRows(List<List<Row<RI, RD>>> unclosedClasses,
                                                                 ObservationTable<RI, RD> table,
                                                                 MembershipOracle<RI, RD> oracle) {
 
-                    List<Row<RI>> result = new ArrayList<>();
-                    for (List<Row<RI>> clazz : unclosedClasses) {
-                        Row<RI> shortest = null;
+                    List<Row<RI, RD>> result = new ArrayList<>();
+                    for (List<Row<RI, RD>> clazz : unclosedClasses) {
+                        Row<RI, RD> shortest = null;
                         int shortestLen = Integer.MAX_VALUE;
-                        for (Row<RI> row : clazz) {
+                        for (Row<RI, RD> row : clazz) {
                             int prefixLen = row.getLabel().length();
                             if (shortest == null || prefixLen < shortestLen) {
                                 shortest = row;
@@ -104,14 +104,14 @@ public final class ClosingStrategies {
             new ClosingStrategy<@Nullable Object, @Nullable Object>() {
 
                 @Override
-                public <RI, RD> List<Row<RI>> selectClosingRows(List<List<Row<RI>>> unclosedClasses,
+                public <RI, RD> List<Row<RI, RD>> selectClosingRows(List<List<Row<RI, RD>>> unclosedClasses,
                                                                 ObservationTable<RI, RD> table,
                                                                 MembershipOracle<RI, RD> oracle) {
-                    List<Row<RI>> result = new ArrayList<>(unclosedClasses.size());
+                    List<Row<RI, RD>> result = new ArrayList<>(unclosedClasses.size());
                     Alphabet<RI> alphabet = table.getInputAlphabet();
-                    for (List<Row<RI>> clazz : unclosedClasses) {
-                        Row<RI> lexMin = null;
-                        for (Row<RI> row : clazz) {
+                    for (List<Row<RI, RD>> clazz : unclosedClasses) {
+                        Row<RI, RD> lexMin = null;
+                        for (Row<RI, RD> row : clazz) {
                             if (lexMin == null) {
                                 lexMin = row;
                             } else if (CmpUtil.lexCompare(row.getLabel(), lexMin.getLabel(), alphabet) < 0) {

@@ -15,10 +15,11 @@
  */
 package de.learnlib.algorithms.lstar;
 
-import java.util.List;
+import java.util.Map;
 
 import de.learnlib.algorithms.lstar.AbstractAutomatonLStar.StateInfo;
 import de.learnlib.datastructure.observationtable.GenericObservationTable;
+import de.learnlib.datastructure.observationtable.RowContent;
 
 /**
  * Class that contains all data that represent the internal state of the {@link AbstractAutomatonLStar} learner and its
@@ -39,11 +40,11 @@ public class AutomatonLStarState<I, D, AI, S> {
 
     private final GenericObservationTable<I, D> observationTable;
     private final AI hypothesis;
-    private final List<StateInfo<S, I>> stateInfos;
+    private final Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos;
 
     AutomatonLStarState(final GenericObservationTable<I, D> observationTable,
                         final AI hypothesis,
-                        final List<StateInfo<S, I>> stateInfos) {
+                        final Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos) {
         this.observationTable = observationTable;
         this.hypothesis = hypothesis;
         this.stateInfos = stateInfos;
@@ -57,7 +58,7 @@ public class AutomatonLStarState<I, D, AI, S> {
         return hypothesis;
     }
 
-    List<AbstractAutomatonLStar.StateInfo<S, I>> getStateInfos() {
+    Map<RowContent<I, D>, StateInfo<S, I, D>> getStateInfos() {
         return stateInfos;
     }
 }

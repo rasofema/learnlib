@@ -21,12 +21,15 @@ package de.learnlib.algorithms.nlstar;
  * @param <I>
  *         input symbol type
  *
+ * @param <D>
+ *         domain symbol type
+ *
  * @author Malte Isberner
  */
-public class Inconsistency<I> {
+public class Inconsistency<I, D> {
 
-    private final Row<I> row1;
-    private final Row<I> row2;
+    private final Row<I, D> row1;
+    private final Row<I, D> row2;
 
     private final int symbolIdx;
 
@@ -44,18 +47,18 @@ public class Inconsistency<I> {
      * @param suffixIdx
      *         the index of the suffix
      */
-    public Inconsistency(Row<I> row1, Row<I> row2, int symbolIdx, int suffixIdx) {
+    public Inconsistency(Row<I, D> row1, Row<I, D> row2, int symbolIdx, int suffixIdx) {
         this.row1 = row1;
         this.row2 = row2;
         this.symbolIdx = symbolIdx;
         this.suffixIdx = suffixIdx;
     }
 
-    public Row<I> getRow1() {
+    public Row<I, D> getRow1() {
         return row1;
     }
 
-    public Row<I> getRow2() {
+    public Row<I, D> getRow2() {
         return row2;
     }
 

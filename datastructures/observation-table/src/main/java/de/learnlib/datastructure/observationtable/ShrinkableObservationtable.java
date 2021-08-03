@@ -15,14 +15,14 @@
  */
 package de.learnlib.datastructure.observationtable;
 
+import de.learnlib.api.oracle.MembershipOracle;
+import net.automatalib.words.Word;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import net.automatalib.words.Word;
-
-public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
+public interface ShrinkableObservationtable<I, D> extends ObservationTable<I, D> {
 
     /**
      * Initializes an observation table using a specified set of suffixes.
@@ -63,6 +63,18 @@ public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
     }
 
     /**
+     * Removes a suffix from the list of distinguishing suffixes. This is a convenience method that can be used as shorthand
+     * for {@code removeSuffixes(Collections.singletonList(suffix))}.
+     *
+     * @param suffix
+     *         the suffix to remove
+     * @return a list of equivalence classes of unclosed rows
+     */
+    default List<List<Row<I, D>>> removeSuffix(Word<I> suffix) {
+        return removeSuffixes(Collections.singletonList(suffix));
+    }
+
+    /**
      * Adds suffixes to the list of distinguishing suffixes.
      *
      * @param newSuffixes
@@ -74,7 +86,19 @@ public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
      */
     List<List<Row<I, D>>> addSuffixes(Collection<? extends Word<I>> newSuffixes, MembershipOracle<I, D> oracle);
 
+    /**
+     * Removes suffixes from the list of distinguishing suffixes.
+     *
+     * @param suffixes
+     *         the suffixes to remove
+     *
+     * @return a list of equivalence classes of unclosed rows
+     */
+    List<List<Row<I, D>>> removeSuffixes(Collection<? extends Word<I>> suffixes);
+
     List<List<Row<I, D>>> addShortPrefixes(List<? extends Word<I>> shortPrefixes, MembershipOracle<I, D> oracle);
+
+    List<List<Row<I, D>>> removeShortPrefixes(List<? extends Word<I>> shortPrefixes);
 
     List<List<Row<I, D>>> correctWord(Word<I> word, D correctValue);
 
@@ -90,6 +114,20 @@ public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
      * @return a list of equivalence classes of unclosed rows
      */
     List<List<Row<I, D>>> toShortPrefixes(List<Row<I, D>> lpRows, MembershipOracle<I, D> oracle);
+
+    /**
+     * Moves the specified rows to the set of long prefix rows. If some of the specified rows already are long prefix
+     * rows, they are ignored (unless they do not have any contents, in which case they are completed).
+     * Useful when preforming table minimisation.
+     *
+     * @param spRows
+     *         the rows to move to the set of long prefix rows
+     * @param oracle
+     *         the membership oracle
+     *
+     * @return a list of equivalence classes of unclosed rows
+     */
+    List<List<Row<I, D>>> toLongPrefixes(List<Row<I, D>> spRows, MembershipOracle<I, D> oracle);
 
     List<List<Row<I, D>>> addAlphabetSymbol(I symbol, MembershipOracle<I, D> oracle);
 

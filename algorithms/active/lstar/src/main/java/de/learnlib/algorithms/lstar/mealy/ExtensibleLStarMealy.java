@@ -82,13 +82,13 @@ public class ExtensibleLStarMealy<I, O>
     }
 
     @Override
-    protected Void stateProperty(ObservationTable<I, Word<O>> table, Row<I> stateRow) {
+    protected Void stateProperty(ObservationTable<I, Word<O>> table, Row<I, Word<O>> stateRow) {
         return null;
     }
 
     @Override
-    protected O transitionProperty(ObservationTable<I, Word<O>> table, Row<I> stateRow, int inputIdx) {
-        Row<I> transRow = stateRow.getSuccessor(inputIdx);
+    protected O transitionProperty(ObservationTable<I, Word<O>> table, Row<I, Word<O>> stateRow, int inputIdx) {
+        Row<I, Word<O>> transRow = stateRow.getSuccessor(inputIdx);
         return outputTable.get(transRow.getRowId() - 1);
     }
 
@@ -104,7 +104,7 @@ public class ExtensibleLStarMealy<I, O>
         List<DefaultQuery<I, Word<O>>> outputQueries = new ArrayList<>(numOutputs);
 
         for (int i = numOutputs + 1; i <= numTransRows; i++) {
-            Row<I> row = table.getRow(i);
+            Row<I, Word<O>> row = table.getRow(i);
             Word<I> rowPrefix = row.getLabel();
             int prefixLen = rowPrefix.size();
             outputQueries.add(new DefaultQuery<>(rowPrefix.prefix(prefixLen - 1), rowPrefix.suffix(1)));

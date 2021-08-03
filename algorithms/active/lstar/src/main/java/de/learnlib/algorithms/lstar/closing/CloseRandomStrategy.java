@@ -37,12 +37,12 @@ public class CloseRandomStrategy implements ClosingStrategy<@Nullable Object, @N
     }
 
     @Override
-    public <RI, RD> List<Row<RI>> selectClosingRows(List<List<Row<RI>>> unclosedClasses,
+    public <RI, RD> List<Row<RI, RD>> selectClosingRows(List<List<Row<RI, RD>>> unclosedClasses,
                                                     ObservationTable<RI, RD> table,
                                                     MembershipOracle<RI, RD> oracle) {
-        List<Row<RI>> result = new ArrayList<>(unclosedClasses.size());
+        List<Row<RI, RD>> result = new ArrayList<>(unclosedClasses.size());
 
-        for (List<Row<RI>> clazz : unclosedClasses) {
+        for (List<Row<RI, RD>> clazz : unclosedClasses) {
             int card = clazz.size();
             result.add(clazz.get(random.nextInt(card)));
         }

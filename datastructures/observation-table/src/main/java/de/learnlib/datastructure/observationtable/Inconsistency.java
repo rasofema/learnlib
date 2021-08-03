@@ -25,13 +25,13 @@ package de.learnlib.datastructure.observationtable;
  *
  * @author Malte Isberner
  */
-public class Inconsistency<I> {
+public class Inconsistency<I, D> {
 
-    private final Row<I> firstRow;
-    private final Row<I> secondRow;
+    private final Row<I, D> firstRow;
+    private final Row<I, D> secondRow;
     private final I symbol;
 
-    public Inconsistency(Row<I> firstRow, Row<I> secondRow, I symbol) {
+    public Inconsistency(Row<I, D> firstRow, Row<I, D> secondRow, I symbol) {
         this.firstRow = firstRow;
         this.secondRow = secondRow;
         this.symbol = symbol;
@@ -42,7 +42,7 @@ public class Inconsistency<I> {
      *
      * @return the first row
      */
-    public Row<I> getFirstRow() {
+    public Row<I, D> getFirstRow() {
         return firstRow;
     }
 
@@ -51,7 +51,7 @@ public class Inconsistency<I> {
      *
      * @return the second row
      */
-    public Row<I> getSecondRow() {
+    public Row<I, D> getSecondRow() {
         return secondRow;
     }
 

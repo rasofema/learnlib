@@ -21,6 +21,7 @@ import java.util.function.Function;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
+import de.learnlib.datastructure.observationtable.RowContent;
 import net.automatalib.words.Word;
 
 public class ObservationTableASCIIWriter<I, D> extends AbstractObservationTableWriter<I, D> {
@@ -70,19 +71,22 @@ public class ObservationTableASCIIWriter<I, D> extends AbstractObservationTableW
             colWidth[i++] = wordToString.apply(suffix).length();
         }
 
-        for (Row<I> row : table.getAllRows()) {
+        for (Row<I, D> row : table.getAllRows()) {
             int thisWidth = wordToString.apply(row.getLabel()).length();
             if (thisWidth > colWidth[0]) {
                 colWidth[0] = thisWidth;
             }
 
-            i = 1;
-            for (D value : table.rowContents(row)) {
-                thisWidth = outputToString.apply(value).length();
-                if (thisWidth > colWidth[i]) {
-                    colWidth[i] = thisWidth;
+            RowContent<I, D> rowContent = row.getRowContent();
+            if (rowContent != null) {
+                i = 1;
+                for (D value : row.getRowContent().getContents()) {
+                    thisWidth = outputToString.apply(value).length();
+                    if (thisWidth > colWidth[i]) {
+                        colWidth[i] = thisWidth;
+                    }
+                    i++;
                 }
-                i++;
             }
         }
 
@@ -99,16 +103,19 @@ public class ObservationTableASCIIWriter<I, D> extends AbstractObservationTableW
         appendSeparatorRow(out, '=', colWidth);
 
         boolean first = true;
-        for (Row<I> spRow : table.getShortPrefixRows()) {
+        for (Row<I, D> spRow : table.getShortPrefixRows()) {
             if (first) {
                 first = false;
             } else if (rowSeparators) {
                 appendSeparatorRow(out, '-', colWidth);
             }
             content[0] = wordToString.apply(spRow.getLabel());
+            RowContent<I, D> rowContent = spRow.getRowContent();
             i = 1;
-            for (D value : table.rowContents(spRow)) {
-                content[i++] = outputToString.apply(value);
+            if (rowContent != null) {
+                for (D value : rowContent.getContents()) {
+                    content[i++] = outputToString.apply(value);
+                }
             }
             appendContentRow(out, content, colWidth);
         }
@@ -116,16 +123,19 @@ public class ObservationTableASCIIWriter<I, D> extends AbstractObservationTableW
         appendSeparatorRow(out, '=', colWidth);
 
         first = true;
-        for (Row<I> lpRow : table.getLongPrefixRows()) {
+        for (Row<I, D> lpRow : table.getLongPrefixRows()) {
             if (first) {
                 first = false;
             } else if (rowSeparators) {
                 appendSeparatorRow(out, '-', colWidth);
             }
             content[0] = wordToString.apply(lpRow.getLabel());
-            i = 1;
-            for (D value : table.rowContents(lpRow)) {
-                content[i++] = outputToString.apply(value);
+            RowContent<I, D> rowContent = lpRow.getRowContent();
+            if (rowContent != null) {
+                i = 1;
+                for (D value : rowContent.getContents()) {
+                    content[i++] = outputToString.apply(value);
+                }
             }
             appendContentRow(out, content, colWidth);
         }

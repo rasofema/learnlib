@@ -66,7 +66,7 @@ public class NLStarLearner<I> implements NFALearner<I> {
             throw new IllegalStateException();
         }
 
-        List<List<Row<I>>> unclosed = table.initialize();
+        List<List<Row<I, Boolean>>> unclosed = table.initialize();
         completeConsistentTable(unclosed);
 
         constructHypothesis();
@@ -119,10 +119,10 @@ public class NLStarLearner<I> implements NFALearner<I> {
         return NFAs.determinize(hypothesis);
     }
 
-    private void completeConsistentTable(List<List<Row<I>>> initialUnclosed) {
-        List<List<Row<I>>> unclosed = initialUnclosed;
+    private void completeConsistentTable(List<List<Row<I, Boolean>>> initialUnclosed) {
+        List<List<Row<I, Boolean>>> unclosed = initialUnclosed;
 
-        Inconsistency<I> incons;
+        Inconsistency<I, Boolean> incons;
 
         do {
             while (!unclosed.isEmpty()) {
@@ -136,17 +136,17 @@ public class NLStarLearner<I> implements NFALearner<I> {
         } while (!unclosed.isEmpty() || incons != null);
     }
 
-    private List<List<Row<I>>> fixUnclosed(List<List<Row<I>>> unclosed) {
-        List<Row<I>> newShort = new ArrayList<>(unclosed.size());
+    private List<List<Row<I, Boolean>>> fixUnclosed(List<List<Row<I, Boolean>>> unclosed) {
+        List<Row<I, Boolean>> newShort = new ArrayList<>(unclosed.size());
 
-        for (List<Row<I>> unclosedClass : unclosed) {
+        for (List<Row<I, Boolean>> unclosedClass : unclosed) {
             newShort.add(unclosedClass.get(0));
         }
 
         return table.makeUpper(newShort);
     }
 
-    private List<List<Row<I>>> fixInconsistency(Inconsistency<I> incons) {
+    private List<List<Row<I, Boolean>>> fixInconsistency(Inconsistency<I, Boolean> incons) {
         I sym = alphabet.getSymbol(incons.getSymbolIdx());
         Word<I> oldSuffix = table.getSuffix(incons.getSuffixIdx());
 
@@ -165,7 +165,7 @@ public class NLStarLearner<I> implements NFALearner<I> {
         while (MQUtil.isCounterexample(ceQuery, hypothesis)) {
             Word<I> ceWord = ceQuery.getInput();
 
-            List<List<Row<I>>> unclosed = table.addSuffixes(ceWord.suffixes(false));
+            List<List<Row<I, Boolean>>> unclosed = table.addSuffixes(ceWord.suffixes(false));
             completeConsistentTable(unclosed);
             constructHypothesis();
 
@@ -180,20 +180,20 @@ public class NLStarLearner<I> implements NFALearner<I> {
         int[] stateMap = new int[table.getNumUpperRows()];
         Arrays.fill(stateMap, -1);
 
-        List<Row<I>> upperPrimes = table.getUpperPrimes();
+        List<Row<I, Boolean>> upperPrimes = table.getUpperPrimes();
 
-        for (Row<I> row : upperPrimes) {
+        for (Row<I, Boolean> row : upperPrimes) {
             int state = hypothesis.addIntState(row.getContent(0));
             stateMap[row.getUpperId()] = state;
         }
 
-        Row<I> firstRow = table.getUpperRow(0);
+        Row<I, Boolean> firstRow = table.getUpperRow(0);
 
         if (firstRow.isPrime()) {
             int state = stateMap[firstRow.getUpperId()];
             hypothesis.setInitial(state, true);
         } else {
-            for (Row<I> row : table.getCoveredRows(firstRow)) {
+            for (Row<I, Boolean> row : table.getCoveredRows(firstRow)) {
                 if (row.isPrime()) {
                     int state = stateMap[row.getUpperId()];
                     hypothesis.setInitial(state, true);
@@ -202,17 +202,17 @@ public class NLStarLearner<I> implements NFALearner<I> {
         }
 
         // Transition relation
-        for (Row<I> row : upperPrimes) {
+        for (Row<I, Boolean> row : upperPrimes) {
             int state = stateMap[row.getUpperId()];
 
             for (int i = 0; i < alphabet.size(); i++) {
-                Row<I> succRow = row.getSuccessorRow(i);
+                Row<I, Boolean> succRow = row.getSuccessorRow(i);
 
                 if (succRow.isPrime()) {
                     int succState = stateMap[succRow.getUpperId()];
                     hypothesis.addTransition(state, i, succState);
                 } else {
-                    for (Row<I> r : succRow.getCoveredRows()) {
+                    for (Row<I, Boolean> r : succRow.getCoveredRows()) {
                         if (r.isPrime()) {
                             int succState = stateMap[r.getUpperId()];
                             hypothesis.addTransition(state, i, succState);

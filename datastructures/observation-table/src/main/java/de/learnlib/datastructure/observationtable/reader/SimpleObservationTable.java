@@ -46,23 +46,23 @@ public class SimpleObservationTable<I, @Nullable D> implements ObservationTable<
     }
 
     @Override
-    public Collection<Row<I>> getShortPrefixRows() {
+    public Collection<Row<I, D>> getShortPrefixRows() {
         return Collections.emptyList();
     }
 
     @Override
-    public Collection<Row<I>> getLongPrefixRows() {
+    public Collection<Row<I, D>> getLongPrefixRows() {
         return Collections.emptyList();
     }
 
 
     @Override
-    public Row<I> getRow(int idx) {
+    public Row<I, D> getRow(int idx) {
         throw new IndexOutOfBoundsException("This OT contains no data");
     }
 
     @Override
-    public Row<I> getRow(Word<I> prefix) {
+    public Row<I, D> getRow(Word<I> prefix) {
         throw new UnsupportedOperationException();
     }
 
@@ -82,13 +82,8 @@ public class SimpleObservationTable<I, @Nullable D> implements ObservationTable<
     }
 
     @Override
-    public D cellContents(Row<I> row, int columnId) {
+    public D cellContents(Row<I, D> row, int columnId) {
         return null;
-    }
-
-    @Override
-    public List<D> rowContents(Row<I> row) {
-        return Collections.emptyList();
     }
 
     @Override

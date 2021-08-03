@@ -31,18 +31,18 @@ import net.automatalib.words.Word;
  *
  * @author Malte Isberner
  */
-public class Row<I> {
+public class Row<I, D> {
 
     private final Word<I> prefix;
     private final BitSet contents = new BitSet();
     private int upperId = -1;
-    private Row<I>[] successorRows;
+    private Row<I, D>[] successorRows;
     // If this is a row in the upper part of the table,
     // this is the lists of all rows in the upper part that
     // are covered by this row.
     // Otherwise, this is the list of all rows in the whole
     // table that are covered by this row.
-    private List<Row<I>> coveredRows;
+    private List<Row<I, D>> coveredRows;
 
     // Indicates if this row is prime. A row is prime if the join over
     // all rows in the coveredRows list
@@ -82,16 +82,16 @@ public class Row<I> {
         this.successorRows = new Row[alphabetSize];
     }
 
-    Row<I> getSuccessorRow(int succIdx) {
+    Row<I, D> getSuccessorRow(int succIdx) {
         return successorRows[succIdx];
     }
 
-    void setSuccessorRow(int succIdx, Row<I> row) {
+    void setSuccessorRow(int succIdx, Row<I, D> row) {
         successorRows[succIdx] = row;
     }
 
-    void updateCovered(List<Row<I>> newRows) {
-        List<Row<I>> oldCovered = coveredRows;
+    void updateCovered(List<Row<I, D>> newRows) {
+        List<Row<I, D>> oldCovered = coveredRows;
 
         this.coveredRows = new ArrayList<>();
         if (oldCovered != null) {
@@ -100,8 +100,8 @@ public class Row<I> {
         checkAndAddCovered(newRows);
     }
 
-    private void checkAndAddCovered(List<Row<I>> rowList) {
-        for (Row<I> row : rowList) {
+    private void checkAndAddCovered(List<Row<I, D>> rowList) {
+        for (Row<I, D> row : rowList) {
             if (row != this) {
                 if (isShortPrefixRow()) {
                     if (row.isShortPrefixRow() && covers(row)) {
@@ -118,13 +118,13 @@ public class Row<I> {
         return successorRows != null;
     }
 
-    boolean covers(Row<I> other) {
+    boolean covers(Row<I, D> other) {
         BitSet c = (BitSet) contents.clone();
         c.or(other.contents);
         return contents.equals(c);
     }
 
-    public List<Row<I>> getCoveredRows() {
+    public List<Row<I, D>> getCoveredRows() {
         return coveredRows;
     }
 
@@ -136,7 +136,7 @@ public class Row<I> {
         } else {
             BitSet aggContents = new BitSet();
 
-            for (Row<I> covered : coveredRows) {
+            for (Row<I, D> covered : coveredRows) {
                 if (covered.isShortPrefixRow() || !contents.equals(covered.contents)) {
                     aggContents.or(covered.contents);
                 }

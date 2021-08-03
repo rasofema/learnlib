@@ -15,18 +15,18 @@
  */
 package de.learnlib.algorithms.lstar;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import de.learnlib.api.Resumable;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
+import de.learnlib.datastructure.observationtable.RowContent;
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.MutableDeterministic;
 import net.automatalib.words.Alphabet;
+import net.automatalib.words.Word;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +55,7 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAutomatonLStar.class);
 
     protected AI internalHyp;
-    protected List<StateInfo<S, I>> stateInfos = new ArrayList<>();
+    protected Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos = new LinkedHashMap<>();
 
     /**
      * Constructor.
@@ -96,18 +96,13 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
             throw new IllegalStateException("Cannot update internal hypothesis: not initialized");
         }
 
-        int oldStates = internalHyp.size();
-        int numDistinct = table.numberOfDistinctRows();
-
-        int newStates = numDistinct - oldStates;
-
-        stateInfos.addAll(Collections.nCopies(newStates, null));
+        internalHyp.clear();
+        stateInfos.clear();
 
         // TODO: Is there a quicker way than iterating over *all* rows?
         // FIRST PASS: Create new hypothesis states
-        for (Row<I> sp : table.getShortPrefixRows()) {
-            int id = sp.getRowContentId();
-            StateInfo<S, I> info = stateInfos.get(id);
+        for (Row<I, D> sp : table.getShortPrefixRows()) {
+            StateInfo<S, I, D> info = stateInfos.getOrDefault(sp.getRowContent(), null);
             if (info != null) {
                 // State from previous hypothesis, property might have changed
                 if (info.getRow() == sp) {
@@ -116,23 +111,22 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
                 continue;
             }
 
-            S state = createState(id == 0, sp);
-
-            stateInfos.set(id, new StateInfo<>(sp, state));
+            S state = createState(sp.getLabel() == Word.epsilon(), sp);
+            stateInfos.put(sp.getRowContent(), new StateInfo<>(sp, state));
         }
 
         // SECOND PASS: Create hypothesis transitions
-        for (StateInfo<S, I> info : stateInfos) {
-            Row<I> sp = info.getRow();
+        for (StateInfo<S, I, D> info : stateInfos.values()) {
+            Row<I, D> sp = info.getRow();
             S state = info.getState();
 
             for (int i = 0; i < alphabet.size(); i++) {
                 I input = alphabet.getSymbol(i);
 
-                Row<I> succ = sp.getSuccessor(i);
-                int succId = succ.getRowContentId();
+                Row<I, D> succ = sp.getSuccessor(i);
+                RowContent<I, D> succRowContent = succ.getRowContent();
 
-                S succState = stateInfos.get(succId).getState();
+                S succState = stateInfos.get(succRowContent).getState();
 
                 setTransition(state, input, succState, sp, i);
             }
@@ -149,9 +143,9 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
      *
      * @return the state property of the corresponding state
      */
-    protected abstract SP stateProperty(ObservationTable<I, D> table, Row<I> stateRow);
+    protected abstract SP stateProperty(ObservationTable<I, D> table, Row<I, D> stateRow);
 
-    protected S createState(boolean initial, Row<I> row) {
+    protected S createState(boolean initial, Row<I, D> row) {
         SP prop = stateProperty(table, row);
         if (initial) {
             return internalHyp.addInitialState(prop);
@@ -159,7 +153,7 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
         return internalHyp.addState(prop);
     }
 
-    protected void setTransition(S from, I input, S to, Row<I> fromRow, int inputIdx) {
+    protected void setTransition(S from, I input, S to, Row<I, D> fromRow, int inputIdx) {
         TP prop = transitionProperty(table, fromRow, inputIdx);
         internalHyp.setTransition(from, input, to, prop);
     }
@@ -177,7 +171,7 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
      *
      * @return the transition property of the corresponding transition
      */
-    protected abstract TP transitionProperty(ObservationTable<I, D> table, Row<I> stateRow, int inputIdx);
+    protected abstract TP transitionProperty(ObservationTable<I, D> table, Row<I, D> stateRow, int inputIdx);
 
     @Override
     protected final void doRefineHypothesis(DefaultQuery<I, D> ceQuery) {
@@ -220,17 +214,17 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
         }
     }
 
-    static final class StateInfo<S, I> {
+    static final class StateInfo<S, I, D> {
 
-        private final Row<I> row;
+        private final Row<I, D> row;
         private final S state;
 
-        StateInfo(Row<I> row, S state) {
+        StateInfo(Row<I, D> row, S state) {
             this.row = row;
             this.state = state;
         }
 
-        public Row<I> getRow() {
+        public Row<I, D> getRow() {
             return row;
         }
 
