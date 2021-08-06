@@ -15,7 +15,12 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import de.learnlib.api.AccessSequenceTransformer;
@@ -314,7 +319,11 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
     }
 
     default D cellContents(Row<I, D> row, int columnId) {
-        return row.getRowContent().get(columnId);
+        RowContent<I, D> rowContent = row.getRowContent();
+        if (rowContent == null) {
+            return null;
+        }
+        return rowContent.get(columnId);
     }
 
 }

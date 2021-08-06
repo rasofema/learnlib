@@ -15,7 +15,8 @@
  */
 package de.learnlib.algorithms.lstar;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import de.learnlib.api.Resumable;
 import de.learnlib.api.oracle.MembershipOracle;
@@ -102,17 +103,10 @@ public abstract class AbstractAutomatonLStar<A, I, D, S, T, SP, TP, AI extends M
         // TODO: Is there a quicker way than iterating over *all* rows?
         // FIRST PASS: Create new hypothesis states
         for (Row<I, D> sp : table.getShortPrefixRows()) {
-            StateInfo<S, I, D> info = stateInfos.getOrDefault(sp.getRowContent(), null);
-            if (info != null) {
-                // State from previous hypothesis, property might have changed
-                if (info.getRow() == sp) {
-                    internalHyp.setStateProperty(info.getState(), stateProperty(table, sp));
-                }
-                continue;
+            if (!stateInfos.containsKey(sp.getRowContent())) {
+                S state = createState(sp.getLabel().getClass() == Word.epsilon().getClass(), sp);
+                stateInfos.put(sp.getRowContent(), new StateInfo<>(sp, state));
             }
-
-            S state = createState(sp.getLabel() == Word.epsilon(), sp);
-            stateInfos.put(sp.getRowContent(), new StateInfo<>(sp, state));
         }
 
         // SECOND PASS: Create hypothesis transitions

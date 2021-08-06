@@ -15,7 +15,12 @@
  */
 package de.learnlib.algorithms.lstar;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.api.algorithm.feature.GlobalSuffixLearner;
@@ -224,11 +229,9 @@ public abstract class AbstractLStar<A, I, D>
 
         for (Row<I, D> row : rowsToVerify) {
             for (int suffIndex = 0; suffIndex < table.getSuffixes().size(); suffIndex++) {
-                Word<I> word = row.getLabel().concat(table.getSuffix(suffIndex));
-                D correctValue = oracle.answerQuery(word);
-
+                D correctValue = oracle.answerQuery(row.getLabel(), table.getSuffix(suffIndex));
                 if (!table.cellContents(row, suffIndex).equals(correctValue)) {
-                    table.correctWord(word, correctValue);
+                    table.correctCell(row.getLabel(), table.getSuffix(suffIndex), correctValue);
                     return null;
                 }
             }

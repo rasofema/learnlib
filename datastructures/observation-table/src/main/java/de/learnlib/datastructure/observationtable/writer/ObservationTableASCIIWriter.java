@@ -80,7 +80,7 @@ public class ObservationTableASCIIWriter<I, D> extends AbstractObservationTableW
             RowContent<I, D> rowContent = row.getRowContent();
             if (rowContent != null) {
                 i = 1;
-                for (D value : row.getRowContent().getContents()) {
+                for (D value : rowContent.getContents()) {
                     thisWidth = outputToString.apply(value).length();
                     if (thisWidth > colWidth[i]) {
                         colWidth[i] = thisWidth;

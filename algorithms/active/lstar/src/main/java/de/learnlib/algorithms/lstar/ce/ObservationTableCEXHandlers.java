@@ -221,7 +221,7 @@ public final class ObservationTableCEXHandlers {
         LinkedList<Word<I>> prefixes = new LinkedList<>(ceQuery.getInput().prefixes(false));
         // The counter-example that we get is guaranteed to be incorrect,
         // so correct any instances of it in our table.
-        List<List<Row<I, D>>> unclosedCorrected = table.correctWord(prefixes.peekLast(), ceQuery.getOutput());
+        List<List<Row<I, D>>> unclosedCorrected = table.correctCell(ceQuery.getPrefix(), ceQuery.getSuffix(), ceQuery.getOutput());
 
         List<List<Row<I, D>>> unclosed = table.addShortPrefixes(prefixes, oracle);
         for (List<Row<I, D>> unclosedCorrectEQ : unclosedCorrected) {

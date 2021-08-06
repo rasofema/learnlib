@@ -15,7 +15,14 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import de.learnlib.datastructure.observationtable.reader.SimpleObservationTable;
@@ -60,11 +67,12 @@ public class MockedObservationTable<I, D> extends SimpleObservationTable<I, D> {
 
         final RowImpl<I, D> row = new RowImpl<>(prefix, rows.size());
         final RowContent<I, D> rowContent = contentsToRowContent.computeIfAbsent(contents, k -> {
-            RowContent<I, D> newRowContent = new RowContent<>(contents, Collections.singleton(row));
-            contentsToRowContent.put(contents, newRowContent);
-            return newRowContent;
+            Set<Row<I, D>> associatedRows = new HashSet<>();
+            associatedRows.add(row);
+            return new RowContent<>(contents, associatedRows);
         });
 
+        contentsToRowContent.put(contents, rowContent);
         row.setRowContent(rowContent);
         rows.add(row);
 

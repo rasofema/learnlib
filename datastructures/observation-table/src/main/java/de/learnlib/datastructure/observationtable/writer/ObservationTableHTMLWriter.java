@@ -21,6 +21,7 @@ import java.util.function.Function;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
+import de.learnlib.datastructure.observationtable.RowContent;
 import net.automatalib.words.Word;
 
 /**
@@ -74,8 +75,11 @@ public class ObservationTableHTMLWriter<I, D> extends AbstractObservationTableWr
             out.append("\t\t<tr class=\"short-prefix\"><td class=\"prefix\">")
                .append(wordToString.apply(row.getLabel()))
                .append("</td>");
-            for (D value : row.getRowContent().getContents()) {
-                out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
+            RowContent<I, D> rowContent = row.getRowContent();
+            if (rowContent != null) {
+                for (D value : rowContent.getContents()) {
+                    out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
+                }
             }
             out.append("</tr>").append(System.lineSeparator());
         }
@@ -84,8 +88,11 @@ public class ObservationTableHTMLWriter<I, D> extends AbstractObservationTableWr
 
         for (Row<I, D> row : table.getLongPrefixRows()) {
             out.append("\t\t<tr class=\"long-prefix\"><td>").append(wordToString.apply(row.getLabel())).append("</td>");
-            for (D value : row.getRowContent().getContents()) {
-                out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
+            RowContent<I, D> rowContent = row.getRowContent();
+            if (rowContent != null) {
+                for (D value : rowContent.getContents()) {
+                    out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
+                }
             }
             out.append("</tr>").append(System.lineSeparator());
         }

@@ -15,7 +15,17 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.api.oracle.MembershipOracle;
@@ -23,7 +33,6 @@ import de.learnlib.api.query.DefaultQuery;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Observation table class.
@@ -54,8 +63,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Malte Isberner
  */
 public final class GenericObservationTable<I, D> implements MutableObservationTable<I, D> {
-
-    private static final int NO_ENTRY = -1;
     private final List<RowImpl<I, D>> shortPrefixRows = new ArrayList<>();
     private final List<RowImpl<I, D>> longPrefixRows = new ArrayList<>();
     private final List<RowImpl<I, D>> allRows = new ArrayList<>();
@@ -297,9 +304,11 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         this.suffixes.addAll(newSuffixList);
 
         for (RowImpl<I, D> row : allRows) {
-            List<D> rowContents = row.getRowContent().getContents();
+            RowContent<I, D> rowContent = row.getRowContent();
             List<D> newContents = new ArrayList<>(oldSuffixCount + numNewSuffixes);
-            newContents.addAll(rowContents.subList(0, oldSuffixCount));
+            if (rowContent != null) {
+                newContents.addAll(rowContent.getContents().subList(0, oldSuffixCount));
+            }
             fetchResults(queryIt, newContents, numNewSuffixes);
             processContents(row, newContents, row.isShortPrefixRow());
         }
@@ -437,21 +446,15 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     }
 
     @Override
-    public List<List<Row<I, D>>> correctWord(Word<I> correctedWord, D correctValue) {
-        List<Row<I, D>> correctedRows = new LinkedList<>();
-
-        for (RowImpl<I, D> row : allRows) {
-            if (row.getLabel().isPrefixOf(correctedWord)) {
-                for (Word<I> suffix : suffixes) {
-                    if (correctedWord.equals(row.getLabel().concat(suffix))) {
-                        List<D> correctedContents = new LinkedList<>(row.getRowContent().getContents());
-                        correctedContents.set(suffixes.indexOf(suffix), correctValue);
-                        processContents(row, correctedContents, row.isShortPrefixRow());
-                        correctedRows.add(row);
-                    }
-                }
-            }
+    public List<List<Row<I, D>>> correctCell(Word<I> prefix, Word<I> suffix, D correctValue) {
+        RowImpl<I, D> incorrectRow = rowMap.get(prefix);
+        List<D> correctedContents = new LinkedList<>();
+        RowContent<I, D> rowContent = incorrectRow.getRowContent();
+        if (rowContent != null) {
+            correctedContents.addAll(rowContent.getContents());
         }
+        correctedContents.set(suffixes.indexOf(suffix), correctValue);
+        processContents(incorrectRow, correctedContents, incorrectRow.isShortPrefixRow());
 
         // TODO: Correcting cells affects closedness - and maybe consistency.
         //  Unclosed EQ classes need to be reported back to the algo.

@@ -34,12 +34,21 @@ jobs:
         run: |
           sudo add-apt-repository universe
           sudo apt-get update
-          sudo apt-get install graphviz
+          sudo apt-get install -y graphviz
       - name: Set up LTSmin
         shell: bash
         run: |
           $GITHUB_WORKSPACE/.github/install-ltsmin.sh
           echo "$HOME/ltsmin/${{ env.LTSMIN_VERSION }}/bin" >> $GITHUB_PATH
+      - name: Download Maven
+        run: |
+          curl -sL https://www-eu.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.zip -o maven.zip
+          apt-get update
+          apt-get -y install unzip
+          unzip -d /usr/share maven.zip
+          rm maven.zip
+          ln -s /usr/share/apache-maven-3.6.3/bin/mvn /usr/bin/mvn
+          echo "M2_HOME=/usr/share/apache-maven-3.6.3" | tee -a /etc/environment
       - name: Set up AutomataLib
         shell: bash
         # Set environment variables "AUTOMATALIB_FORK" and "AUTOMATALIB_BRANCH" to build custom AutomataLib versions.
