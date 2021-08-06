@@ -41,6 +41,7 @@ jobs:
           $GITHUB_WORKSPACE/.github/install-ltsmin.sh
           echo "$HOME/ltsmin/${{ env.LTSMIN_VERSION }}/bin" >> $GITHUB_PATH
       - name: Download Maven
+        if: ${{ env.ACT }}
         run: |
           curl -sL https://www-eu.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.zip -o maven.zip
           apt-get update
