@@ -1,3 +1,21 @@
+/* Copyright (C) 2013-2021 TU Dortmund
+ * This file is part of LearnLib, http://www.learnlib.de/.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package de.learnlib.algorithms.ilstar;
+
 import de.learnlib.examples.DefaultLearningExample;
 import net.automatalib.automata.fsa.MutableDFA;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
@@ -6,11 +24,11 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.impl.FastAlphabet;
 import net.automatalib.words.impl.Symbol;
 
-public class SimpleDFA2 extends DefaultLearningExample.DefaultDFALearningExample<Symbol> {
+public class SimpleDFA extends DefaultLearningExample.DefaultDFALearningExample<Symbol> {
     public static final Symbol IN_ZERO = new Symbol("0");
     public static final Symbol OUT_ONE = new Symbol("1");
 
-    public SimpleDFA2() {
+    public SimpleDFA() {
         super(constructMachine());
     }
 
@@ -33,6 +51,12 @@ public class SimpleDFA2 extends DefaultLearningExample.DefaultDFALearningExample
             .from("s1")
             .on(IN_ZERO).to("s2")
             .from("s2")
+            .on(IN_ZERO).to("s3")
+            .from("s3")
+            .on(IN_ZERO).to("s4")
+            .from("s4")
+            .on(IN_ZERO).to("s5")
+            .from("s5")
             .on(IN_ZERO).to("s0")
             .withAccepting("s0")
             .create();
@@ -43,8 +67,8 @@ public class SimpleDFA2 extends DefaultLearningExample.DefaultDFALearningExample
         return new FastAlphabet<>(IN_ZERO);
     }
 
-    public static SimpleDFA2 createExample() {
-        return new SimpleDFA2();
+    public static SimpleDFA createExample() {
+        return new SimpleDFA();
     }
 
 }

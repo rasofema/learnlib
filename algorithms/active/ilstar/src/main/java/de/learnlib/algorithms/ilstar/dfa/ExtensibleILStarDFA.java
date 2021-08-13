@@ -25,7 +25,7 @@ import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategy;
 import de.learnlib.algorithms.lstar.dfa.LStarDFAUtil;
 import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.datastructure.observationtable.GenericObservationTable;
+import de.learnlib.datastructure.observationtable.MutableObservationTable;
 import de.learnlib.datastructure.observationtable.OTLearner.OTLearnerDFA;
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
@@ -48,7 +48,7 @@ public class ExtensibleILStarDFA<I>
     extends AbstractExtensibleAutomatonILStar<DFA<?, I>, I, Boolean, Integer, Integer, Boolean, Void, CompactDFA<I>>
     implements OTLearnerDFA<I> {
 
-    public ExtensibleILStarDFA(Alphabet<I> alphabet, MembershipOracle<I, Boolean> oracle, GenericObservationTable<I, Boolean> startingOT) {
+    public ExtensibleILStarDFA(Alphabet<I> alphabet, MembershipOracle<I, Boolean> oracle, MutableObservationTable<I, Boolean> startingOT) {
         this(alphabet, oracle, (List<Word<I>>) startingOT.getShortPrefixes(), startingOT.getSuffixes(), ObservationTableCEXHandlers.INCREMENTAL_LSTAR, ClosingStrategies.CLOSE_FIRST);
         this.table = startingOT;
     }

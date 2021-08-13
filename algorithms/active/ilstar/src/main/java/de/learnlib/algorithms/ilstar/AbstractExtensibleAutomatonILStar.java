@@ -15,6 +15,9 @@
  */
 package de.learnlib.algorithms.ilstar;
 
+import java.util.Collections;
+import java.util.List;
+
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandler;
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
@@ -26,9 +29,6 @@ import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.MutableDeterministic;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
-
-import java.util.Collections;
-import java.util.List;
 
 public abstract class AbstractExtensibleAutomatonILStar<A, I, D, S, T, SP, TP, AI extends MutableDeterministic<S, I, T, SP, TP> & SupportsGrowingAlphabet<I>>
         extends AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI> {

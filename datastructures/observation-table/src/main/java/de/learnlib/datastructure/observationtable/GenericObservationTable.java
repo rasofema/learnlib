@@ -87,6 +87,53 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         this.alphabetSize = alphabet.size();
     }
 
+    public GenericObservationTable(GenericObservationTable<I, D> table) {
+        this.alphabet = table.alphabet;
+        this.alphabetSize = table.alphabetSize;
+        this.suffixes.addAll(table.suffixes);
+        this.suffixSet.addAll(table.suffixSet);
+
+        Map<RowContent<I, D>, RowContent<I, D>> oldContentToNewContent = new HashMap<>();
+        Map<RowImpl<I, D>, RowImpl<I, D>> oldRowToNewRow = new HashMap<>();
+        for (Map.Entry<List<D>, RowContent<I, D>> entry : table.contentToRowContent.entrySet()) {
+            RowContent<I, D> newContent = new RowContent<>(entry.getKey());
+            this.contentToRowContent.put(entry.getKey(), newContent);
+            oldContentToNewContent.put(entry.getValue(), newContent);
+        }
+
+        for (RowImpl<I, D> row : table.allRows) {
+            RowImpl<I, D> newRow;
+            if (row.isShortPrefixRow()) {
+                newRow = new RowImpl<>(row.getLabel(), row.getRowId(), this.alphabetSize);
+                this.shortPrefixRows.add(newRow);
+            } else {
+                newRow = new RowImpl<>(row.getLabel(), row.getRowId());
+                this.longPrefixRows.add(newRow);
+            }
+            oldRowToNewRow.put(row, newRow);
+            this.allRows.add(newRow);
+            this.rowMap.put(newRow.getLabel(), newRow);
+
+            newRow.setRowContent(oldContentToNewContent.get(row.getRowContent()));
+            oldContentToNewContent.get(row.getRowContent()).addAssociatedRow(newRow);
+
+            if (table.canonicalRows.containsValue(row)) {
+                this.canonicalRows.put(newRow.getRowContent(), newRow);
+            }
+        }
+
+        for (Map.Entry<RowImpl<I, D>, RowImpl<I, D>> entry : oldRowToNewRow.entrySet()) {
+            for (int index = 0; index < alphabetSize; index++) {
+                if (entry.getKey().isShortPrefixRow()) {
+                    entry.getValue().setSuccessor(index, oldRowToNewRow.get(entry.getKey().getSuccessor(index)));
+                }
+            }
+        }
+
+        this.numRows = allRows.size();
+        this.initialConsistencyCheckRequired = table.initialConsistencyCheckRequired;
+    }
+
     private static <I, D> void buildQueries(List<DefaultQuery<I, D>> queryList,
                                             Word<I> prefix,
                                             List<? extends Word<I>> suffixes) {

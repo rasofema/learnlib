@@ -15,14 +15,14 @@
  */
 package de.learnlib.algorithms.ilstar.dfa;
 
+import java.util.Collections;
+
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
 import de.learnlib.api.oracle.MembershipOracle;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
-
-import java.util.Collections;
 
 /**
  * Implementation of the L* algorithm by Dana Angluin.

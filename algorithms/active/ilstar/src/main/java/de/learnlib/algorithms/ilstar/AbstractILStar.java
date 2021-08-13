@@ -15,12 +15,20 @@
  */
 package de.learnlib.algorithms.ilstar;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.api.algorithm.feature.GlobalSuffixLearner;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.observationtable.GenericObservationTable;
 import de.learnlib.datastructure.observationtable.Inconsistency;
+import de.learnlib.datastructure.observationtable.MutableObservationTable;
 import de.learnlib.datastructure.observationtable.OTLearner;
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
@@ -30,13 +38,6 @@ import net.automatalib.automata.concepts.SuffixOutput;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * An abstract base class for L*-style algorithms.
@@ -59,7 +60,7 @@ public abstract class AbstractILStar<A, I, D>
 
     protected final Alphabet<I> alphabet;
     protected final MembershipOracle<I, D> oracle;
-    protected GenericObservationTable<I, D> table;
+    protected MutableObservationTable<I, D> table;
 
     /**
      * Constructor.
@@ -135,10 +136,6 @@ public abstract class AbstractILStar<A, I, D>
     protected boolean completeConsistentTable(List<List<Row<I, D>>> unclosed, boolean checkConsistency) {
         boolean refined = false;
         List<List<Row<I, D>>> unclosedIter = unclosed;
-        // TODO: Something here isn't terminating,
-        //  I think it's due to addSuffix not adding already present suffixes.
-        //  And why is it adding a present suffix? Is it an indication of
-        //  incorrect cell values?
         do {
             while (!unclosedIter.isEmpty()) {
                 List<Row<I, D>> closingRows = selectClosingRows(unclosedIter);
@@ -162,6 +159,17 @@ public abstract class AbstractILStar<A, I, D>
         } while (!unclosedIter.isEmpty());
 
         return refined;
+    }
+
+    protected void minimiseTable() {
+        // TODO: A property critical for our table to be kept up-to-date is the idea that "table not correct => cex will be returned",
+        //  however this only holds if the observation table is kept minimal. This is because we could have a table that
+        //  represents a correct but not minimal DFA, and that way no cex will be returned fixing incorrect cells causing non-minimallity.
+        //  --
+        //  As such, we want to minimise the table every time it becomes closed and consistent. Not before, as we don't want to remove behaviour that
+        //  could be critical in detecting unclosedness or inconsistency.
+        //  --
+        //  I have an algorithm for this, not sure it is the most efficient but it is correct. I'll implement it soon.
     }
 
     /**

@@ -15,6 +15,10 @@
  */
 package de.learnlib.algorithms.ilstar;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+
 import de.learnlib.api.Resumable;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
@@ -27,9 +31,6 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Abstract base class for algorithms that produce (subclasses of) {@link MutableDeterministic} automata.
