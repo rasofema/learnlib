@@ -13,14 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.lstar;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+package de.learnlib.algorithms.ilstar;
 
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.api.algorithm.feature.GlobalSuffixLearner;
@@ -38,6 +31,13 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
 /**
  * An abstract base class for L*-style algorithms.
  * <p>
@@ -54,7 +54,7 @@ import net.automatalib.words.impl.Alphabets;
  *
  * @author Malte Isberner
  */
-public abstract class AbstractLStar<A, I, D>
+public abstract class AbstractILStar<A, I, D>
         implements OTLearner<A, I, D>, GlobalSuffixLearner<A, I, D>, SupportsGrowingAlphabet<I> {
 
     protected final Alphabet<I> alphabet;
@@ -69,7 +69,7 @@ public abstract class AbstractLStar<A, I, D>
      * @param oracle
      *         the membership oracle.
      */
-    protected AbstractLStar(Alphabet<I> alphabet, MembershipOracle<I, D> oracle) {
+    protected AbstractILStar(Alphabet<I> alphabet, MembershipOracle<I, D> oracle) {
         this.alphabet = alphabet;
         this.oracle = oracle;
         this.table = new GenericObservationTable<>(alphabet);
