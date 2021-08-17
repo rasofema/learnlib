@@ -18,6 +18,7 @@ package de.learnlib.datastructure.observationtable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -73,7 +74,6 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     private final Set<Word<I>> suffixSet = new HashSet<>();
     private final Alphabet<I> alphabet;
     private int alphabetSize;
-    private int numRows;
     private boolean initialConsistencyCheckRequired;
 
     /**
@@ -104,10 +104,10 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         for (RowImpl<I, D> row : table.allRows) {
             RowImpl<I, D> newRow;
             if (row.isShortPrefixRow()) {
-                newRow = new RowImpl<>(row.getLabel(), row.getRowId(), this.alphabetSize);
+                newRow = new RowImpl<>(row.getLabel(), this.alphabetSize);
                 this.shortPrefixRows.add(newRow);
             } else {
-                newRow = new RowImpl<>(row.getLabel(), row.getRowId());
+                newRow = new RowImpl<>(row.getLabel());
                 this.longPrefixRows.add(newRow);
             }
             oldRowToNewRow.put(row, newRow);
@@ -130,8 +130,53 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             }
         }
 
-        this.numRows = allRows.size();
         this.initialConsistencyCheckRequired = table.initialConsistencyCheckRequired;
+    }
+
+    public GenericObservationTable(Alphabet<I> alphabet, List<Word<I>> shortPrefixes, List<Word<I>> longPrefixes,
+                                   List<Word<I>> suffixes, List<List<D>> shortPrefixRows, List<List<D>> longPrefixRows) {
+        this.alphabet = alphabet;
+        this.alphabetSize = this.alphabet.size();
+        this.suffixes.addAll(suffixes);
+        this.suffixSet.addAll(suffixes);
+
+        for (int index = 0; index < shortPrefixes.size(); index++) {
+            RowImpl<I, D> newRow = new RowImpl<>(shortPrefixes.get(index), this.alphabetSize);
+            this.rowMap.put(shortPrefixes.get(index), newRow);
+            if (!contentToRowContent.containsKey(shortPrefixRows.get(index))) {
+                RowContent<I, D> newContent = new RowContent<>(shortPrefixRows.get(index));
+                contentToRowContent.put(shortPrefixRows.get(index), newContent);
+                this.canonicalRows.put(newContent, newRow);
+            }
+            newRow.setRowContent(contentToRowContent.get(shortPrefixRows.get(index)));
+            newRow.getRowContent().addAssociatedRow(newRow);
+
+            this.allRows.add(newRow);
+            this.shortPrefixRows.add(newRow);
+        }
+
+        for (int index = 0; index < longPrefixes.size(); index++) {
+            RowImpl<I, D> newRow = new RowImpl<>(longPrefixes.get(index));
+            this.rowMap.put(longPrefixes.get(index), newRow);
+            if (!contentToRowContent.containsKey(longPrefixRows.get(index))) {
+                RowContent<I, D> newContent = new RowContent<>(longPrefixRows.get(index));
+                contentToRowContent.put(longPrefixRows.get(index), newContent);
+            }
+            newRow.setRowContent(contentToRowContent.get(longPrefixRows.get(index)));
+            newRow.getRowContent().addAssociatedRow(newRow);
+
+            this.allRows.add(newRow);
+            this.longPrefixRows.add(newRow);
+        }
+
+        for (RowImpl<I, D> row : this.shortPrefixRows) {
+            for (int index = 0; index < this.alphabetSize; index++) {
+                row.setSuccessor(index, this.rowMap.get(row.getLabel().append(alphabet.getSymbol(index))));
+            }
+        }
+
+        // TODO: Check this.
+        this.initialConsistencyCheckRequired = false;
     }
 
     private static <I, D> void buildQueries(List<DefaultQuery<I, D>> queryList,
@@ -249,7 +294,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     }
 
     private RowImpl<I, D> createSpRow(Word<I> prefix) {
-        RowImpl<I, D> newRow = new RowImpl<>(prefix, numRows++, alphabet.size());
+        RowImpl<I, D> newRow = new RowImpl<>(prefix, alphabet.size());
         allRows.add(newRow);
         rowMap.put(prefix, newRow);
         shortPrefixRows.add(newRow);
@@ -257,12 +302,10 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     }
 
     private RowImpl<I, D> createLpRow(Word<I> prefix) {
-        RowImpl<I, D> newRow = new RowImpl<>(prefix, numRows++);
+        RowImpl<I, D> newRow = new RowImpl<>(prefix);
         allRows.add(newRow);
         rowMap.put(prefix, newRow);
-        int idx = longPrefixRows.size();
         longPrefixRows.add(newRow);
-        newRow.setLpIndex(idx);
         return newRow;
     }
 
@@ -421,7 +464,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         List<RowImpl<I, D>> freshLpRows = new ArrayList<>();
 
         for (Row<I, D> r : lpRows) {
-            final RowImpl<I, D> row = allRows.get(r.getRowId());
+            final RowImpl<I, D> row = rowMap.get(r.getLabel());
             if (row.isShortPrefixRow()) {
                 if (row.hasContents()) {
                     continue;
@@ -526,22 +569,132 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             .collect(Collectors.toList());
     }
 
+    private void deleteRow(Row<I, D> row, boolean cleanupContents) {
+        RowContent<I, D> associatedContent = row.getRowContent();
+        if (associatedContent != null) {
+            associatedContent.removeAssociatedRow(row);
+            if (associatedContent.getAssociatedRows().size() == 0 && cleanupContents) {
+                contentToRowContent.remove(associatedContent.getContents());
+                canonicalRows.remove(associatedContent);
+            }
+        }
+        allRows.remove((RowImpl<I, D>) row);
+        if (row.isShortPrefixRow()) {
+            shortPrefixRows.remove(row);
+            for (int index = 0; index < alphabetSize; index++) {
+                deleteRow(row.getSuccessor(index), cleanupContents);
+            }
+        } else {
+            longPrefixRows.remove(row);
+        }
+    }
+
+    public boolean minimiseTable() {
+        // TODO: A property critical for our table to be kept up-to-date is the idea that "table not correct => cex will be returned",
+        //  however this only holds if the observation table is kept minimal. This is because we could have a table that
+        //  represents a correct but not minimal DFA, and that way no cex will be returned fixing incorrect cells causing non-minimallity.
+        //  --
+        //  As such, we want to minimise the table every time it becomes closed and consistent. Not before, as we don't want to remove behaviour that
+        //  could be critical in detecting unclosedness or inconsistency.
+        //  --
+        //  I have an algorithm for this, not sure it is the most efficient but it is correct. I'll implement it soon.
+
+        boolean minimised = false;
+        for (RowContent<I, D> content : contentToRowContent.values()) {
+            List<Row<I, D>> associatedShortRows = content.getAssociatedRows().stream()
+                .filter(Row::isShortPrefixRow)
+                .collect(Collectors.toList());
+
+            while (associatedShortRows.size() > 1) {
+                Row<I, D> biggestLexLabelRow = associatedShortRows.stream()
+                    // TODO: This may not work with complex alphabets as it relies on string rep.
+                    .max(Comparator.comparing(row -> row.getLabel().toString().replaceAll("\\s","").replaceAll("ε", "")))
+                    .orElse(null);
+
+                if (biggestLexLabelRow.getLabel().size() != 0) {
+                    minimised = true;
+                    Word<I> prefixLabel = biggestLexLabelRow.getLabel().prefix(biggestLexLabelRow.getLabel().size() - 1);
+                    if (rowMap.get(prefixLabel).isShortPrefixRow()) {
+                        makeLong((RowImpl<I, D>) biggestLexLabelRow);
+                    } else {
+                        deleteRow(biggestLexLabelRow, false);
+                    }
+                }
+                associatedShortRows = content.getAssociatedRows().stream()
+                    .filter(Row::isShortPrefixRow)
+                    .collect(Collectors.toList());
+            }
+        }
+
+        contentToRowContent.entrySet().removeIf(entry -> entry.getValue().getAssociatedRows().isEmpty());
+
+        for (int sufIndex = suffixes.size() -1; sufIndex > 0; sufIndex--) {
+            List<Word<I>> newSuffixes = new ArrayList<>(suffixes);
+            newSuffixes.remove(sufIndex);
+            int finalSufIndex = sufIndex;
+            GenericObservationTable<I, D> hypotheticalTable = new GenericObservationTable<I, D>(
+                alphabet,
+                shortPrefixRows.stream().map(RowImpl::getLabel).collect(Collectors.toList()),
+                longPrefixRows.stream().map(RowImpl::getLabel).collect(Collectors.toList()),
+                newSuffixes,
+                shortPrefixRows.stream()
+                    .map(row -> new ArrayList<>(row.getRowContent().getContents()))
+                    .peek(newContent -> newContent.remove(finalSufIndex))
+                    .collect(Collectors.toList()),
+                longPrefixRows.stream()
+                    .map(row -> new ArrayList<>(row.getRowContent().getContents()))
+                    .peek(newContent -> newContent.remove(finalSufIndex))
+                    .collect(Collectors.toList())
+            );
+
+            if (hypotheticalTable.findInconsistency() == null) {
+                minimised = true;
+                this.allRows.clear();
+                this.allRows.addAll(hypotheticalTable.allRows);
+                this.shortPrefixRows.clear();
+                this.shortPrefixRows.addAll(hypotheticalTable.shortPrefixRows);
+                this.longPrefixRows.clear();
+                this.longPrefixRows.addAll(hypotheticalTable.longPrefixRows);
+                this.suffixes.clear();
+                this.suffixes.addAll(hypotheticalTable.suffixes);
+                this.suffixSet.clear();
+                this.suffixSet.addAll(hypotheticalTable.suffixSet);
+                this.rowMap.clear();
+                this.rowMap.putAll(hypotheticalTable.rowMap);
+                this.contentToRowContent.clear();
+                this.contentToRowContent.putAll(hypotheticalTable.contentToRowContent);
+                this.canonicalRows.clear();
+                this.canonicalRows.putAll(hypotheticalTable.canonicalRows);
+            }
+        }
+        return minimised;
+    }
+
     private void makeShort(RowImpl<I, D> row) {
         if (row.isShortPrefixRow()) {
             return;
         }
 
-        int lastIdx = longPrefixRows.size() - 1;
-        RowImpl<I, D> last = longPrefixRows.get(lastIdx);
-        int rowIdx = row.getLpIndex();
-        longPrefixRows.remove(lastIdx);
-        if (last != row) {
-            longPrefixRows.set(rowIdx, last);
-            last.setLpIndex(rowIdx);
+        shortPrefixRows.add(row);
+        shortPrefixRows.sort(Comparator.comparing(shortRow -> shortRow.getLabel().toString()));
+        row.makeShort(alphabet.size());
+    }
+
+    private void makeLong(RowImpl<I, D> row) {
+        if (!row.isShortPrefixRow()) {
+            return;
         }
 
-        shortPrefixRows.add(row);
-        row.makeShort(alphabet.size());
+        shortPrefixRows.remove(row);
+        longPrefixRows.add(row);
+        longPrefixRows.sort(Comparator.comparing(longRow -> longRow.getLabel().toString()));
+
+
+        for (int index = 0; index < alphabet.size(); index++) {
+            deleteRow(row.getSuccessor(index), false);
+        }
+
+        row.makeLong();
     }
 
     private static <I, D> void buildRowQueries(List<DefaultQuery<I, D>> queryList,

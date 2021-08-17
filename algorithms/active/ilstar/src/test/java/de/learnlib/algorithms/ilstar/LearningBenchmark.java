@@ -28,7 +28,6 @@ import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.observationtable.GenericObservationTable;
-import de.learnlib.datastructure.observationtable.MutableObservationTable;
 import de.learnlib.datastructure.observationtable.OTLearner;
 import de.learnlib.filter.statistic.oracle.DFACounterOracle;
 import de.learnlib.oracle.equivalence.WpMethodEQOracle;
@@ -37,25 +36,26 @@ import net.automatalib.automata.Automaton;
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.automata.fsa.MutableDFA;
 import net.automatalib.serialization.dot.GraphDOT;
+import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.impl.Symbol;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test
 public class LearningBenchmark {
-    private static final MutableDFA<Integer, Symbol> TARGET_DFA = SimpleDFA2.constructMachine();
-    private static final Alphabet<Symbol> ALPHABET = SimpleDFA2.createInputAlphabet();
+    private static final MutableDFA<Integer, Symbol> TARGET_DFA = SimpleDFA.constructMachine();
+    private static final Alphabet<Symbol> ALPHABET = SimpleDFA.createInputAlphabet();
     private static final MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA);
 
     public static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
         OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learner,
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle) {
-        int maxRounds = target.size();
         int cexCounter = 0;
 
         learner.startLearning();
 
-        while (maxRounds-- > 0) {
+        while (true) {
             DFA<?, Symbol> hyp = learner.getHypothesisModel();
 
             DefaultQuery<Symbol, Boolean> ce = eqOracle.findCounterExample(hyp, alphabet);
@@ -72,8 +72,7 @@ public class LearningBenchmark {
 
         DFA<?, Symbol> hyp = learner.getHypothesisModel();
 
-        // TODO: Minimality requires table minimisation.
-        // Assert.assertEquals(hyp.size(), DFAs.minimize(target, alphabet).size());
+         Assert.assertEquals(hyp.size(), DFAs.minimize(target, alphabet).size());
         return cexCounter;
     }
 
@@ -94,7 +93,7 @@ public class LearningBenchmark {
 
     }
 
-    public OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnIncremental(MutableObservationTable<Symbol, Boolean> startingOT) {
+    public OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnIncremental(GenericObservationTable<Symbol, Boolean> startingOT) {
         LinkedList<Symbol> accWord = new LinkedList<>();
         // accWord.add(alphabet.getSymbol(0));
         // accWord.add(alphabet.getSymbol(0));

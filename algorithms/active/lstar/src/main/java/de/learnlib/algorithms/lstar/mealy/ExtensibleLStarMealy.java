@@ -17,7 +17,9 @@ package de.learnlib.algorithms.lstar.mealy;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
 import de.learnlib.algorithms.lstar.AbstractExtensibleAutomatonLStar;
@@ -39,7 +41,7 @@ public class ExtensibleLStarMealy<I, O>
         extends AbstractExtensibleAutomatonLStar<MealyMachine<?, I, ?, O>, I, Word<O>, Integer, CompactTransition<O>, Void, O, CompactMealy<I, O>>
         implements OTLearnerMealy<I, O> {
 
-    private final List<O> outputTable = new ArrayList<>();
+    private final Map<Row<I, Word<O>>, O> outputTable = new HashMap<>();
 
     public ExtensibleLStarMealy(Alphabet<I> alphabet,
                                 MembershipOracle<I, Word<O>> oracle,
@@ -89,7 +91,7 @@ public class ExtensibleLStarMealy<I, O>
     @Override
     protected O transitionProperty(ObservationTable<I, Word<O>> table, Row<I, Word<O>> stateRow, int inputIdx) {
         Row<I, Word<O>> transRow = stateRow.getSuccessor(inputIdx);
-        return outputTable.get(transRow.getRowId() - 1);
+        return outputTable.get(transRow);
     }
 
     protected void updateOutputs() {
@@ -115,7 +117,7 @@ public class ExtensibleLStarMealy<I, O>
         for (int i = 0; i < newOutputs; i++) {
             DefaultQuery<I, Word<O>> query = outputQueries.get(i);
             O outSym = query.getOutput().getSymbol(0);
-            outputTable.add(outSym);
+            outputTable.put(table.getShortPrefixRows().get(numOutputs + i), outSym);
         }
     }
 

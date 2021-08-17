@@ -18,6 +18,7 @@ package de.learnlib.algorithms.ilstar;
 import java.util.Map;
 
 import de.learnlib.algorithms.ilstar.AbstractAutomatonILStar.StateInfo;
+import de.learnlib.datastructure.observationtable.GenericObservationTable;
 import de.learnlib.datastructure.observationtable.MutableObservationTable;
 import de.learnlib.datastructure.observationtable.RowContent;
 
@@ -38,11 +39,11 @@ import de.learnlib.datastructure.observationtable.RowContent;
  */
 public class AutomatonILStarState<I, D, AI, S> {
 
-    private final MutableObservationTable<I, D> observationTable;
+    private final GenericObservationTable<I, D> observationTable;
     private final AI hypothesis;
     private final Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos;
 
-    AutomatonILStarState(final MutableObservationTable<I, D> observationTable,
+    AutomatonILStarState(final GenericObservationTable<I, D> observationTable,
                          final AI hypothesis,
                          final Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos) {
         this.observationTable = observationTable;
@@ -50,7 +51,7 @@ public class AutomatonILStarState<I, D, AI, S> {
         this.stateInfos = stateInfos;
     }
 
-    MutableObservationTable<I, D> getObservationTable() {
+    GenericObservationTable<I, D> getObservationTable() {
         return observationTable;
     }
 

@@ -37,15 +37,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public interface Row<I, D> {
 
     /**
-     * Retrieves the unique row identifier associated with this row.
-     *
-     * @return the row identifier
-     *
-     * @see ObservationTable#numberOfRows()
-     */
-    int getRowId();
-
-    /**
      * Retrieves the RowContent associated with this row (may be {@code null} if this row has not
      * yet been initialized).
      *

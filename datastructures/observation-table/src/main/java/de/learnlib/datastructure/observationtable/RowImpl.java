@@ -21,10 +21,8 @@ import net.automatalib.words.Word;
 final class RowImpl<I, D> implements Row<I, D> {
 
     private final Word<I> label;
-    private final int rowId;
-
     private RowContent<I, D> rowContent;
-    private int lpIndex;
+    private boolean isShortRow = false;
     private ResizingArrayStorage<RowImpl<I, D>> successors;
 
     /**
@@ -37,9 +35,8 @@ final class RowImpl<I, D> implements Row<I, D> {
      * @param alphabetSize
      *         the size of the alphabet, used for initializing the successor array
      */
-    RowImpl(Word<I> label, int rowId, int alphabetSize) {
-        this(label, rowId);
-
+    RowImpl(Word<I> label, int alphabetSize) {
+        this(label);
         makeShort(alphabetSize);
     }
 
@@ -51,9 +48,8 @@ final class RowImpl<I, D> implements Row<I, D> {
      * @param rowId
      *         the unique row identifier
      */
-    RowImpl(Word<I> label, int rowId) {
+    RowImpl(Word<I> label) {
         this.label = label;
-        this.rowId = rowId;
     }
 
     /**
@@ -64,11 +60,16 @@ final class RowImpl<I, D> implements Row<I, D> {
      *         the size of the input alphabet.
      */
     void makeShort(int initialAlphabetSize) {
-        if (lpIndex == -1) {
+        if (isShortRow) {
             return;
         }
-        lpIndex = -1;
+        isShortRow = true;
         this.successors = new ResizingArrayStorage<>(RowImpl.class, initialAlphabetSize);
+    }
+
+    void makeLong() {
+        this.isShortRow = false;
+        this.successors = null;
     }
 
     @Override
@@ -95,11 +96,6 @@ final class RowImpl<I, D> implements Row<I, D> {
     }
 
     @Override
-    public int getRowId() {
-        return rowId;
-    }
-
-    @Override
     public RowContent<I, D> getRowContent() {
         return rowContent;
     }
@@ -117,19 +113,11 @@ final class RowImpl<I, D> implements Row<I, D> {
 
     @Override
     public boolean isShortPrefixRow() {
-        return lpIndex == -1;
+        return isShortRow;
     }
 
     boolean hasContents() {
         return rowContent != null;
-    }
-
-    int getLpIndex() {
-        return lpIndex;
-    }
-
-    void setLpIndex(int lpIndex) {
-        this.lpIndex = lpIndex;
     }
 
     /**

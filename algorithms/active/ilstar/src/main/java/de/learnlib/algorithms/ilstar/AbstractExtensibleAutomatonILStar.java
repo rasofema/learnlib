@@ -53,12 +53,6 @@ public abstract class AbstractExtensibleAutomatonILStar<A, I, D, S, T, SP, TP, A
     }
 
     @Override
-    protected void refineHypothesisInternal(DefaultQuery<I, D> ceQuery) {
-        List<List<Row<I, D>>> unclosed = cexHandler.handleCounterexample(ceQuery, table, hypothesisOutput(), oracle);
-        completeConsistentTable(unclosed, cexHandler.needsConsistencyCheck());
-    }
-
-    @Override
     protected final List<Word<I>> initialPrefixes() {
         return initialPrefixes;
     }
