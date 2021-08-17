@@ -18,7 +18,6 @@ package de.learnlib.algorithms.lstar;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -85,13 +84,13 @@ public abstract class AbstractLStar<A, I, D>
     }
 
     @Override
-    public boolean refineHypothesis(DefaultQuery<I, D> ceQuery) {
+    public final boolean refineHypothesis(DefaultQuery<I, D> ceQuery) {
         if (!MQUtil.isCounterexample(ceQuery, hypothesisOutput())) {
             return false;
         }
+        int oldDistinctRows = table.numberOfDistinctRows();
         doRefineHypothesis(ceQuery);
-        // TODO: We are no longer guaranteed to always increase in number of rows.
-        //  I'm sure this breaks a tonne of theorems.
+        assert table.numberOfDistinctRows() > oldDistinctRows;
         return true;
     }
 
@@ -134,26 +133,20 @@ public abstract class AbstractLStar<A, I, D>
      */
     protected boolean completeConsistentTable(List<List<Row<I, D>>> unclosed, boolean checkConsistency) {
         boolean refined = false;
-        List<List<Row<I, D>>> unclosedIter = unclosed;
-        // TODO: Something here isn't terminating,
-        //  I think it's due to addSuffix not adding already present suffixes.
-        //  And why is it adding a present suffix? Is it an indication of
-        //  incorrect cell values?
+        List<List<Row<I>>> unclosedIter = unclosed;
         do {
             while (!unclosedIter.isEmpty()) {
-                List<Row<I, D>> closingRows = selectClosingRows(unclosedIter);
+                List<Row<I>> closingRows = selectClosingRows(unclosedIter);
                 unclosedIter = table.toShortPrefixes(closingRows, oracle);
                 refined = true;
             }
 
             if (checkConsistency) {
-                Inconsistency<I, D> incons;
+                Inconsistency<I> incons;
 
                 do {
                     incons = table.findInconsistency();
-                    incons = verifyInconsistency(incons);
                     if (incons != null) {
-
                         Word<I> newSuffix = analyzeInconsistency(incons);
                         unclosedIter = table.addSuffix(newSuffix, oracle);
                     }
