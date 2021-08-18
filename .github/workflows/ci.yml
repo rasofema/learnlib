@@ -56,7 +56,7 @@ jobs:
         # Defaults are "LearnLib" and the current/targeted LearnLib branch ($GITHUB_REF, relies on the same naming
         # conventions between AutomataLib and LearnLib branches).
         run: |
-          git clone -b ${AUTOMATALIB_BRANCH:-${GITHUB_REF#refs/*/}} --single-branch https://github.com/${AUTOMATALIB_FORK:-LearnLib}/automatalib.git ${HOME}/automatalib-git
+          git clone -b ${AUTOMATALIB_BRANCH:-develop} --single-branch https://github.com/${AUTOMATALIB_FORK:-LearnLib}/automatalib.git ${HOME}/automatalib-git
           cd ${HOME}/automatalib-git
           mvn -B install -DskipTests
           cd $GITHUB_WORKSPACE
