@@ -675,8 +675,9 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             return;
         }
 
+        longPrefixRows.remove(row);
         shortPrefixRows.add(row);
-        shortPrefixRows.sort(Comparator.comparing(shortRow -> shortRow.getLabel().toString()));
+//        shortPrefixRows.sort(Comparator.comparing(shortRow -> shortRow.getLabel().toString()));
         row.makeShort(alphabet.size());
     }
 
@@ -687,7 +688,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
 
         shortPrefixRows.remove(row);
         longPrefixRows.add(row);
-        longPrefixRows.sort(Comparator.comparing(longRow -> longRow.getLabel().toString()));
+//        longPrefixRows.sort(Comparator.comparing(longRow -> longRow.getLabel().toString()));
 
 
         for (int index = 0; index < alphabet.size(); index++) {

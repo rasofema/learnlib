@@ -133,16 +133,16 @@ public abstract class AbstractLStar<A, I, D>
      */
     protected boolean completeConsistentTable(List<List<Row<I, D>>> unclosed, boolean checkConsistency) {
         boolean refined = false;
-        List<List<Row<I>>> unclosedIter = unclosed;
+        List<List<Row<I, D>>> unclosedIter = unclosed;
         do {
             while (!unclosedIter.isEmpty()) {
-                List<Row<I>> closingRows = selectClosingRows(unclosedIter);
+                List<Row<I, D>> closingRows = selectClosingRows(unclosedIter);
                 unclosedIter = table.toShortPrefixes(closingRows, oracle);
                 refined = true;
             }
 
             if (checkConsistency) {
-                Inconsistency<I> incons;
+                Inconsistency<I, D> incons;
 
                 do {
                     incons = table.findInconsistency();
@@ -204,30 +204,6 @@ public abstract class AbstractLStar<A, I, D>
         }
 
         throw new IllegalArgumentException("Bogus inconsistency");
-    }
-
-    protected Inconsistency<I, D> verifyInconsistency(Inconsistency<I, D> incons) {
-        if (incons == null) {
-            return null;
-        }
-
-        int inputIdx = alphabet.getSymbolIndex(incons.getSymbol());
-        List<Row<I, D>> rowsToVerify = new LinkedList<>();
-        rowsToVerify.add(incons.getFirstRow());
-        rowsToVerify.add(incons.getSecondRow());
-        rowsToVerify.add(incons.getFirstRow().getSuccessor(inputIdx));
-        rowsToVerify.add(incons.getSecondRow().getSuccessor(inputIdx));
-
-        for (Row<I, D> row : rowsToVerify) {
-            for (int suffIndex = 0; suffIndex < table.getSuffixes().size(); suffIndex++) {
-                D correctValue = oracle.answerQuery(row.getLabel(), table.getSuffix(suffIndex));
-                if (!table.cellContents(row, suffIndex).equals(correctValue)) {
-                    table.correctCell(row.getLabel(), table.getSuffix(suffIndex), correctValue);
-                    return null;
-                }
-            }
-        }
-        return incons;
     }
 
     @Override

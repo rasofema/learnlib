@@ -15,11 +15,11 @@
  */
 package de.learnlib.algorithms.lstar.mealy;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
 import de.learnlib.algorithms.lstar.AbstractExtensibleAutomatonLStar;
@@ -95,30 +95,18 @@ public class ExtensibleLStarMealy<I, O>
     }
 
     protected void updateOutputs() {
-        int numOutputs = outputTable.size();
-        int numTransRows = table.numberOfRows() - 1;
+        List<DefaultQuery<I, Word<O>>> outputQueries = table.getAllRows().stream()
+            .filter(row -> !outputTable.containsKey(row) && row.getLabel().getClass() != Word.epsilon().getClass())
+            .map(row -> new DefaultQuery<I, Word<O>>(row.getLabel().prefix(row.getLabel().size() - 1), row.getLabel().suffix(1)))
+            .collect(Collectors.toList());
 
-        int newOutputs = numTransRows - numOutputs;
-        if (newOutputs == 0) {
+        if (outputQueries.isEmpty()) {
             return;
-        }
-
-        List<DefaultQuery<I, Word<O>>> outputQueries = new ArrayList<>(numOutputs);
-
-        for (int i = numOutputs + 1; i <= numTransRows; i++) {
-            Row<I, Word<O>> row = table.getRow(i);
-            Word<I> rowPrefix = row.getLabel();
-            int prefixLen = rowPrefix.size();
-            outputQueries.add(new DefaultQuery<>(rowPrefix.prefix(prefixLen - 1), rowPrefix.suffix(1)));
         }
 
         oracle.processQueries(outputQueries);
 
-        for (int i = 0; i < newOutputs; i++) {
-            DefaultQuery<I, Word<O>> query = outputQueries.get(i);
-            O outSym = query.getOutput().getSymbol(0);
-            outputTable.put(table.getShortPrefixRows().get(numOutputs + i), outSym);
-        }
+        outputQueries.forEach(q -> outputTable.put(table.getRow(q.getInput()), q.getOutput().getSymbol(0)));
     }
 
     @Override

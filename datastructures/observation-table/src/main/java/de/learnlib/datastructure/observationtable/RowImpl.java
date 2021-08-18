@@ -30,8 +30,6 @@ final class RowImpl<I, D> implements Row<I, D> {
      *
      * @param label
      *         the label (label) of this row
-     * @param rowId
-     *         the unique row identifier
      * @param alphabetSize
      *         the size of the alphabet, used for initializing the successor array
      */
