@@ -26,7 +26,6 @@ import de.learnlib.algorithms.lstar.closing.ClosingStrategy;
 import de.learnlib.algorithms.lstar.dfa.LStarDFAUtil;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.datastructure.observationtable.GenericObservationTable;
-import de.learnlib.datastructure.observationtable.MutableObservationTable;
 import de.learnlib.datastructure.observationtable.OTLearner.OTLearnerDFA;
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;

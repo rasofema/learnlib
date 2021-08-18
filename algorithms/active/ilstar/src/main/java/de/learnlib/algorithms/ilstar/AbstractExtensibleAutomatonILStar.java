@@ -23,7 +23,6 @@ import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategy;
 import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.observationtable.Row;
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.MutableDeterministic;

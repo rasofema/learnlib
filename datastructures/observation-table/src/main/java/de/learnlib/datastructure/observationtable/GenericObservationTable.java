@@ -104,7 +104,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         for (RowImpl<I, D> row : table.allRows) {
             RowImpl<I, D> newRow;
             if (row.isShortPrefixRow()) {
-                newRow = new RowImpl<>(row.getLabel(), this.alphabetSize);
+                newRow = new RowImpl<>(row.getLabel(), this.alphabet.size());
                 this.shortPrefixRows.add(newRow);
             } else {
                 newRow = new RowImpl<>(row.getLabel());
@@ -123,7 +123,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         }
 
         for (Map.Entry<RowImpl<I, D>, RowImpl<I, D>> entry : oldRowToNewRow.entrySet()) {
-            for (int index = 0; index < alphabetSize; index++) {
+            for (int index = 0; index < this.alphabet.size(); index++) {
                 if (entry.getKey().isShortPrefixRow()) {
                     entry.getValue().setSuccessor(index, oldRowToNewRow.get(entry.getKey().getSuccessor(index)));
                 }
@@ -141,7 +141,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         this.suffixSet.addAll(suffixes);
 
         for (int index = 0; index < shortPrefixes.size(); index++) {
-            RowImpl<I, D> newRow = new RowImpl<>(shortPrefixes.get(index), this.alphabetSize);
+            RowImpl<I, D> newRow = new RowImpl<>(shortPrefixes.get(index), this.alphabet.size());
             this.rowMap.put(shortPrefixes.get(index), newRow);
             if (!contentToRowContent.containsKey(shortPrefixRows.get(index))) {
                 RowContent<I, D> newContent = new RowContent<>(shortPrefixRows.get(index));
@@ -149,7 +149,10 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
                 this.canonicalRows.put(newContent, newRow);
             }
             newRow.setRowContent(contentToRowContent.get(shortPrefixRows.get(index)));
-            newRow.getRowContent().addAssociatedRow(newRow);
+            RowContent<I, D> newContent = newRow.getRowContent();
+            if (newContent != null) {
+                newContent.addAssociatedRow(newRow);
+            }
 
             this.allRows.add(newRow);
             this.shortPrefixRows.add(newRow);
@@ -163,14 +166,17 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
                 contentToRowContent.put(longPrefixRows.get(index), newContent);
             }
             newRow.setRowContent(contentToRowContent.get(longPrefixRows.get(index)));
-            newRow.getRowContent().addAssociatedRow(newRow);
+            RowContent<I, D> newContent = newRow.getRowContent();
+            if (newContent != null) {
+                newContent.addAssociatedRow(newRow);
+            }
 
             this.allRows.add(newRow);
             this.longPrefixRows.add(newRow);
         }
 
         for (RowImpl<I, D> row : this.shortPrefixRows) {
-            for (int index = 0; index < this.alphabetSize; index++) {
+            for (int index = 0; index < this.alphabet.size(); index++) {
                 row.setSuccessor(index, this.rowMap.get(row.getLabel().append(alphabet.getSymbol(index))));
             }
         }
@@ -581,7 +587,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         allRows.remove((RowImpl<I, D>) row);
         if (row.isShortPrefixRow()) {
             shortPrefixRows.remove(row);
-            for (int index = 0; index < alphabetSize; index++) {
+            for (int index = 0; index < alphabet.size(); index++) {
                 deleteRow(row.getSuccessor(index), cleanupContents);
             }
         } else {
@@ -608,7 +614,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             while (associatedShortRows.size() > 1) {
                 Row<I, D> biggestLexLabelRow = associatedShortRows.stream()
                     // TODO: This may not work with complex alphabets as it relies on string rep.
-                    .max(Comparator.comparing(row -> row.getLabel().toString().replaceAll("\\s","").replaceAll("ε", "")))
+                    .max(Comparator.comparing(row -> row.getLabel().toString().replaceAll("\\s", "").replaceAll("ε", "")))
                     .orElse(null);
 
                 if (biggestLexLabelRow.getLabel().size() != 0) {
@@ -632,7 +638,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             List<Word<I>> newSuffixes = new ArrayList<>(suffixes);
             newSuffixes.remove(sufIndex);
             int finalSufIndex = sufIndex;
-            GenericObservationTable<I, D> hypotheticalTable = new GenericObservationTable<I, D>(
+            GenericObservationTable<I, D> hypotheticalTable = new GenericObservationTable<>(
                 alphabet,
                 shortPrefixRows.stream().map(RowImpl::getLabel).collect(Collectors.toList()),
                 longPrefixRows.stream().map(RowImpl::getLabel).collect(Collectors.toList()),
@@ -677,7 +683,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
 
         longPrefixRows.remove(row);
         shortPrefixRows.add(row);
-//        shortPrefixRows.sort(Comparator.comparing(shortRow -> shortRow.getLabel().toString()));
+        // shortPrefixRows.sort(Comparator.comparing(shortRow -> shortRow.getLabel().toString()));
         row.makeShort(alphabet.size());
     }
 
@@ -688,8 +694,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
 
         shortPrefixRows.remove(row);
         longPrefixRows.add(row);
-//        longPrefixRows.sort(Comparator.comparing(longRow -> longRow.getLabel().toString()));
-
+        // longPrefixRows.sort(Comparator.comparing(longRow -> longRow.getLabel().toString()));
 
         for (int index = 0; index < alphabet.size(); index++) {
             deleteRow(row.getSuccessor(index), false);
@@ -827,5 +832,10 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     @Override
     public Collection<Row<I, D>> getLongPrefixRows() {
         return Collections.unmodifiableList(longPrefixRows);
+    }
+
+    @Override
+    public Collection<Row<I, D>> getAllRows() {
+        return Collections.unmodifiableList(allRows);
     }
 }

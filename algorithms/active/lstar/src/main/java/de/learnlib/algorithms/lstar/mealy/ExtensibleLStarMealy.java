@@ -41,7 +41,7 @@ public class ExtensibleLStarMealy<I, O>
         extends AbstractExtensibleAutomatonLStar<MealyMachine<?, I, ?, O>, I, Word<O>, Integer, CompactTransition<O>, Void, O, CompactMealy<I, O>>
         implements OTLearnerMealy<I, O> {
 
-    private final Map<Row<I, Word<O>>, O> outputTable = new HashMap<>();
+    private final Map<Word<I>, O> outputTable = new HashMap<>();
 
     public ExtensibleLStarMealy(Alphabet<I> alphabet,
                                 MembershipOracle<I, Word<O>> oracle,
@@ -91,12 +91,12 @@ public class ExtensibleLStarMealy<I, O>
     @Override
     protected O transitionProperty(ObservationTable<I, Word<O>> table, Row<I, Word<O>> stateRow, int inputIdx) {
         Row<I, Word<O>> transRow = stateRow.getSuccessor(inputIdx);
-        return outputTable.get(transRow);
+        return outputTable.get(transRow.getLabel());
     }
 
     protected void updateOutputs() {
         List<DefaultQuery<I, Word<O>>> outputQueries = table.getAllRows().stream()
-            .filter(row -> !outputTable.containsKey(row) && row.getLabel().getClass() != Word.epsilon().getClass())
+            .filter(row -> !outputTable.containsKey(row.getLabel()) && row.getLabel().getClass() != Word.epsilon().getClass())
             .map(row -> new DefaultQuery<I, Word<O>>(row.getLabel().prefix(row.getLabel().size() - 1), row.getLabel().suffix(1)))
             .collect(Collectors.toList());
 
@@ -106,7 +106,7 @@ public class ExtensibleLStarMealy<I, O>
 
         oracle.processQueries(outputQueries);
 
-        outputQueries.forEach(q -> outputTable.put(table.getRow(q.getInput()), q.getOutput().getSymbol(0)));
+        outputQueries.forEach(q -> outputTable.put(table.getRow(q.getInput()).getLabel(), q.getOutput().getSymbol(0)));
     }
 
     @Override

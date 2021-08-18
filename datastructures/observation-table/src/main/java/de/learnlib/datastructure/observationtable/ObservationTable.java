@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.api.AccessSequenceTransformer;
@@ -159,8 +158,6 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
      * (row) ids of the table rows.
      *
      * @return the number of rows
-     *
-     * @see Row#getRowId()
      */
     default int numberOfRows() {
         return getShortPrefixRows().size() + getLongPrefixRows().size();

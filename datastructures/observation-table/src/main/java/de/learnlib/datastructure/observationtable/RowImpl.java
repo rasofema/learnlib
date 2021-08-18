@@ -22,7 +22,7 @@ final class RowImpl<I, D> implements Row<I, D> {
 
     private final Word<I> label;
     private RowContent<I, D> rowContent;
-    private boolean isShortRow = false;
+    private boolean isShortRow;
     private ResizingArrayStorage<RowImpl<I, D>> successors;
 
     /**

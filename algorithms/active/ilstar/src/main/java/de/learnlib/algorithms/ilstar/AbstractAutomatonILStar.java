@@ -18,7 +18,6 @@ package de.learnlib.algorithms.ilstar;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-
 import de.learnlib.api.Resumable;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;

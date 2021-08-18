@@ -19,7 +19,6 @@ import java.util.Map;
 
 import de.learnlib.algorithms.ilstar.AbstractAutomatonILStar.StateInfo;
 import de.learnlib.datastructure.observationtable.GenericObservationTable;
-import de.learnlib.datastructure.observationtable.MutableObservationTable;
 import de.learnlib.datastructure.observationtable.RowContent;
 
 /**
