@@ -65,7 +65,7 @@ public final class ObservationTableCEXHandlers {
                                                                      MutableObservationTable<RI, RD> table,
                                                                      SuffixOutput<RI, RD> hypOutput,
                                                                      MembershipOracle<RI, RD> oracle) {
-                return handleIncrementalLStar(ceQuery, table, oracle);
+                return handleIncrementalLStar(ceQuery, table, hypOutput, oracle);
             }
 
             @Override
@@ -216,13 +216,15 @@ public final class ObservationTableCEXHandlers {
 
     public static <I, D> List<List<Row<I, D>>> handleIncrementalLStar(DefaultQuery<I, D> ceQuery,
                                                                MutableObservationTable<I, D> table,
+                                                               SuffixOutput<I, D> hypOutput,
                                                                MembershipOracle<I, D> oracle) {
         LinkedList<Word<I>> prefixes = new LinkedList<>(ceQuery.getInput().prefixes(false));
         // The counter-example that we get is guaranteed to be incorrect,
         // so correct any instances of it in our table.
         List<List<Row<I, D>>> unclosedCorrected = table.correctCell(ceQuery.getPrefix(), ceQuery.getSuffix(), ceQuery.getOutput());
+        List<List<Row<I, D>>> unclosed = FIND_LINEAR_ALLSUFFIXES.handleCounterexample(ceQuery, table, hypOutput, oracle);
+//        List<List<Row<I, D>>> unclosed = table.addShortPrefixes(prefixes, oracle);
 
-        List<List<Row<I, D>>> unclosed = table.addShortPrefixes(prefixes, oracle);
         for (List<Row<I, D>> unclosedCorrectEQ : unclosedCorrected) {
             for (List<Row<I, D>> unclosedEQ :unclosed) {
                 if (unclosedCorrectEQ.get(0).equals(unclosedEQ.get(0))) {

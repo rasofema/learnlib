@@ -543,14 +543,22 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
 
     @Override
     public List<List<Row<I, D>>> correctCell(Word<I> prefix, Word<I> suffix, D correctValue) {
-        RowImpl<I, D> incorrectRow = rowMap.get(prefix);
-        List<D> correctedContents = new LinkedList<>();
-        RowContent<I, D> rowContent = incorrectRow.getRowContent();
-        if (rowContent != null) {
-            correctedContents.addAll(rowContent.getContents());
+        for (RowImpl<I, D> row : allRows) {
+            for (Word<I> suf : suffixes) {
+                // FIXME: This logic only applies to DFAs! In Mealy machines cell(a.ab) != cell(aa.b),
+                //  so we can't blanket correct every matching word. However, what we can do is set
+                //  the corrected value to match suffix size.
+                if (row.getLabel().concat(suf).equals(prefix.concat(suffix))) {
+                    List<D> correctedContents = new LinkedList<>();
+                    RowContent<I, D> rowContent = row.getRowContent();
+                    if (rowContent != null) {
+                        correctedContents.addAll(rowContent.getContents());
+                    }
+                    correctedContents.set(suffixes.indexOf(suf), correctValue);
+                    processContents(row, correctedContents, row.isShortPrefixRow());
+                }
+            }
         }
-        correctedContents.set(suffixes.indexOf(suffix), correctValue);
-        processContents(incorrectRow, correctedContents, incorrectRow.isShortPrefixRow());
 
         // TODO: Correcting cells affects closedness - and maybe consistency.
         //  Unclosed EQ classes need to be reported back to the algo.

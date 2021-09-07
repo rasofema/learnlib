@@ -114,7 +114,7 @@ public abstract class AbstractILStar<A, I, D>
      * @return the rows (equivalence classes) which became unclosed by adding the information.
      */
     protected List<List<Row<I, D>>> incorporateCounterExample(DefaultQuery<I, D> ce) {
-        return ObservationTableCEXHandlers.handleIncrementalLStar(ce, table, oracle);
+        return ObservationTableCEXHandlers.handleIncrementalLStar(ce, table, hypothesisOutput(), oracle);
     }
 
     protected List<Word<I>> initialPrefixes() {

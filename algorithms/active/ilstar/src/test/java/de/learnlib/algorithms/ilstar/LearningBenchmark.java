@@ -65,8 +65,6 @@ public class LearningBenchmark {
                 break;
             }
 
-            // Assert.assertNotEquals(maxRounds, 0);
-
             learner.refineHypothesis(ce);
         }
 
@@ -95,10 +93,10 @@ public class LearningBenchmark {
 
     public OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnIncremental(GenericObservationTable<Symbol, Boolean> startingOT) {
         LinkedList<Symbol> accWord = new LinkedList<>();
-        // accWord.add(alphabet.getSymbol(0));
-        // accWord.add(alphabet.getSymbol(0));
-        // accWord.add(alphabet.getSymbol(0));
-        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), false);
+         accWord.add(ALPHABET.getSymbol(0));
+         accWord.add(ALPHABET.getSymbol(0));
+         accWord.add(ALPHABET.getSymbol(0));
+        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
 
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");

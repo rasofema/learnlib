@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.function.BooleanSupplier;
 
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
@@ -32,6 +34,7 @@ import de.learnlib.api.Resumable;
 import de.learnlib.api.algorithm.LearningAlgorithm.DFALearner;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.datastructure.discriminationtree.BinaryDTNode;
 import de.learnlib.datastructure.discriminationtree.BinaryDTree;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import de.learnlib.datastructure.discriminationtree.model.LCAInfo;
@@ -62,6 +65,7 @@ public class KearnsVaziraniDFA<I>
     private final Alphabet<I> alphabet;
     private final MembershipOracle<I, Boolean> oracle;
     private final boolean repeatedCounterexampleEvaluation;
+    private final boolean ensureCanonical;
     private final AcexAnalyzer ceAnalyzer;
     private BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
     protected List<StateInfo<I, Boolean>> stateInfos = new ArrayList<>();
@@ -79,12 +83,14 @@ public class KearnsVaziraniDFA<I>
     public KearnsVaziraniDFA(Alphabet<I> alphabet,
                              MembershipOracle<I, Boolean> oracle,
                              boolean repeatedCounterexampleEvaluation,
+                             boolean ensureCanonical,
                              AcexAnalyzer counterexampleAnalyzer) {
         this.alphabet = alphabet;
         this.hypothesis = new CompactDFA<>(alphabet);
         this.discriminationTree = new BinaryDTree<>(oracle);
         this.oracle = oracle;
         this.repeatedCounterexampleEvaluation = repeatedCounterexampleEvaluation;
+        this.ensureCanonical = ensureCanonical;
         this.ceAnalyzer = counterexampleAnalyzer;
     }
 
@@ -106,6 +112,15 @@ public class KearnsVaziraniDFA<I>
         if (repeatedCounterexampleEvaluation) {
             while (refineHypothesisSingle(input, output)) {}
         }
+
+        if (ensureCanonical) {
+            DefaultQuery<I, Boolean> nonCanonCex = analyseTree();
+            while (nonCanonCex != null) {
+                while (refineHypothesisSingle(nonCanonCex.getInput(), nonCanonCex.getOutput())) {}
+                nonCanonCex = analyseTree();
+            }
+        }
+
         return true;
     }
 
@@ -144,6 +159,25 @@ public class KearnsVaziraniDFA<I>
         splitState(srcStateInfo, prefix, sym, lca);
 
         return true;
+    }
+
+    private DefaultQuery<I, Boolean> analyseTree() {
+        Queue<AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>>> bfsQueue = new ArrayDeque<>();
+        bfsQueue.add(discriminationTree.getRoot());
+
+        while (!bfsQueue.isEmpty()) {
+            AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> currentNode = bfsQueue.poll();
+            if (currentNode.isLeaf()) {
+                Word<I> se = currentNode.getData().accessSequence.concat(currentNode.getParent().getDiscriminator());
+                if (currentNode.getParentOutcome() != hypothesis.computeOutput(se)) {
+                    return new DefaultQuery<>(se, currentNode.getParentOutcome());
+                }
+            } else {
+                bfsQueue.addAll(currentNode.getChildren());
+            }
+        }
+
+        return null;
     }
 
     private void splitState(StateInfo<I, Boolean> stateInfo,
