@@ -1,0 +1,78 @@
+/* Copyright (C) 2013-2021 TU Dortmund
+ * This file is part of LearnLib, http://www.learnlib.de/.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package de.learnlib.algorithms.kv.dfa;
+
+import de.learnlib.acex.analyzers.AcexAnalyzers;
+import de.learnlib.api.oracle.EquivalenceOracle;
+import de.learnlib.api.oracle.MembershipOracle;
+import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.oracle.equivalence.WpMethodEQOracle;
+import de.learnlib.oracle.membership.SimulatorOracle;
+import net.automatalib.automata.fsa.DFA;
+import net.automatalib.automata.fsa.impl.compact.CompactDFA;
+import net.automatalib.util.automata.builders.AutomatonBuilders;
+import net.automatalib.util.automata.fsa.DFAs;
+import net.automatalib.util.automata.random.RandomAutomata;
+import net.automatalib.words.Alphabet;
+import net.automatalib.words.impl.Alphabets;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+@Test
+public class CanonicalTest {
+
+    @Test
+    public static void test() {
+        Alphabet<Integer> alphabet = Alphabets.integers(0,0);
+//        for (int iter = 0; iter < 10; iter++) {
+            CompactDFA<Integer> target = new CompactDFA<>(alphabet);
+                AutomatonBuilders.forDFA(target)
+                .withInitial("s0")
+                .from("s0")
+                .on(alphabet.getSymbol(0)).to("s1")
+                .from("s1")
+                .on(alphabet.getSymbol(0)).to("s2")
+                .from("s2")
+                .on(alphabet.getSymbol(0)).to("s0")
+                .withAccepting("s0")
+                .withAccepting("s1")
+                .create();
+            MembershipOracle<Integer, Boolean> oracle = new SimulatorOracle.DFASimulatorOracle<>(target);
+            EquivalenceOracle<DFA<?, Integer>, Integer, Boolean> eqOracle = new WpMethodEQOracle<>(oracle, 5);
+            KearnsVaziraniDFA<Integer> learner = new KearnsVaziraniDFA<>(alphabet, oracle, true, true, AcexAnalyzers.LINEAR_FWD);
+
+            learner.startLearning();
+
+            while (true) {
+                DFA<?, Integer> hyp = learner.getHypothesisModel();
+                Assert.assertEquals(hyp, DFAs.minimize(hyp, alphabet));
+
+                DefaultQuery<Integer, Boolean> ce = eqOracle.findCounterExample(hyp, alphabet);
+
+                if (ce == null) {
+                    break;
+                }
+
+                learner.refineHypothesis(ce);
+            }
+
+            DFA<?, Integer> hyp = learner.getHypothesisModel();
+
+            Assert.assertEquals(hyp.size(), target.size());
+
+//        }
+    }
+}

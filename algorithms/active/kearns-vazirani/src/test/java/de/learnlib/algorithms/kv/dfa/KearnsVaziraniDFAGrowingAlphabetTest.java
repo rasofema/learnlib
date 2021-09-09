@@ -28,6 +28,6 @@ public class KearnsVaziraniDFAGrowingAlphabetTest extends AbstractGrowingAlphabe
     @Override
     protected KearnsVaziraniDFA<Character> getLearner(MembershipOracle<Character, Boolean> oracle,
                                                       Alphabet<Character> alphabet) {
-        return new KearnsVaziraniDFA<>(alphabet, oracle, true, false, AcexAnalyzers.LINEAR_FWD);
+        return new KearnsVaziraniDFA<>(alphabet, oracle, true, AcexAnalyzers.LINEAR_FWD);
     }
 }

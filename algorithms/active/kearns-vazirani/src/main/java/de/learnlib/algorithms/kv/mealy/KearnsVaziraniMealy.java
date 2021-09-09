@@ -22,6 +22,8 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
 import de.learnlib.acex.AcexAnalyzer;
@@ -40,6 +42,7 @@ import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.base.compact.CompactTransition;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
@@ -153,8 +156,7 @@ public class KearnsVaziraniMealy<I, O>
                             LCAInfo<Word<O>, @Nullable AbstractWordBasedDTNode<I, Word<O>, StateInfo<I, Word<O>>>> separatorInfo) {
         int state = stateInfo.id;
 
-        // TLongList oldIncoming = stateInfo.fetchIncoming();
-        List<Long> oldIncoming = stateInfo.fetchIncoming(); // TODO: replace with primitive specialization
+        Set<Pair<StateInfo<I, Word<O>>, I>> oldIncoming = stateInfo.fetchIncoming();
 
         StateInfo<I, Word<O>> newStateInfo = createState(newPrefix);
 
@@ -191,36 +193,21 @@ public class KearnsVaziraniMealy<I, O>
         return succOutcome.prepend(transOutput);
     }
 
-    // private void updateTransitions(TLongList transList, DTNode<I,Word<O>,StateInfo<I,O>> oldDtTarget) {
-    private void updateTransitions(List<Long> transList,
-                                   AbstractWordBasedDTNode<I, Word<O>, StateInfo<I, Word<O>>> oldDtTarget) { // TODO: replace with primitive specialization
-        int numTrans = transList.size();
+    private void updateTransitions(Set<Pair<StateInfo<I, Word<O>>, I>> transSet,
+                                   AbstractWordBasedDTNode<I, Word<O>, StateInfo<I, Word<O>>> oldDtTarget) {
+        List<Pair<StateInfo<I, Word<O>>, I>> trans = new ArrayList<>(transSet);
+        final List<Word<I>> transAs = trans.stream()
+            .map(t -> t.getFirst().accessSequence.append(t.getSecond()))
+            .collect(Collectors.toList());
 
-        final List<Word<I>> transAs = new ArrayList<>(numTrans);
+        final List<StateInfo<I, Word<O>>> succs = sift(Collections.nCopies(trans.size(), oldDtTarget), transAs);
 
-        for (int i = 0; i < numTrans; i++) {
-            long encodedTrans = transList.get(i);
+        for (int i = 0; i < trans.size(); i++) {
+            Pair<StateInfo<I, Word<O>>, I> t = trans.get(i);
 
-            int sourceState = (int) (encodedTrans >> Integer.SIZE);
-            int transIdx = (int) (encodedTrans);
-
-            StateInfo<I, Word<O>> sourceInfo = stateInfos.get(sourceState);
-            I symbol = alphabet.getSymbol(transIdx);
-
-            transAs.add(sourceInfo.accessSequence.append(symbol));
-        }
-
-        final List<StateInfo<I, Word<O>>> succs = sift(Collections.nCopies(numTrans, oldDtTarget), transAs);
-
-        for (int i = 0; i < numTrans; i++) {
-            long encodedTrans = transList.get(i);
-
-            int sourceState = (int) (encodedTrans >> Integer.SIZE);
-            int transIdx = (int) (encodedTrans);
-
-            CompactTransition<O> trans = hypothesis.getTransition(sourceState, transIdx);
-            assert trans != null;
-            setTransition(sourceState, transIdx, succs.get(i), trans.getProperty());
+            CompactTransition<O> transition = hypothesis.getTransition(t.getFirst().id, t.getSecond());
+            assert transition != null;
+            setTransition(t.getFirst(), t.getSecond(), succs.get(i), transition.getProperty());
         }
     }
 
@@ -258,7 +245,6 @@ public class KearnsVaziraniMealy<I, O>
     private void initState(StateInfo<I, Word<O>> stateInfo) {
         int alphabetSize = alphabet.size();
 
-        int state = stateInfo.id;
         Word<I> accessSequence = stateInfo.accessSequence;
 
         final List<Word<I>> transAs = new ArrayList<>(alphabetSize);
@@ -274,13 +260,13 @@ public class KearnsVaziraniMealy<I, O>
         this.oracle.processQueries(outputQueries);
 
         for (int i = 0; i < alphabetSize; i++) {
-            setTransition(state, i, succs.get(i), outputQueries.get(i).getOutput().firstSymbol());
+            setTransition(stateInfo, alphabet.getSymbol(i), succs.get(i), outputQueries.get(i).getOutput().firstSymbol());
         }
     }
 
-    private void setTransition(int state, int symIdx, StateInfo<I, Word<O>> succInfo, O output) {
-        succInfo.addIncoming(state, symIdx);
-        hypothesis.setTransition(state, symIdx, succInfo.id, output);
+    private void setTransition(StateInfo<I, Word<O>> state, I symbol, StateInfo<I, Word<O>> succInfo, O output) {
+        succInfo.addIncoming(state, symbol);
+        hypothesis.setTransition(state.id, alphabet.getSymbolIndex(symbol), succInfo.id, output);
     }
 
     private List<StateInfo<I, Word<O>>> sift(List<Word<I>> prefixes) {
@@ -342,11 +328,10 @@ public class KearnsVaziraniMealy<I, O>
             final Iterator<StateInfo<I, Word<O>>> stateIter = this.stateInfos.iterator();
             final Iterator<StateInfo<I, Word<O>>> leafsIter = succs.iterator();
             final Iterator<DefaultQuery<I, Word<O>>> outputsIter = outputQueries.iterator();
-            final int inputIdx = this.alphabet.getSymbolIndex(symbol);
 
             while (stateIter.hasNext() && leafsIter.hasNext()) {
-                setTransition(stateIter.next().id,
-                              inputIdx,
+                setTransition(stateIter.next(),
+                              symbol,
                               leafsIter.next(),
                               outputsIter.next().getOutput().firstSymbol());
             }

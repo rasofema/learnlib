@@ -34,5 +34,6 @@ limitations under the License.
     <modules>
         <module>active</module>
         <module>passive</module>
+        <module>incremental</module>
     </modules>
 </project>

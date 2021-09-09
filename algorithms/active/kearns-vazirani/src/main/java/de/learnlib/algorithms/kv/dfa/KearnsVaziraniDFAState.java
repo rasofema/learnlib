@@ -35,23 +35,23 @@ public class KearnsVaziraniDFAState<I> {
     private final BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
     private final List<StateInfo<I, Boolean>> stateInfos;
 
-    KearnsVaziraniDFAState(final CompactDFA<I> hypothesis,
-                           final BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree,
-                           final List<StateInfo<I, Boolean>> stateInfos) {
+    public KearnsVaziraniDFAState(final CompactDFA<I> hypothesis,
+                                  final BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree,
+                                  final List<StateInfo<I, Boolean>> stateInfos) {
         this.hypothesis = hypothesis;
         this.discriminationTree = discriminationTree;
         this.stateInfos = stateInfos;
     }
 
-    CompactDFA<I> getHypothesis() {
+    public CompactDFA<I> getHypothesis() {
         return hypothesis;
     }
 
-    BinaryDTree<I, StateInfo<I, Boolean>> getDiscriminationTree() {
+    public BinaryDTree<I, StateInfo<I, Boolean>> getDiscriminationTree() {
         return discriminationTree;
     }
 
-    List<StateInfo<I, Boolean>> getStateInfos() {
+    public List<StateInfo<I, Boolean>> getStateInfos() {
         return stateInfos;
     }
 }
