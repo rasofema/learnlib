@@ -16,6 +16,7 @@
 package de.learnlib.algorithms.kv.dfa;
 
 import java.util.List;
+import java.util.Map;
 
 import de.learnlib.algorithms.kv.StateInfo;
 import de.learnlib.datastructure.discriminationtree.BinaryDTree;
@@ -33,11 +34,11 @@ public class KearnsVaziraniDFAState<I> {
 
     private final CompactDFA<I> hypothesis;
     private final BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
-    private final List<StateInfo<I, Boolean>> stateInfos;
+    private final Map<Integer, StateInfo<I, Boolean>> stateInfos;
 
     public KearnsVaziraniDFAState(final CompactDFA<I> hypothesis,
                                   final BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree,
-                                  final List<StateInfo<I, Boolean>> stateInfos) {
+                                  final Map<Integer, StateInfo<I, Boolean>> stateInfos) {
         this.hypothesis = hypothesis;
         this.discriminationTree = discriminationTree;
         this.stateInfos = stateInfos;
@@ -51,7 +52,7 @@ public class KearnsVaziraniDFAState<I> {
         return discriminationTree;
     }
 
-    public List<StateInfo<I, Boolean>> getStateInfos() {
+    public Map<Integer, StateInfo<I, Boolean>> getStateInfos() {
         return stateInfos;
     }
 }

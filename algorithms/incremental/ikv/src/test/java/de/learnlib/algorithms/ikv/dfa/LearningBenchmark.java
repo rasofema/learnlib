@@ -43,8 +43,8 @@ import org.testng.annotations.Test;
 
 @Test
 public class LearningBenchmark {
-    private static final MutableDFA<Integer, Symbol> TARGET_DFA = SimpleDFA.constructMachine();
-    private static final Alphabet<Symbol> ALPHABET = SimpleDFA.createInputAlphabet();
+    private static final MutableDFA<Integer, Symbol> TARGET_DFA = SimpleDFA2.constructMachine();
+    private static final Alphabet<Symbol> ALPHABET = SimpleDFA2.createInputAlphabet();
     private static final MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA);
 
     public static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
@@ -80,10 +80,6 @@ public class LearningBenchmark {
     }
 
     public KearnsVaziraniDFA<Symbol> learnIncremental(KearnsVaziraniDFAState<Symbol> startingState) {
-        LinkedList<Symbol> accWord = new LinkedList<>();
-        accWord.add(ALPHABET.getSymbol(0));
-        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
-
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);
@@ -102,8 +98,18 @@ public class LearningBenchmark {
         KearnsVaziraniDFA<Symbol> classicLearner = learnClassic();
         writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
 
+        LinkedList<Symbol> accWord = new LinkedList<>();
+        accWord.add(ALPHABET.getSymbol(0));
+        accWord.add(ALPHABET.getSymbol(0));
+        accWord.add(ALPHABET.getSymbol(0));
+        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
+
+        KearnsVaziraniDFA<Symbol> classicDiffLearner = learnClassic();
+        writeDotFile(classicDiffLearner.getHypothesisModel(), ALPHABET, "./classic-diff.dot");
+
         // TODO: It would be good to clone the tree at some point.
         KearnsVaziraniDFAState<Symbol> startingState = classicLearner.suspend();
+
         KearnsVaziraniDFA<Symbol> incLearner = learnIncremental(startingState);
         writeDotFile(incLearner.getHypothesisModel(), ALPHABET, "./incremental.dot");
     }

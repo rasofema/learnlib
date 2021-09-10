@@ -19,8 +19,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -69,7 +71,7 @@ public class KearnsVaziraniDFA<I>
     protected final boolean ensureCanonical;
     protected final AcexAnalyzer ceAnalyzer;
     protected BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
-    protected List<StateInfo<I, Boolean>> stateInfos = new ArrayList<>();
+    protected Map<Integer, StateInfo<I, Boolean>> stateInfos = new HashMap<>();
     protected CompactDFA<I> hypothesis;
 
     /**
@@ -251,7 +253,7 @@ public class KearnsVaziraniDFA<I>
         int state = hypothesis.addIntInitialState(accepting);
         StateInfo<I, Boolean> si = new StateInfo<>(state, Word.epsilon());
         assert stateInfos.size() == state;
-        stateInfos.add(si);
+        stateInfos.put(si.id, si);
 
         return si;
     }
@@ -260,7 +262,7 @@ public class KearnsVaziraniDFA<I>
         int state = hypothesis.addIntState(accepting);
         StateInfo<I, Boolean> si = new StateInfo<>(state, accessSequence);
         assert stateInfos.size() == state;
-        stateInfos.add(si);
+        stateInfos.put(si.id, si);
 
         return si;
     }
@@ -336,13 +338,13 @@ public class KearnsVaziraniDFA<I>
             this.hypothesis.getSuccessor(this.hypothesis.getInitialState(), symbol) == null) {
             // use new list to prevent concurrent modification exception
             final List<Word<I>> transAs = new ArrayList<>(this.stateInfos.size());
-            for (final StateInfo<I, Boolean> si : this.stateInfos) {
+            for (final StateInfo<I, Boolean> si : this.stateInfos.values()) {
                 transAs.add(si.accessSequence.append(symbol));
             }
 
             final List<StateInfo<I, Boolean>> succs = sift(transAs);
 
-            final Iterator<StateInfo<I, Boolean>> stateIter = this.stateInfos.iterator();
+            final Iterator<StateInfo<I, Boolean>> stateIter = this.stateInfos.values().iterator();
             final Iterator<StateInfo<I, Boolean>> leafsIter = succs.iterator();
 
             while (stateIter.hasNext() && leafsIter.hasNext()) {

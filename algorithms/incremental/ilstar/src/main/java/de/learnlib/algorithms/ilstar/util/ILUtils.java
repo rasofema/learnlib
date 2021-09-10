@@ -1,4 +1,4 @@
-package de.learnlib.algorithms.ikv.util;
+package de.learnlib.algorithms.ilstar.util;
 
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;

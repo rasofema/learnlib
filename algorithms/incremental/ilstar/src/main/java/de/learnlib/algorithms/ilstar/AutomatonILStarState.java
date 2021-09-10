@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.ikv;
+package de.learnlib.algorithms.ilstar;
 
 import java.util.Map;
 
-import de.learnlib.algorithms.ikv.AbstractAutomatonILStar.StateInfo;
 import de.learnlib.datastructure.observationtable.GenericObservationTable;
 import de.learnlib.datastructure.observationtable.RowContent;
 
@@ -40,11 +39,11 @@ public class AutomatonILStarState<I, D, AI, S> {
 
     private final GenericObservationTable<I, D> observationTable;
     private final AI hypothesis;
-    private final Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos;
+    private final Map<RowContent<I, D>, AbstractAutomatonILStar.StateInfo<S, I, D>> stateInfos;
 
     AutomatonILStarState(final GenericObservationTable<I, D> observationTable,
                          final AI hypothesis,
-                         final Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos) {
+                         final Map<RowContent<I, D>, AbstractAutomatonILStar.StateInfo<S, I, D>> stateInfos) {
         this.observationTable = observationTable;
         this.hypothesis = hypothesis;
         this.stateInfos = stateInfos;
@@ -58,7 +57,7 @@ public class AutomatonILStarState<I, D, AI, S> {
         return hypothesis;
     }
 
-    Map<RowContent<I, D>, StateInfo<S, I, D>> getStateInfos() {
+    Map<RowContent<I, D>, AbstractAutomatonILStar.StateInfo<S, I, D>> getStateInfos() {
         return stateInfos;
     }
 }

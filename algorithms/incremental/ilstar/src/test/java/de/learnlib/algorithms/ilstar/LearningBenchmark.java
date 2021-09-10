@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.learnlib.algorithms.ikv;
+package de.learnlib.algorithms.ilstar;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import de.learnlib.algorithms.ikv.dfa.ExtensibleILStarDFA;
+import de.learnlib.algorithms.ilstar.dfa.ExtensibleILStarDFA;
 import de.learnlib.algorithms.lstar.dfa.ClassicLStarDFA;
 import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;

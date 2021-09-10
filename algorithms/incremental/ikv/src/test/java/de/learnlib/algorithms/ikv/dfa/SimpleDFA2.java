@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.learnlib.algorithms.ilstar;
+package de.learnlib.algorithms.ikv.dfa;
 
 import de.learnlib.examples.DefaultLearningExample;
 import net.automatalib.automata.fsa.MutableDFA;
@@ -24,11 +24,10 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.impl.FastAlphabet;
 import net.automatalib.words.impl.Symbol;
 
-public class SimpleDFA extends DefaultLearningExample.DefaultDFALearningExample<Symbol> {
+public class SimpleDFA2 extends DefaultLearningExample.DefaultDFALearningExample<Symbol> {
     public static final Symbol IN_ZERO = new Symbol("0");
-    public static final Symbol OUT_ONE = new Symbol("1");
 
-    public SimpleDFA() {
+    public SimpleDFA2() {
         super(constructMachine());
     }
 
@@ -67,8 +66,8 @@ public class SimpleDFA extends DefaultLearningExample.DefaultDFALearningExample<
         return new FastAlphabet<>(IN_ZERO);
     }
 
-    public static SimpleDFA createExample() {
-        return new SimpleDFA();
+    public static SimpleDFA2 createExample() {
+        return new SimpleDFA2();
     }
 
 }

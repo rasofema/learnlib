@@ -35,8 +35,8 @@ import java.util.Objects;
  */
 public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, O, D, N>> {
 
-    protected final N parent;
-    protected final O parentOutcome;
+    protected N parent;
+    protected O parentOutcome;
     protected final int depth;
     protected Map<O, N> children;
     protected DSCR discriminator;
@@ -59,6 +59,10 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
 
     public N getParent() {
         return parent;
+    }
+
+    public void setParent(N parent) {
+        this.parent = parent;
     }
 
     public DSCR getDiscriminator() {
@@ -162,6 +166,10 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
 
     public O getParentOutcome() {
         return parentOutcome;
+    }
+
+    public void setParentOutcome(O parentOutcome) {
+        this.parentOutcome = parentOutcome;
     }
 
     public class SplitResult {

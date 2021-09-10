@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.learnlib.algorithms.ikv;
+package de.learnlib.algorithms.ilstar;
 
 import de.learnlib.examples.DefaultLearningExample;
 import net.automatalib.automata.fsa.MutableDFA;
