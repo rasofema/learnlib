@@ -150,7 +150,7 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
         dfsStack.push(discriminationTree.getRoot());
         Set<Integer> idsRemoved = new HashSet<>();
 
-        while(!dfsStack.isEmpty()) {
+        while (!dfsStack.isEmpty()) {
             AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> currentNode = dfsStack.pop();
             if (currentNode.isLeaf()) {
                 if (currentNode != discriminationTree.sift(currentNode.getData().accessSequence)) {
@@ -194,10 +194,10 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
 
         stateInfos.clear();
 
-        CompactDFA<I> newhyp = new CompactDFA<I>(alphabet);
+        CompactDFA<I> newhyp = new CompactDFA<>(alphabet);
         Iterator<AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>>> acceptingIt =
             DiscriminationTreeIterators.leafIterator(discriminationTree.getRoot().getChild(true));
-        while(acceptingIt.hasNext()) {
+        while (acceptingIt.hasNext()) {
             AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> node = acceptingIt.next();
             node.getData().id = newhyp.addIntState(true);
             stateInfos.put(node.getData().id, node.getData());
@@ -208,7 +208,7 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
 
         Iterator<AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>>> rejectingIt =
             DiscriminationTreeIterators.leafIterator(discriminationTree.getRoot().getChild(false));
-        while(rejectingIt.hasNext()) {
+        while (rejectingIt.hasNext()) {
             AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> node = rejectingIt.next();
             node.getData().id = newhyp.addIntState(false);
             stateInfos.put(node.getData().id, node.getData());

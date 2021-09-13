@@ -179,7 +179,7 @@ public class KearnsVaziraniDFA<I>
             AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> currentNode = bfsQueue.poll();
             if (currentNode.isLeaf()) {
                 Word<I> se = currentNode.getData().accessSequence.concat(currentNode.getParent().getDiscriminator());
-                if (currentNode.getParentOutcome() != hypothesis.computeOutput(se)) {
+                if (!currentNode.getParentOutcome().equals(hypothesis.computeOutput(se))) {
                     return new DefaultQuery<>(se, currentNode.getParentOutcome());
                 }
             } else {

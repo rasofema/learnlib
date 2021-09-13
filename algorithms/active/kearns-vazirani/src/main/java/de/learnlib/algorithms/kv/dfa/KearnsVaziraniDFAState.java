@@ -15,7 +15,6 @@
  */
 package de.learnlib.algorithms.kv.dfa;
 
-import java.util.List;
 import java.util.Map;
 
 import de.learnlib.algorithms.kv.StateInfo;

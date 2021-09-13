@@ -25,7 +25,6 @@ import net.automatalib.automata.fsa.DFA;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.util.automata.builders.AutomatonBuilders;
 import net.automatalib.util.automata.fsa.DFAs;
-import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.impl.Alphabets;
 import org.testng.Assert;
@@ -34,45 +33,41 @@ import org.testng.annotations.Test;
 @Test
 public class CanonicalTest {
 
-    @Test
-    public static void test() {
-        Alphabet<Integer> alphabet = Alphabets.integers(0,0);
-//        for (int iter = 0; iter < 10; iter++) {
-            CompactDFA<Integer> target = new CompactDFA<>(alphabet);
-                AutomatonBuilders.forDFA(target)
-                .withInitial("s0")
-                .from("s0")
-                .on(alphabet.getSymbol(0)).to("s1")
-                .from("s1")
-                .on(alphabet.getSymbol(0)).to("s2")
-                .from("s2")
-                .on(alphabet.getSymbol(0)).to("s0")
-                .withAccepting("s0")
-                .withAccepting("s1")
-                .create();
-            MembershipOracle<Integer, Boolean> oracle = new SimulatorOracle.DFASimulatorOracle<>(target);
-            EquivalenceOracle<DFA<?, Integer>, Integer, Boolean> eqOracle = new WpMethodEQOracle<>(oracle, 5);
-            KearnsVaziraniDFA<Integer> learner = new KearnsVaziraniDFA<>(alphabet, oracle, true, true, AcexAnalyzers.LINEAR_FWD);
+    public void test() {
+        Alphabet<Integer> alphabet = Alphabets.integers(0, 0);
+        CompactDFA<Integer> target = new CompactDFA<>(alphabet);
+            AutomatonBuilders.forDFA(target)
+            .withInitial("s0")
+            .from("s0")
+            .on(alphabet.getSymbol(0)).to("s1")
+            .from("s1")
+            .on(alphabet.getSymbol(0)).to("s2")
+            .from("s2")
+            .on(alphabet.getSymbol(0)).to("s0")
+            .withAccepting("s0")
+            .withAccepting("s1")
+            .create();
+        MembershipOracle<Integer, Boolean> oracle = new SimulatorOracle.DFASimulatorOracle<>(target);
+        EquivalenceOracle<DFA<?, Integer>, Integer, Boolean> eqOracle = new WpMethodEQOracle<>(oracle, 5);
+        KearnsVaziraniDFA<Integer> learner = new KearnsVaziraniDFA<>(alphabet, oracle, true, true, AcexAnalyzers.LINEAR_FWD);
 
-            learner.startLearning();
+        learner.startLearning();
 
-            while (true) {
-                DFA<?, Integer> hyp = learner.getHypothesisModel();
-                Assert.assertEquals(hyp, DFAs.minimize(hyp, alphabet));
+        while (true) {
+            DFA<?, Integer> hyp = learner.getHypothesisModel();
+            Assert.assertEquals(hyp, DFAs.minimize(hyp, alphabet));
 
-                DefaultQuery<Integer, Boolean> ce = eqOracle.findCounterExample(hyp, alphabet);
+            DefaultQuery<Integer, Boolean> ce = eqOracle.findCounterExample(hyp, alphabet);
 
-                if (ce == null) {
-                    break;
-                }
-
-                learner.refineHypothesis(ce);
+            if (ce == null) {
+                break;
             }
 
-            DFA<?, Integer> hyp = learner.getHypothesisModel();
+            learner.refineHypothesis(ce);
+        }
 
-            Assert.assertEquals(hyp.size(), target.size());
+        DFA<?, Integer> hyp = learner.getHypothesisModel();
 
-//        }
+        Assert.assertEquals(hyp.size(), target.size());
     }
 }

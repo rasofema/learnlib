@@ -62,17 +62,6 @@ limitations under the License.
             <groupId>net.automatalib</groupId>
             <artifactId>automata-core</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker-qual</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
         <!-- build -->
         <dependency>
             <groupId>com.github.misberner.buildergen</groupId>
@@ -84,7 +73,39 @@ limitations under the License.
             <groupId>de.learnlib.testsupport</groupId>
             <artifactId>learnlib-learner-it-support</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-membership-oracles</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-equivalence-oracles</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib.testsupport</groupId>
+            <artifactId>learnlib-learning-examples</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-statistics</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-commons-util</artifactId>
+            <version>0.11.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-util</artifactId>
+            <version>0.11.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>

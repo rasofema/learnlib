@@ -18,6 +18,7 @@ package de.learnlib.algorithms.ilstar.dfa;
 import java.util.List;
 
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
+import de.learnlib.algorithms.ilstar.AbstractExtensibleAutomatonILStar;
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandler;
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
@@ -31,7 +32,6 @@ import de.learnlib.datastructure.observationtable.Row;
 import net.automatalib.automata.concepts.SuffixOutput;
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
-import de.learnlib.algorithms.ilstar.AbstractExtensibleAutomatonILStar;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 

@@ -99,8 +99,8 @@ public class LearningBenchmark {
 
         LinkedList<Symbol> accWord = new LinkedList<>();
         accWord.add(ALPHABET.getSymbol(0));
-//        accWord.add(ALPHABET.getSymbol(0));
-//        accWord.add(ALPHABET.getSymbol(0));
+        // accWord.add(ALPHABET.getSymbol(0));
+        // accWord.add(ALPHABET.getSymbol(0));
         TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
 
         KearnsVaziraniDFA<Symbol> classicDiffLearner = learnClassic();
