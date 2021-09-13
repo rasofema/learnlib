@@ -48,7 +48,7 @@ public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = SimpleDFA.createInputAlphabet();
     private static final MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA);
 
-    public static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
+    private static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
         OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learner,
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle) {
         int cexCounter = 0;
@@ -74,7 +74,7 @@ public class LearningBenchmark {
         return cexCounter;
     }
 
-    public OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnClassic() {
+    private OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnClassic() {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);
@@ -91,13 +91,7 @@ public class LearningBenchmark {
 
     }
 
-    public OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnIncremental(GenericObservationTable<Symbol, Boolean> startingOT) {
-        LinkedList<Symbol> accWord = new LinkedList<>();
-         accWord.add(ALPHABET.getSymbol(0));
-         accWord.add(ALPHABET.getSymbol(0));
-         accWord.add(ALPHABET.getSymbol(0));
-        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
-
+    private OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnIncremental(GenericObservationTable<Symbol, Boolean> startingOT) {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);
@@ -116,34 +110,28 @@ public class LearningBenchmark {
         OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> classicLearner = learnClassic();
         writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
 
+        LinkedList<Symbol> accWord = new LinkedList<>();
+        accWord.add(ALPHABET.getSymbol(0));
+//        accWord.add(ALPHABET.getSymbol(0));
+//        accWord.add(ALPHABET.getSymbol(0));
+        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
+
+        OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> classicDiffLearner = learnClassic();
+        writeDotFile(classicDiffLearner.getHypothesisModel(), ALPHABET, "./classic-diff.dot");
+
         GenericObservationTable<Symbol, Boolean> startingOT = new GenericObservationTable<>((GenericObservationTable<Symbol, Boolean>) classicLearner.getObservationTable());
         OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> incLearner = learnIncremental(startingOT);
         writeDotFile(incLearner.getHypothesisModel(), ALPHABET, "./incremental.dot");
     }
 
     // policy : convert into method throwing unchecked exception
-    public static <S, I, T> void writeDotFile(Automaton<S, I, T> automaton, Collection<? extends I> inputAlphabet, String filepath) throws IOException {
-        writeFile(automaton, inputAlphabet, filepath);
-    }
-
-    //policy:
-    //  write dotfile with red double circeled start state
-    public static <S, I, T> void writeFile(Automaton<S, I, T> automaton, Collection<? extends I> inputAlphabet, String filepath) throws IOException {
+    private static <S, I, T> void writeDotFile(Automaton<S, I, T> automaton, Collection<? extends I> inputAlphabet, String filepath) throws IOException {
         BufferedWriter outstream = new BufferedWriter(new FileWriter(filepath));
-        write(automaton, inputAlphabet, outstream);
-        outstream.close();
-    }
-
-    /* write
-     *   same as writeFile but then to Appendable instead of filepath
-     *
-     */
-    public static <S, I, T> void write(Automaton<S, I, T> automaton, Collection<? extends I> inputAlphabet, Appendable out) {
         try {
-            GraphDOT.write(automaton, inputAlphabet, out);
+            GraphDOT.write(automaton, inputAlphabet, outstream);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        outstream.close();
     }
-
 }

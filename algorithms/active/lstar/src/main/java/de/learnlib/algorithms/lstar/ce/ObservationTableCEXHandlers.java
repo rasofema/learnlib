@@ -218,10 +218,20 @@ public final class ObservationTableCEXHandlers {
                                                                MutableObservationTable<I, D> table,
                                                                SuffixOutput<I, D> hypOutput,
                                                                MembershipOracle<I, D> oracle) {
+
+        if (hypOutput.computeOutput(ceQuery.getInput()) == ceQuery.getOutput()) {
+            return Collections.emptyList();
+        }
+
         LinkedList<Word<I>> prefixes = new LinkedList<>(ceQuery.getInput().prefixes(false));
         // The counter-example that we get is guaranteed to be incorrect,
         // so correct any instances of it in our table.
         List<List<Row<I, D>>> unclosedCorrected = table.correctCell(ceQuery.getPrefix(), ceQuery.getSuffix(), ceQuery.getOutput());
+
+        if (ceQuery.getInput().length() < 2) {
+            return unclosedCorrected;
+        }
+
         List<List<Row<I, D>>> unclosed = FIND_LINEAR_ALLSUFFIXES.handleCounterexample(ceQuery, table, hypOutput, oracle);
 //        List<List<Row<I, D>>> unclosed = table.addShortPrefixes(prefixes, oracle);
 
