@@ -26,11 +26,13 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
+import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
@@ -340,10 +342,12 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         if (rowContent == null) {
             rowContent = new RowContent<>(rowContents);
             contentToRowContent.put(rowContents, rowContent);
-            if (makeCanonical) {
-                canonicalRows.put(rowContent, row);
-            }
             added = true;
+        }
+
+        makeCanonical = row.isShortPrefixRow() && !canonicalRows.containsKey(rowContent);
+        if (makeCanonical) {
+            canonicalRows.put(rowContent, row);
         }
 
         row.setRowContent(rowContent);
@@ -409,35 +413,8 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             processContents(row, newContents, row.isShortPrefixRow());
         }
 
-        Set<RowContent<I, D>> unclosed = new LinkedHashSet<>();
-
-        for (RowImpl<I, D> spRow : shortPrefixRows) {
-            for (int i = 0; i < alphabet.size(); i++) {
-                RowImpl<I, D> succRow = spRow.getSuccessor(i);
-                if (succRow.isShortPrefixRow()) {
-                    continue;
-                }
-
-                Set<RowContent<I, D>> spRowContents = shortPrefixRows.stream()
-                    .map(RowImpl::getRowContent)
-                    .collect(Collectors.toSet());
-
-                if (!spRowContents.contains(succRow.getRowContent())) {
-                    unclosed.add(succRow.getRowContent());
-                }
-            }
-        }
-
-        // Get the set of unclosed row contents,
-        return unclosed.stream()
-            // Map them to the associated rows,
-            .map(con -> con.getAssociatedRows().stream()
-                // Keep only the long rows,
-                .filter(row -> !row.isShortPrefixRow())
-                // Collect them into lists,
-                .collect(Collectors.toList()))
-            // Collect this stream of lists into a list.
-            .collect(Collectors.toList());
+        queries.forEach(q -> correctCell(q.getPrefix(), q.getSuffix(), q.getOutput()));
+        return findUnclosedRows();
     }
 
     @Override
@@ -513,42 +490,35 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             processContents(row, contents, true);
         }
 
-        Set<RowContent<I, D>> unclosed = new LinkedHashSet<>();
-
         for (RowImpl<I, D> row : freshLpRows) {
             List<D> contents = new ArrayList<>(numSuffixes);
             fetchResults(queryIt, contents, numSuffixes);
             processContents(row, contents, false);
+        }
 
-            Set<RowContent<I, D>> spRowContents = shortPrefixRows.stream()
-                .map(RowImpl::getRowContent)
-                .collect(Collectors.toSet());
-
-            if (!spRowContents.contains(row.getRowContent())) {
-                unclosed.add(row.getRowContent());
+        for (Row<I, D> row : lpRows) {
+            if (row.isShortPrefixRow() && !canonicalRows.containsKey(row.getRowContent())) {
+                canonicalRows.put(row.getRowContent(), rowMap.get(row.getLabel()));
             }
         }
 
-        // Get the set of unclosed row contents,
-        return unclosed.stream()
-            // Map them to the associated rows,
-            .map(con -> con.getAssociatedRows().stream()
-                // Keep only the long rows,
-                .filter(row -> !row.isShortPrefixRow())
-                // Collect them into lists,
-                .collect(Collectors.toList()))
-            // Collect this stream of lists into a list.
-            .collect(Collectors.toList());
+        queries.forEach(q -> correctCell(q.getPrefix(), q.getSuffix(), q.getOutput()));
+
+        return findUnclosedRows();
     }
 
     @Override
-    public List<List<Row<I, D>>> correctCell(Word<I> prefix, Word<I> suffix, D correctValue) {
+    public boolean correctCell(Word<I> prefix, Word<I> suffix, D correctValue) {
+        boolean corrected = false;
         for (RowImpl<I, D> row : allRows) {
             for (Word<I> suf : suffixes) {
                 // FIXME: This logic only applies to DFAs! In Mealy machines cell(a.ab) != cell(aa.b),
                 //  so we can't blanket correct every matching word. However, what we can do is set
                 //  the corrected value to match suffix size.
-                if (row.getLabel().concat(suf).equals(prefix.concat(suffix))) {
+                if (row.getLabel().concat(suf).equals(prefix.concat(suffix)) &&
+                    row.getRowContent() != null &&
+                    !row.getRowContent().get(suffixes.indexOf(suf)).equals(correctValue)) {
+                    corrected = true;
                     List<D> correctedContents = new LinkedList<>();
                     RowContent<I, D> rowContent = row.getRowContent();
                     if (rowContent != null) {
@@ -562,25 +532,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
 
         // TODO: Correcting cells affects closedness - and maybe consistency.
         //  Unclosed EQ classes need to be reported back to the algo.
-        Set<RowContent<I, D>> spRowContents = shortPrefixRows.stream()
-            .map(RowImpl::getRowContent)
-            .collect(Collectors.toSet());
-
-        Set<RowContent<I, D>> unclosed = longPrefixRows.stream()
-            .filter(row -> !spRowContents.contains(row.getRowContent()))
-            .map(RowImpl::getRowContent)
-            .collect(Collectors.toSet());
-
-        // Get the set of unclosed row contents,
-        return unclosed.stream()
-            // Map them to the associated rows,
-            .map(con -> con.getAssociatedRows().stream()
-                // Keep only the long rows,
-                .filter(row -> !row.isShortPrefixRow())
-                // Collect them into lists,
-                .collect(Collectors.toList()))
-            // Collect this stream of lists into a list.
-            .collect(Collectors.toList());
+        return corrected;
     }
 
     private void deleteRow(Row<I, D> row, boolean cleanupContents) {
@@ -593,6 +545,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             }
         }
         allRows.remove((RowImpl<I, D>) row);
+        rowMap.remove(row.getLabel());
         if (row.isShortPrefixRow()) {
             shortPrefixRows.remove(row);
             for (int index = 0; index < alphabet.size(); index++) {
@@ -603,7 +556,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         }
     }
 
-    public boolean minimiseTable() {
+    public boolean minimiseTable(MembershipOracle<I, D> oracle) {
         // TODO: A property critical for our table to be kept up-to-date is the idea that "table not correct => cex will be returned",
         //  however this only holds if the observation table is kept minimal. This is because we could have a table that
         //  represents a correct but not minimal DFA, and that way no cex will be returned fixing incorrect cells causing non-minimallity.
@@ -611,7 +564,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         //  As such, we want to minimise the table every time it becomes closed and consistent. Not before, as we don't want to remove behaviour that
         //  could be critical in detecting unclosedness or inconsistency.
         //  --
-        //  I have an algorithm for this, not sure it is the most efficient but it is correct. I'll implement it soon.
+        //  I have an algorithm for this, not sure it is the most efficient but it should be correct. I'll implement it soon.
 
         boolean minimised = false;
         for (RowContent<I, D> content : contentToRowContent.values()) {
@@ -619,13 +572,27 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
                 .filter(Row::isShortPrefixRow)
                 .collect(Collectors.toList());
 
+            class LengthFirstComparator implements Comparator<Row<I, D>> {
+                @Override
+                public int compare(Row<I, D> o1, Row<I, D> o2) {
+                    if (o1.getLabel().size() != o2.getLabel().size()) {
+                        return o1.getLabel().size() - o2.getLabel().size();
+                    }
+                    // TODO: This may not work with complex alphabets as it relies on string rep.
+                    String o1String = o1.getLabel().toString()
+                        .replaceAll("\\s", "").replaceAll("ε", "");
+                    String o2String = o2.getLabel().toString()
+                        .replaceAll("\\s", "").replaceAll("ε", "");
+                    return o1String.compareTo(o2String);
+                }
+            }
+
             while (associatedShortRows.size() > 1) {
                 Row<I, D> biggestLexLabelRow = associatedShortRows.stream()
-                    // TODO: This may not work with complex alphabets as it relies on string rep.
-                    .max(Comparator.comparing(row -> row.getLabel().toString().replaceAll("\\s", "").replaceAll("ε", "")))
+                    .max(new LengthFirstComparator())
                     .orElse(null);
 
-                if (biggestLexLabelRow.getLabel().size() != 0) {
+                if (biggestLexLabelRow.getLabel().getClass() != Word.epsilon().getClass()) {
                     minimised = true;
                     Word<I> prefixLabel = biggestLexLabelRow.getLabel().prefix(biggestLexLabelRow.getLabel().size() - 1);
                     if (rowMap.get(prefixLabel).isShortPrefixRow()) {
@@ -661,7 +628,36 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
                     .collect(Collectors.toList())
             );
 
-            if (hypotheticalTable.findInconsistency() == null) {
+            // Okay Tiago, here's the problem (so that you can remember).
+            // It is possible for a suffix to be distinguishing 2 rows that are actually the same.
+            // This can happen because the distungishing suffix has an outdated value, which you already knew
+            // and thought had solved with table suffix minimisation. However, there are cases where that
+            // suffix will not be able to be removed with this current logic, as it can still be a valid
+            // suffix that is mantaining 2 rows different (correctly), so removing it would trigger a valid
+            // inconsistency. How do we fix this? Honestly my immediate answer would be "by using
+            // discrimination trees". Probably want to check if this isn't also an issue in KV tho.
+            // In the meantime another option is to verify all inconsitencies, not just the first one.
+            // This is super expensive though....
+
+            Inconsistency<I, D> inconsistency = hypotheticalTable.findInconsistency();
+
+//            while (inconsistency != null) {
+//                System.out.println("BEGIN +++++++++++");
+//                Pair<Inconsistency<I, D>, DefaultQuery<I, D>> pair = hypotheticalTable.verifyInconsistency(inconsistency, oracle);
+//                System.out.println("END +++++++++++");
+//                if (pair.getSecond() != null) {
+//                    this.correctCell(pair.getSecond().getPrefix(), pair.getSecond().getSuffix(), pair.getSecond().getOutput());
+//                    minimised = true;
+//                    return minimised;
+//                }
+//                if (pair.getFirst() == null) {
+//                    inconsistency = hypotheticalTable.findInconsistency();
+//                } else {
+//                    break;
+//                }
+//            }
+
+            if (inconsistency == null) {
                 minimised = true;
                 this.allRows.clear();
                 this.allRows.addAll(hypotheticalTable.allRows);
@@ -679,9 +675,30 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
                 this.contentToRowContent.putAll(hypotheticalTable.contentToRowContent);
                 this.canonicalRows.clear();
                 this.canonicalRows.putAll(hypotheticalTable.canonicalRows);
+
+
             }
         }
         return minimised;
+    }
+
+    public boolean findContradiction() {
+        for (RowImpl<I, D> row1 : allRows) {
+            for (Word<I> suf1 : suffixes) {
+                D value1 = row1.getRowContent().get(suffixes.indexOf(suf1));
+                for (RowImpl<I, D> row2 : allRows) {
+                    for (Word<I> suf2 : suffixes) {
+                        if (row2.getLabel().concat(suf2).equals(row1.getLabel().concat(suf1))) {
+                            D value2 = row2.getRowContent().get(suffixes.indexOf(suf2));
+                            if (!value1.equals(value2)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void makeShort(RowImpl<I, D> row) {

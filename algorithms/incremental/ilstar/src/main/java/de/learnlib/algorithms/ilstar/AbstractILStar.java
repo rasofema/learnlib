@@ -18,9 +18,11 @@ package de.learnlib.algorithms.ilstar;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.api.algorithm.feature.GlobalSuffixLearner;
@@ -34,6 +36,7 @@ import de.learnlib.datastructure.observationtable.Row;
 import de.learnlib.util.MQUtil;
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.concepts.SuffixOutput;
+import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
@@ -79,9 +82,9 @@ public abstract class AbstractILStar<A, I, D>
     public void startLearning() {
         List<Word<I>> prefixes = initialPrefixes();
         List<Word<I>> suffixes = initialSuffixes();
-        List<List<Row<I, D>>> initialUnclosed = table.initialize(prefixes, suffixes, oracle);
+        table.initialize(prefixes, suffixes, oracle);
 
-        completeConsistentTable(initialUnclosed, table.isInitialConsistencyCheckRequired());
+        completeConsistentTable(table.isInitialConsistencyCheckRequired());
     }
 
     @Override
@@ -98,10 +101,10 @@ public abstract class AbstractILStar<A, I, D>
     protected abstract SuffixOutput<I, D> hypothesisOutput();
 
     protected void doRefineHypothesis(DefaultQuery<I, D> ceQuery) {
-        List<List<Row<I, D>>> unclosed = incorporateCounterExample(ceQuery);
-        completeConsistentTable(unclosed, true);
-        while (table.minimiseTable()) {
-            completeConsistentTable(Collections.emptyList(), true);
+        incorporateCounterExample(ceQuery);
+        completeConsistentTable(true);
+        while (table.minimiseTable(oracle)) {
+            completeConsistentTable(true);
         }
     }
 
@@ -132,34 +135,46 @@ public abstract class AbstractILStar<A, I, D>
      * Iteratedly checks for unclosedness and inconsistencies in the table, and fixes any occurrences thereof. This
      * process is repeated until the observation table is both closed and consistent.
      *
-     * @param unclosed
-     *         the unclosed rows (equivalence classes) to start with.
      */
-    protected boolean completeConsistentTable(List<List<Row<I, D>>> unclosed, boolean checkConsistency) {
+    protected boolean completeConsistentTable(boolean checkConsistency) {
+        boolean refined = closedTable();
+        if (checkConsistency) {
+            boolean consistentRefined = consistentTable();
+            refined = refined || consistentRefined;
+        }
+
+        return refined;
+    }
+
+    protected boolean closedTable() {
+        List<List<Row<I, D>>> unclosed = table.findUnclosedRows();
         boolean refined = false;
-        List<List<Row<I, D>>> unclosedIter = unclosed;
-        do {
-            while (!unclosedIter.isEmpty()) {
-                List<Row<I, D>> closingRows = selectClosingRows(unclosedIter);
-                unclosedIter = table.toShortPrefixes(closingRows, oracle);
+
+        while (!unclosed.isEmpty()) {
+            List<Row<I, D>> closingRows = selectClosingRows(unclosed);
+            unclosed = table.toShortPrefixes(closingRows, oracle);
+            refined = true;
+        }
+
+        return refined;
+    }
+
+    protected boolean consistentTable() {
+        boolean refined = false;
+        Inconsistency<I, D> incons = table.findInconsistency();
+        while (incons != null) {
+            System.out.println("BEGIN ==========");
+            incons = table.verifyInconsistency(incons, oracle).getFirst();
+            System.out.println("END ==========");
+            if (incons != null) {
+                Word<I> newSuffix = analyzeInconsistency(incons);
+                table.addSuffix(newSuffix, oracle);
                 refined = true;
             }
-
-            if (checkConsistency) {
-                Inconsistency<I, D> incons;
-
-                do {
-                    incons = table.findInconsistency();
-                    incons = verifyInconsistency(incons);
-                    if (incons != null) {
-
-                        Word<I> newSuffix = analyzeInconsistency(incons);
-                        unclosedIter = table.addSuffix(newSuffix, oracle);
-                    }
-                } while (unclosedIter.isEmpty() && incons != null);
-            }
-        } while (!unclosedIter.isEmpty());
-
+            boolean closedRefined = closedTable();
+            refined = refined || closedRefined;
+            incons = table.findInconsistency();
+        }
         return refined;
     }
 
@@ -212,30 +227,6 @@ public abstract class AbstractILStar<A, I, D>
         throw new IllegalArgumentException("Bogus inconsistency");
     }
 
-    protected Inconsistency<I, D> verifyInconsistency(Inconsistency<I, D> incons) {
-        if (incons == null) {
-            return null;
-        }
-
-        int inputIdx = alphabet.getSymbolIndex(incons.getSymbol());
-        List<Row<I, D>> rowsToVerify = new LinkedList<>();
-        rowsToVerify.add(incons.getFirstRow());
-        rowsToVerify.add(incons.getSecondRow());
-        rowsToVerify.add(incons.getFirstRow().getSuccessor(inputIdx));
-        rowsToVerify.add(incons.getSecondRow().getSuccessor(inputIdx));
-
-        for (Row<I, D> row : rowsToVerify) {
-            for (int suffIndex = 0; suffIndex < table.getSuffixes().size(); suffIndex++) {
-                D correctValue = oracle.answerQuery(row.getLabel(), table.getSuffix(suffIndex));
-                if (!table.cellContents(row, suffIndex).equals(correctValue)) {
-                    table.correctCell(row.getLabel(), table.getSuffix(suffIndex), correctValue);
-                    return null;
-                }
-            }
-        }
-        return incons;
-    }
-
     @Override
     public Collection<Word<I>> getGlobalSuffixes() {
         return Collections.unmodifiableCollection(table.getSuffixes());
@@ -247,7 +238,7 @@ public abstract class AbstractILStar<A, I, D>
         if (unclosed.isEmpty()) {
             return false;
         }
-        return completeConsistentTable(unclosed, false);
+        return completeConsistentTable(false);
     }
 
     @Override
@@ -263,6 +254,6 @@ public abstract class AbstractILStar<A, I, D>
         }
 
         final List<List<Row<I, D>>> unclosed = this.table.addAlphabetSymbol(symbol, oracle);
-        completeConsistentTable(unclosed, true);
+        completeConsistentTable(true);
     }
 }

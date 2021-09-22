@@ -17,13 +17,19 @@ package de.learnlib.datastructure.observationtable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.api.AccessSequenceTransformer;
+import de.learnlib.api.oracle.MembershipOracle;
+import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -201,6 +207,28 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
         }
 
         return null;
+    }
+
+    default List<List<Row<I, D>>> findUnclosedRows() {
+        Set<RowContent<I, D>> spRowContents = getShortPrefixRows().stream()
+            .map(Row::getRowContent)
+            .collect(Collectors.toSet());
+
+        Set<RowContent<I, D>> unclosedSet = getLongPrefixRows().stream()
+            .filter(row -> !spRowContents.contains(row.getRowContent()))
+            .map(Row::getRowContent)
+            .collect(Collectors.toSet());
+
+        // Get the set of unclosed row contents,
+        return unclosedSet.stream()
+            // Map them to the associated rows,
+            .map(con -> con.getAssociatedRows().stream()
+                // Keep only the long rows,
+                .filter(row -> !row.isShortPrefixRow())
+                // Collect them into lists,
+                .collect(Collectors.toList()))
+            // Collect this stream of lists into a list.
+            .collect(Collectors.toList());
     }
 
     default @Nullable Word<I> findDistinguishingSuffix(Inconsistency<I, D> inconsistency) {

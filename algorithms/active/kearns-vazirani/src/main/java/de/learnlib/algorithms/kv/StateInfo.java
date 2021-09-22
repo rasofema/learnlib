@@ -35,7 +35,7 @@ import net.automatalib.words.Word;
  */
 public final class StateInfo<I, D> {
     public int id;
-    public final Word<I> accessSequence;
+    public Word<I> accessSequence;
     public AbstractWordBasedDTNode<I, D, StateInfo<I, D>> dtNode;
     private final Set<Pair<StateInfo<I, D>, I>> incoming;
 

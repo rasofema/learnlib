@@ -38,6 +38,7 @@ import de.learnlib.api.algorithm.LearningAlgorithm.DFALearner;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.discriminationtree.BinaryDTree;
+import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import de.learnlib.datastructure.discriminationtree.model.LCAInfo;
 import net.automatalib.SupportsGrowingAlphabet;
@@ -172,18 +173,16 @@ public class KearnsVaziraniDFA<I>
     }
 
     protected DefaultQuery<I, Boolean> analyseTree() {
-        Queue<AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>>> bfsQueue = new ArrayDeque<>();
-        bfsQueue.add(discriminationTree.getRoot());
+        Iterator<AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>>> leafIt =
+            DiscriminationTreeIterators.leafIterator(discriminationTree.getRoot());
 
-        while (!bfsQueue.isEmpty()) {
-            AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> currentNode = bfsQueue.poll();
-            if (currentNode.isLeaf()) {
+        while (leafIt.hasNext()) {
+            AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> currentNode = leafIt.next();
+            if (currentNode.getData() != null) {
                 Word<I> se = currentNode.getData().accessSequence.concat(currentNode.getParent().getDiscriminator());
                 if (!currentNode.getParentOutcome().equals(hypothesis.computeOutput(se))) {
                     return new DefaultQuery<>(se, currentNode.getParentOutcome());
                 }
-            } else {
-                bfsQueue.addAll(currentNode.getChildren());
             }
         }
 

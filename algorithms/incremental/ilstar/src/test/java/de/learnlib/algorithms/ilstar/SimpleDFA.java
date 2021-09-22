@@ -64,7 +64,7 @@ public class SimpleDFA extends DefaultLearningExample.DefaultDFALearningExample<
     }
 
     public static Alphabet<Symbol> createInputAlphabet() {
-        return new FastAlphabet<>(IN_ZERO);
+        return new FastAlphabet<>(IN_ZERO, new Symbol("1"), new Symbol("2"));
     }
 
     public static SimpleDFA createExample() {

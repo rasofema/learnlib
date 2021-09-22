@@ -37,7 +37,7 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
 
     protected N parent;
     protected O parentOutcome;
-    protected final int depth;
+    protected int depth;
     protected Map<O, N> children;
     protected DSCR discriminator;
     protected D data;
@@ -132,12 +132,20 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
         return children.entrySet();
     }
 
+    public Map<O, N> getChildMap() {
+        return children;
+    }
+
     public void replaceChildren(Map<O, N> repChildren) {
         this.children = repChildren;
     }
 
     public int getDepth() {
         return depth;
+    }
+
+    public void setDepth(int newDepth) {
+        depth = newDepth;
     }
 
     public D getData() {
@@ -148,6 +156,10 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
     public void setData(D data) {
         assert isLeaf();
         this.data = data;
+    }
+
+    public void clearData() {
+        this.data = null;
     }
 
     public O subtreeLabel(N descendant) {

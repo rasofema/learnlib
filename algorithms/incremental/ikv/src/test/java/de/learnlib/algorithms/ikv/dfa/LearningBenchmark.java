@@ -19,7 +19,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Random;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFA;
@@ -32,19 +32,27 @@ import de.learnlib.oracle.membership.SimulatorOracle;
 import de.learnlib.util.Experiment;
 import net.automatalib.automata.Automaton;
 import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.fsa.MutableDFA;
+import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.serialization.dot.GraphDOT;
 import net.automatalib.util.automata.fsa.DFAs;
+import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.words.Alphabet;
+import net.automatalib.words.impl.FastAlphabet;
 import net.automatalib.words.impl.Symbol;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test
 public class LearningBenchmark {
-    private static final MutableDFA<Integer, Symbol> TARGET_DFA = SimpleDFA2.constructMachine();
-    private static final Alphabet<Symbol> ALPHABET = SimpleDFA2.createInputAlphabet();
-    private static final MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA);
+    private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
+    private static Long RAND_SEED1 = (new Random()).nextLong();
+    private static Long RAND_SEED2 = (new Random()).nextLong();
+    private static CompactDFA<Symbol> TARGET_DFA1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(10, ALPHABET);
+    private static CompactDFA<Symbol> TARGET_DFA2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(10, ALPHABET);
+
+    private static MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE1 = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA1);
+    private static MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE2_CLASS = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
+    private static MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE2_INC = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
 
     private static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
                                      KearnsVaziraniDFA<Symbol> learner,
@@ -58,17 +66,18 @@ public class LearningBenchmark {
         experiment.run();
 
         Assert.assertEquals(experiment.getFinalHypothesis().size(), DFAs.minimize(target, alphabet).size());
+        Assert.assertTrue(DFAs.acceptsEmptyLanguage(DFAs.xor(experiment.getFinalHypothesis(), DFAs.minimize(target, alphabet), alphabet)));
         return (int) experiment.getRounds().getCount();
     }
 
-    private KearnsVaziraniDFA<Symbol> learnClassic() {
-        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
+    private KearnsVaziraniDFA<Symbol> learnClassic(CompactDFA<Symbol> target, MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
+        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
-        EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);
+        EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 8);
 
         KearnsVaziraniDFA<Symbol> learner = new KearnsVaziraniDFA<>(ALPHABET, memOracle, true, AcexAnalyzers.LINEAR_FWD);
 
-        int cexCounter = testLearnModel(TARGET_DFA, ALPHABET, learner, eqOracle);
+        int cexCounter = testLearnModel(target, ALPHABET, learner, eqOracle);
 
         System.out.println("Number of total queries: " + queryOracle.getCount());
         System.out.println("Number of membership queries: " + memOracle.getCount());
@@ -78,13 +87,13 @@ public class LearningBenchmark {
 
     }
 
-    private KearnsVaziraniDFA<Symbol> learnIncremental(KearnsVaziraniDFAState<Symbol> startingState) {
-        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
+    private KearnsVaziraniDFA<Symbol> learnIncremental(KearnsVaziraniDFAState<Symbol> startingState, CompactDFA<Symbol> target, MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
+        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);
 
         KearnsVaziraniDFA<Symbol> learner = new IKearnsVaziraniDFA<>(ALPHABET, memOracle, AcexAnalyzers.LINEAR_FWD, startingState);
-        int cexCounter = testLearnModel(TARGET_DFA, ALPHABET, learner, eqOracle);
+        int cexCounter = testLearnModel(target, ALPHABET, learner, eqOracle);
 
         System.out.println("Number of total queries: " + queryOracle.getCount());
         System.out.println("Number of membership queries: " + memOracle.getCount());
@@ -94,24 +103,36 @@ public class LearningBenchmark {
     }
 
     public void benchmark() throws IOException {
-        KearnsVaziraniDFA<Symbol> classicLearner = learnClassic();
+        System.out.println("Autoamton seed1: " + RAND_SEED1);
+        System.out.println("Autoamton seed2: " + RAND_SEED2);
+
+        KearnsVaziraniDFA<Symbol> classicLearner = learnClassic(TARGET_DFA1, DFA_ORACLE1);
         writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
 
-        LinkedList<Symbol> accWord = new LinkedList<>();
-        accWord.add(ALPHABET.getSymbol(0));
-        // accWord.add(ALPHABET.getSymbol(0));
-        // accWord.add(ALPHABET.getSymbol(0));
-        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
-
-        KearnsVaziraniDFA<Symbol> classicDiffLearner = learnClassic();
+        KearnsVaziraniDFA<Symbol> classicDiffLearner = learnClassic(TARGET_DFA2, DFA_ORACLE2_CLASS);
         writeDotFile(classicDiffLearner.getHypothesisModel(), ALPHABET, "./classic-diff.dot");
 
         // TODO: It would be good to clone the tree at some point.
         KearnsVaziraniDFAState<Symbol> startingState = classicLearner.suspend();
 
-        KearnsVaziraniDFA<Symbol> incLearner = learnIncremental(startingState);
+        KearnsVaziraniDFA<Symbol> incLearner = learnIncremental(startingState, TARGET_DFA2, DFA_ORACLE2_INC);
         writeDotFile(incLearner.getHypothesisModel(), ALPHABET, "./incremental.dot");
     }
+
+    /*public void repeat() throws IOException {
+        for (int i = 0; i < 5000; i++) {
+            System.out.println("ITER: " + i);
+            RAND_SEED1 = (new Random()).nextLong();
+            RAND_SEED2 = (new Random()).nextLong();
+            TARGET_DFA1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(10, ALPHABET);
+            TARGET_DFA2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(10, ALPHABET);
+
+            DFA_ORACLE1 = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA1);
+            DFA_ORACLE2_CLASS = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
+            DFA_ORACLE2_INC = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
+            benchmark();
+        }
+    }*/
 
     // policy : convert into method throwing unchecked exception
     private static <S, I, T> void writeDotFile(Automaton<S, I, T> automaton, Collection<? extends I> inputAlphabet, String filepath) throws IOException {

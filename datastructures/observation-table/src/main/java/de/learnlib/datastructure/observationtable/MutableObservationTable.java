@@ -17,9 +17,12 @@ package de.learnlib.datastructure.observationtable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import de.learnlib.api.oracle.MembershipOracle;
+import de.learnlib.api.query.DefaultQuery;
+import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Word;
 
 public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
@@ -76,7 +79,34 @@ public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
 
     List<List<Row<I, D>>> addShortPrefixes(List<? extends Word<I>> shortPrefixes, MembershipOracle<I, D> oracle);
 
-    List<List<Row<I, D>>> correctCell(Word<I> prefix, Word<I> suffix, D correctValue);
+    boolean correctCell(Word<I> prefix, Word<I> suffix, D correctValue);
+
+    default Pair<Inconsistency<I, D>, DefaultQuery<I, D>> verifyInconsistency(Inconsistency<I, D> incons, MembershipOracle<I, D> oracle) {
+         if (incons == null) {
+             return Pair.of(null, null);
+         }
+
+        int inputIdx = getInputAlphabet().getSymbolIndex(incons.getSymbol());
+        List<Row<I, D>> rowsToVerify = new LinkedList<>();
+        rowsToVerify.add(incons.getFirstRow());
+        rowsToVerify.add(incons.getSecondRow());
+        rowsToVerify.add(incons.getFirstRow().getSuccessor(inputIdx));
+        rowsToVerify.add(incons.getSecondRow().getSuccessor(inputIdx));
+
+        for (Row<I, D> row : rowsToVerify) {
+            for (int suffIndex = 0; suffIndex < getSuffixes().size(); suffIndex++) {
+                D correctValue = oracle.answerQuery(row.getLabel(), getSuffix(suffIndex));
+                System.out.println("DAMN: Used oracle for verifying.");
+                if (!cellContents(row, suffIndex).equals(correctValue)) {
+                    correctCell(row.getLabel(), getSuffix(suffIndex), correctValue);
+                    return Pair.of(null, new DefaultQuery<>(row.getLabel(), getSuffix(suffIndex), correctValue));
+                }
+            }
+        }
+
+        return Pair.of(incons, null);
+    }
+
 
     /**
      * Moves the specified rows to the set of short prefix rows. If some of the specified rows already are short prefix

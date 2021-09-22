@@ -15,8 +15,11 @@
  */
 package de.learnlib.algorithms.lstar.ce;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
@@ -28,6 +31,7 @@ import de.learnlib.counterexamples.LocalSuffixFinders;
 import de.learnlib.datastructure.observationtable.MutableObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
 import net.automatalib.automata.concepts.SuffixOutput;
+import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -224,23 +228,29 @@ public final class ObservationTableCEXHandlers {
 
         // The counter-example that we get is guaranteed to be incorrect,
         // so correct any instances of it in our table.
-        List<List<Row<I, D>>> unclosedCorrected = table.correctCell(ceQuery.getPrefix(), ceQuery.getSuffix(), ceQuery.getOutput());
-
-        if (ceQuery.getInput().length() < 2) {
-            return unclosedCorrected;
+        if (table.correctCell(ceQuery.getPrefix(), ceQuery.getSuffix(), ceQuery.getOutput())) {
+            return table.findUnclosedRows();
         }
 
-        List<List<Row<I, D>>> unclosed = FIND_LINEAR_ALLSUFFIXES.handleCounterexample(ceQuery, table, hypOutput, oracle);
+//        if (table.correctCell(Word.epsilon(), Word.epsilon(), oracle.answerQuery(Word.epsilon()))) {
+//            return table.findUnclosedRows();
+//        }
 
-        for (List<Row<I, D>> unclosedCorrectEQ : unclosedCorrected) {
-            for (List<Row<I, D>> unclosedEQ :unclosed) {
-                if (unclosedCorrectEQ.get(0).equals(unclosedEQ.get(0))) {
-                    unclosedEQ.addAll(unclosedCorrectEQ);
-                }
-            }
-        }
 
-        return unclosed;
+        // Our prefixes must be correct for suffix search to work.
+//        for (int i = 0; i < ceQuery.getInput().length(); i++) {
+//            Word<I> prefix = ceQuery.getInput().prefix(i);
+//            Word<I> suffix = ceQuery.getInput().suffix(ceQuery.getInput().length() - i);
+//            D answer = oracle.answerQuery(prefix, suffix);
+//            if (!hypOutput.computeSuffixOutput(prefix, suffix).equals(oracle.answerQuery(prefix, suffix))) {
+//                FIND_LINEAR_ALLSUFFIXES.handleCounterexample(new DefaultQuery<>(prefix, answer), table, hypOutput, oracle);
+//                return table.findUnclosedRows();
+//            }
+//        }
+//
+//        RIVEST_SCHAPIRE_ALLSUFFIXES.handleCounterexample(ceQuery, table, hypOutput, oracle);
+        SUFFIX1BY1.handleCounterexample(ceQuery, table, hypOutput, oracle);
+        return table.findUnclosedRows();
     }
 
     public static <I, D> List<List<Row<I, D>>> handleSuffix1by1(DefaultQuery<I, D> ceQuery,

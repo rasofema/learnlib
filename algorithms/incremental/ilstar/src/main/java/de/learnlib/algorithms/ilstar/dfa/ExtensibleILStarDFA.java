@@ -32,6 +32,7 @@ import de.learnlib.datastructure.observationtable.Row;
 import net.automatalib.automata.concepts.SuffixOutput;
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
+import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
@@ -76,7 +77,7 @@ public class ExtensibleILStarDFA<I>
 
     @Override
     protected DFA<?, I> exposeInternalHypothesis() {
-        return internalHyp;
+        return DFAs.minimize(internalHyp);
     }
 
     @Override
@@ -91,7 +92,7 @@ public class ExtensibleILStarDFA<I>
 
     @Override
     protected SuffixOutput<I, Boolean> hypothesisOutput() {
-        return internalHyp;
+        return DFAs.minimize(internalHyp);
     }
 
 }

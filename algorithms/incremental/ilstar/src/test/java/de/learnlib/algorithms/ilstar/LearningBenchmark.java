@@ -21,6 +21,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Random;
 
 import de.learnlib.algorithms.ilstar.dfa.ExtensibleILStarDFA;
 import de.learnlib.algorithms.lstar.dfa.ClassicLStarDFA;
@@ -34,9 +35,10 @@ import de.learnlib.oracle.equivalence.WpMethodEQOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
 import net.automatalib.automata.Automaton;
 import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.fsa.MutableDFA;
+import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.serialization.dot.GraphDOT;
 import net.automatalib.util.automata.fsa.DFAs;
+import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.impl.Symbol;
 import org.testng.Assert;
@@ -44,9 +46,14 @@ import org.testng.annotations.Test;
 
 @Test
 public class LearningBenchmark {
-    private static final MutableDFA<Integer, Symbol> TARGET_DFA = SimpleDFA.constructMachine();
     private static final Alphabet<Symbol> ALPHABET = SimpleDFA.createInputAlphabet();
-    private static final MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA);
+    private static Long RAND_SEED1 = 924193704317147478L /*(new Random()).nextLong()*/;
+    private static Long RAND_SEED2 = 6103753416947823906L /*(new Random()).nextLong()*/;
+    private static CompactDFA<Symbol> TARGET_DFA1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(10, ALPHABET);
+    private static CompactDFA<Symbol> TARGET_DFA2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(10, ALPHABET);
+
+    private static MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE1 = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA1);
+    private static MembershipOracle.DFAMembershipOracle<Symbol> DFA_ORACLE2 = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
 
     private static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
         OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learner,
@@ -57,6 +64,11 @@ public class LearningBenchmark {
 
         while (true) {
             DFA<?, Symbol> hyp = learner.getHypothesisModel();
+            Assert.assertFalse(((GenericObservationTable<Symbol, Boolean>) learner.getObservationTable()).findContradiction());
+
+            // Fun fact: There's no guarantee that intermediate hyp will be canonical, only DFAs.
+            // This is because we could have 2 states that are different in the table,
+            // but are just waiting for a cex to be corrected, thus pointing to the same row.
 
             DefaultQuery<Symbol, Boolean> ce = eqOracle.findCounterExample(hyp, alphabet);
             cexCounter++;
@@ -70,18 +82,19 @@ public class LearningBenchmark {
 
         DFA<?, Symbol> hyp = learner.getHypothesisModel();
 
-         Assert.assertEquals(hyp.size(), DFAs.minimize(target, alphabet).size());
+        Assert.assertEquals(hyp.size(), DFAs.minimize(target, alphabet).size());
+        assert DFAs.acceptsEmptyLanguage(DFAs.xor(hyp, DFAs.minimize(target, alphabet), ALPHABET));
         return cexCounter;
     }
 
-    private OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnClassic() {
-        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
+    private OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnClassic(CompactDFA<Symbol> target, MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
+        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);
 
         ClassicLStarDFA<Symbol> learner = new ClassicLStarDFA<>(ALPHABET, memOracle);
 
-        int cexCounter = testLearnModel(TARGET_DFA, ALPHABET, learner, eqOracle);
+        int cexCounter = testLearnModel(target, ALPHABET, learner, eqOracle);
 
         System.out.println("Number of total queries: " + queryOracle.getCount());
         System.out.println("Number of membership queries: " + memOracle.getCount());
@@ -92,12 +105,12 @@ public class LearningBenchmark {
     }
 
     private OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learnIncremental(GenericObservationTable<Symbol, Boolean> startingOT) {
-        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE, "Number of total queries");
+        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(DFA_ORACLE2, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 4);
 
         OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> learner = new ExtensibleILStarDFA<>(ALPHABET, memOracle, startingOT);
-        int cexCounter = testLearnModel(TARGET_DFA, ALPHABET, learner, eqOracle);
+        int cexCounter = testLearnModel(TARGET_DFA2, ALPHABET, learner, eqOracle);
 
         System.out.println("Number of total queries: " + queryOracle.getCount());
         System.out.println("Number of membership queries: " + memOracle.getCount());
@@ -107,21 +120,34 @@ public class LearningBenchmark {
     }
 
     public void benchmark() throws IOException {
-        OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> classicLearner = learnClassic();
+        System.out.println("Autoamton seed1: " + RAND_SEED1);
+        System.out.println("Autoamton seed2: " + RAND_SEED2);
+
+        OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> classicLearner = learnClassic(TARGET_DFA1, DFA_ORACLE1);
         writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
 
-        LinkedList<Symbol> accWord = new LinkedList<>();
-        accWord.add(ALPHABET.getSymbol(0));
-        // accWord.add(ALPHABET.getSymbol(0));
-        // accWord.add(ALPHABET.getSymbol(0));
-        TARGET_DFA.setAccepting(TARGET_DFA.getState(accWord), true);
-
-        OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> classicDiffLearner = learnClassic();
+        OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> classicDiffLearner = learnClassic(TARGET_DFA2, DFA_ORACLE2);
         writeDotFile(classicDiffLearner.getHypothesisModel(), ALPHABET, "./classic-diff.dot");
 
         GenericObservationTable<Symbol, Boolean> startingOT = new GenericObservationTable<>((GenericObservationTable<Symbol, Boolean>) classicLearner.getObservationTable());
         OTLearner<? extends DFA<?, Symbol>, Symbol, Boolean> incLearner = learnIncremental(startingOT);
         writeDotFile(incLearner.getHypothesisModel(), ALPHABET, "./incremental.dot");
+
+        assert DFAs.acceptsEmptyLanguage(DFAs.xor(classicDiffLearner.getHypothesisModel(), incLearner.getHypothesisModel(), ALPHABET));
+    }
+
+    public void repeat() throws IOException {
+        for (int i = 0; i < 5000; i++) {
+            System.out.println("ITER: " + i);
+            RAND_SEED1 = (new Random()).nextLong();
+            RAND_SEED2 = (new Random()).nextLong();
+            TARGET_DFA1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(10, ALPHABET);
+            TARGET_DFA2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(10, ALPHABET);
+
+            DFA_ORACLE1 = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA1);
+            DFA_ORACLE2 = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
+            benchmark();
+        }
     }
 
     // policy : convert into method throwing unchecked exception
