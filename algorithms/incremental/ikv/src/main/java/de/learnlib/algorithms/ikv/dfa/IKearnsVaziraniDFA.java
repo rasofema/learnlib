@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -85,7 +84,7 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
 
     private void initialize() {
         // Minimising the tree at the start allows us the make the tree smaller, limiting sift depth.
-        minimiseTree(true);
+        minimiseTree();
 
         DefaultQuery<I, Boolean> nonCanonCex = analyseTree();
         while (nonCanonCex != null) {
@@ -149,13 +148,10 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
 
         splitState(srcStateInfo, prefix, sym, lca);
 
-        minimiseTree(false);
-
         return true;
     }
 
-    private void minimiseTree(boolean isFirstMin) {
-        Set<Integer> idsRemoved = new HashSet<>();
+    private void minimiseTree() {
         boolean hasRemovedLeaf = true;
         while (hasRemovedLeaf) {
             hasRemovedLeaf = false;
@@ -174,7 +170,6 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
                             siftedNode.getData().dtNode = siftedNode;
                             currentNode.setData(null);
                         } else {
-                            idsRemoved.add(currentNode.getData().id);
                             if (currentNode.getData().accessSequence.getClass() == Word.epsilon().getClass()) {
                                 siftedNode.getData().accessSequence = Word.epsilon();
                             }
@@ -188,7 +183,7 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
 
         // To maintain Isberner 2014, I3, we need to make sure transitions to remaining states
         // are correct from the beginning w.r.t the new target. As such, recompute every transition.
-        rebuildHypothesis(isFirstMin ? new HashSet<>(stateInfos.keySet()) : idsRemoved);
+        rebuildHypothesis(new HashSet<>(stateInfos.keySet()));
     }
 
     private void removeLeaf(AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> leaf) {
