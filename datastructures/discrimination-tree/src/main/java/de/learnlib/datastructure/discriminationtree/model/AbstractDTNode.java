@@ -149,12 +149,14 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
     }
 
     public D getData() {
-        assert isLeaf();
+        // Continuous learners can have tree states.
+        // assert isLeaf();
         return data;
     }
 
     public void setData(D data) {
-        assert isLeaf();
+        // Continuous learners can have tree states.
+        // assert isLeaf();
         this.data = data;
     }
 
