@@ -26,15 +26,12 @@ import java.util.Set;
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.DeterministicAutomaton;
 import net.automatalib.automata.FiniteAlphabetAutomaton;
-import net.automatalib.automata.MutableAutomaton;
 import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.fsa.MutableFSA;
 import net.automatalib.graphs.Graph;
 import net.automatalib.visualization.DefaultVisualizationHelper;
 import net.automatalib.visualization.VisualizationHelper;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.GrowingAlphabet;
-import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
 /**
@@ -104,16 +101,6 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
 
     protected abstract T mapTransition(ICTransition<I, D> internalTransition);
 
-    public ICState<I, D> createState(Word<I> as) {
-        ICState<I, D> state = newState(as);
-        states.add(state);
-        return state;
-    }
-
-    protected ICState<I, D> newState(Word<I> as) {
-        return new ICState<>(as);
-    }
-
     @Override
     public Alphabet<I> getInputAlphabet() {
         return alphabet;
@@ -160,18 +147,18 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
         dest.addIncoming(new ICTransition<>(start, input));
     }
 
-    public static final class ICTransition<I, D> {
+    public static final class ICEdge<I, D> {
 
         public final ICTransition<I, D> transition;
         public final ICState<I, D> target;
 
-        public ICTransition(ICTransition<I, D> transition, ICState<I, D> target) {
+        public ICEdge(ICTransition<I, D> transition, ICState<I, D> target) {
             this.transition = transition;
             this.target = target;
         }
     }
 
-    public class GraphView implements Graph<ICState<I, D>, ICTransition<I, D>> {
+    public class GraphView implements Graph<ICState<I, D>, ICEdge<I, D>> {
 
         @Override
         public Collection<ICState<I, D>> getNodes() {
@@ -179,37 +166,29 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
         }
 
         @Override
-        public Collection<ICTransition<I, D>> getOutgoingEdges(ICState<I, D> node) {
-            List<ICTransition<I, D>> result = new ArrayList<>();
-            for (de.learnlib.algorithms.continuous.base.ICTransition<I, D> trans : node.incoming) {
-                result.add(new ICTransition<>(trans, tr));
-                for (ICState<I, D> target : trans.getDTTarget().subtreeStates()) {
-
-                }
+        public Collection<ICEdge<I, D>> getOutgoingEdges(ICState<I, D> node) {
+            List<ICEdge<I, D>> result = new ArrayList<>();
+            for (ICTransition<I, D> trans : node.incoming) {
+                result.add(new ICEdge<>(trans, node));
             }
             return result;
         }
 
         @Override
-        public ICState<I, D> getTarget(ICTransition<I, D> edge) {
+        public ICState<I, D> getTarget(ICEdge<I, D> edge) {
             return edge.target;
         }
 
         @Override
-        public VisualizationHelper<ICState<I, D>, ICTransition<I, D>> getVisualizationHelper() {
-            return new DefaultVisualizationHelper<ICState<I, D>, ICTransition<I, D>>() {
+        public VisualizationHelper<ICState<I, D>, ICEdge<I, D>> getVisualizationHelper() {
+            return new DefaultVisualizationHelper<ICState<I, D>, ICEdge<I, D>>() {
 
                 @Override
                 public boolean getEdgeProperties(ICState<I, D> src,
-                                                 ICTransition<I, D> edge,
+                                                 ICEdge<I, D> edge,
                                                  ICState<I, D> tgt,
                                                  Map<String, String> properties) {
                     properties.put(EdgeAttrs.LABEL, String.valueOf(edge.transition.getInput()));
-                    if (edge.transition.isTree()) {
-                        properties.put(EdgeAttrs.STYLE, EdgeStyles.BOLD);
-                    } else if (edge.transition.getDTTarget().isInner()) {
-                        properties.put(EdgeAttrs.STYLE, EdgeStyles.DOTTED);
-                    }
                     return true;
                 }
 

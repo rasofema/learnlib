@@ -20,7 +20,6 @@ import de.learnlib.algorithms.continuous.base.ICState;
 import de.learnlib.algorithms.continuous.base.ICTransition;
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
 
 public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Boolean, ICState<I, Boolean>>
         implements DFA<ICState<I, Boolean>, I>{
@@ -42,11 +41,6 @@ public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Boolean, ICState
             }
         }
         return null;
-    }
-
-    @Override
-    protected ICState<I, Boolean> newState(Word<I> as) {
-        return new ICState<I, Boolean>(as);
     }
 
     @Override
