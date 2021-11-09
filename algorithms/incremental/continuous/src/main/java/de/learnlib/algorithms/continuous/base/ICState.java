@@ -4,16 +4,29 @@ import java.util.HashSet;
 import java.util.Set;
 
 import net.automatalib.words.Word;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class ICState<I, D> {
     public Boolean accepting;
     public Word<I> accessSequence;
-    public final Set<ICTransition<I, D>> incoming;
+    public final Set<ICTransition<I, D>> incoming = new HashSet<>();
 
-    public ICState(Word<I> accessSequence) {
+    public ICState() {
+        this((Word<I>) null);
+    }
+
+    public ICState(ICState<I, D> state) {
+        this.accessSequence = state.accessSequence != null
+            ? Word.fromWords(state.accessSequence)
+            : null;
+
+        this.accepting = state.accepting;
+        this.incoming.addAll(state.incoming);
+    }
+
+    public ICState(@Nullable Word<I> accessSequence) {
         this.accepting = null;
-        this.accessSequence = accessSequence.trimmed();
-        this.incoming = new HashSet<>();
+        this.accessSequence = accessSequence;
     }
     public void addIncoming(ICTransition<I, D> trans) {
         incoming.add(trans);

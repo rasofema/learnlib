@@ -18,6 +18,7 @@ package de.learnlib.algorithms.continuous.base;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.DeterministicAutomaton;
 import net.automatalib.automata.FiniteAlphabetAutomaton;
 import net.automatalib.automata.fsa.DFA;
+import net.automatalib.commons.util.Pair;
+import net.automatalib.commons.util.Triple;
 import net.automatalib.graphs.Graph;
 import net.automatalib.visualization.DefaultVisualizationHelper;
 import net.automatalib.visualization.VisualizationHelper;
@@ -46,9 +49,10 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
                                                                 FiniteAlphabetAutomaton<ICState<I, D>, I, T>,
                                                                 SupportsGrowingAlphabet<I> {
 
-    protected final Set<ICState<I, D>> states = new HashSet<>();
     private final Alphabet<I> alphabet;
-    protected ICState<I, D> initialState;
+    public ICState<I, D> initialState;
+    public final Map<Pair<ICState<I, D>, I>, ICState<I, D>> transitions = new HashMap<>();
+    public final Map<ICState<I, D>, Boolean> acceptance = new HashMap<>();
 
     /**
      * Constructor.
@@ -67,39 +71,10 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
 
     @Override
     public T getTransition(ICState<I, D> state, I input) {
-        ICTransition<I, D> trans = getInternalTransition(state, input);
-        return trans == null ? null : mapTransition(trans);
+        return mapTransition(Pair.of(state, input));
     }
 
-    /**
-     * Retrieves the <i>internal</i> transition (i.e., the {@link ICTransition} object) for a given state and input.
-     * This method is required since the {@link DFA} interface requires the return value of {@link
-     * #getTransition(ICState, Object)} to refer to the successor state directly.
-     *
-     * @param state
-     *         the source state
-     * @param input
-     *         the input symbol triggering the transition
-     *
-     * @return the transition object
-     */
-    public ICTransition<I, D> getInternalTransition(ICState<I, D> state, I input) {
-        int inputIdx = alphabet.getSymbolIndex(input);
-        return getInternalTransition(state, inputIdx);
-    }
-
-    public ICTransition<I, D> getInternalTransition(ICState<I, D> start, int input) {
-        for (ICState<I, D> state : states) {
-            for (ICTransition<I, D> trans : state.incoming) {
-                if (trans.getStart().equals(start) && trans.getInput().equals(alphabet.getSymbol(input))) {
-                    return trans;
-                }
-            }
-        }
-        return null;
-    }
-
-    protected abstract T mapTransition(ICTransition<I, D> internalTransition);
+    protected abstract T mapTransition(Pair<ICState<I, D>, I> internalTransition);
 
     @Override
     public Alphabet<I> getInputAlphabet() {
@@ -122,37 +97,32 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
 
     @Override
     public Collection<ICState<I, D>> getStates() {
-        return Collections.unmodifiableSet(states);
+        return Collections.unmodifiableSet(acceptance.keySet());
     }
 
     @Override
     public int size() {
-        return states.size();
+        return acceptance.size();
     }
 
-    public void setInitial(ICState<I, D> initial, boolean accepting) {
-        states.add(initial);
+    public void setInitial(ICState<I, D> initial) {
         initialState = initial;
-        initialState.accepting = accepting;
     }
 
     public void setAccepting(ICState<I, D> state, boolean accepting) {
-        states.add(state);
-        state.accepting = accepting;
+        acceptance.put(state, accepting);
     }
 
     public void addTransition(ICState<I, D> start, I input, ICState<I, D> dest) {
-        states.add(start);
-        states.add(dest);
-        dest.addIncoming(new ICTransition<>(start, input));
+        transitions.put(Pair.of(start, input), dest);
     }
 
     public static final class ICEdge<I, D> {
 
-        public final ICTransition<I, D> transition;
+        public final Pair<ICState<I, D>, I> transition;
         public final ICState<I, D> target;
 
-        public ICEdge(ICTransition<I, D> transition, ICState<I, D> target) {
+        public ICEdge(Pair<ICState<I, D>, I> transition, ICState<I, D> target) {
             this.transition = transition;
             this.target = target;
         }
@@ -162,15 +132,15 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
 
         @Override
         public Collection<ICState<I, D>> getNodes() {
-            return states;
+            return acceptance.keySet();
         }
 
         @Override
         public Collection<ICEdge<I, D>> getOutgoingEdges(ICState<I, D> node) {
             List<ICEdge<I, D>> result = new ArrayList<>();
-            for (ICTransition<I, D> trans : node.incoming) {
-                result.add(new ICEdge<>(trans, node));
-            }
+            transitions.entrySet().stream()
+                .filter(e -> e.getKey().getFirst().equals(node))
+                .forEach(e -> result.add(new ICEdge<>(e.getKey(), e.getValue())));
             return result;
         }
 
@@ -188,7 +158,7 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
                                                  ICEdge<I, D> edge,
                                                  ICState<I, D> tgt,
                                                  Map<String, String> properties) {
-                    properties.put(EdgeAttrs.LABEL, String.valueOf(edge.transition.getInput()));
+                    properties.put(EdgeAttrs.LABEL, String.valueOf(edge.transition.getSecond()));
                     return true;
                 }
 

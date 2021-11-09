@@ -17,12 +17,12 @@ package de.learnlib.algorithms.continuous.dfa;
 
 import de.learnlib.algorithms.continuous.base.AbstractICHypothesis;
 import de.learnlib.algorithms.continuous.base.ICState;
-import de.learnlib.algorithms.continuous.base.ICTransition;
 import net.automatalib.automata.fsa.DFA;
+import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 
 public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Boolean, ICState<I, Boolean>>
-        implements DFA<ICState<I, Boolean>, I>{
+        implements DFA<ICState<I, Boolean>, I> {
 
     public ICHypothesisDFA(Alphabet<I> alphabet) {
         super(alphabet);
@@ -34,13 +34,8 @@ public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Boolean, ICState
     }
 
     @Override
-    protected ICState<I, Boolean> mapTransition(ICTransition<I, Boolean> internalTransition) {
-        for (ICState<I, Boolean> state : states) {
-            if (state.incoming.contains(internalTransition)) {
-                return state;
-            }
-        }
-        return null;
+    protected ICState<I, Boolean> mapTransition(Pair<ICState<I, Boolean>, I> internalTransition) {
+        return transitions.getOrDefault(internalTransition, null);
     }
 
     @Override

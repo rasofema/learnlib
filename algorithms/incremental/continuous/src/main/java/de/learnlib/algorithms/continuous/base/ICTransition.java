@@ -11,7 +11,6 @@ public final class ICTransition<I, D> {
         this.input = input;
     }
 
-
     public ICState<I, D> getStart() {
         return start;
     }
