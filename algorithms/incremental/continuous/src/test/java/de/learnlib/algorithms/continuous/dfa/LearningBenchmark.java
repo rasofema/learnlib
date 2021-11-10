@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Random;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
+import de.learnlib.algorithms.ikv.dfa.SimpleDFA;
 import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFA;
 import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFAState;
 import de.learnlib.api.oracle.EquivalenceOracle;
@@ -46,8 +47,9 @@ import org.testng.annotations.Test;
 @Test
 public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
-    private static Long RAND_SEED = (new Random()).nextLong();
-    private static CompactDFA<Symbol> TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(15, ALPHABET);
+    private static Long RAND_SEED = /*(new Random()).nextLong()*/ 6748127791969163554L;
+
+    private static CompactDFA<Symbol> TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(10, ALPHABET);
     private static MembershipOracle.DFAMembershipOracle<Symbol> ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET);
 
     private static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
@@ -102,6 +104,7 @@ public class LearningBenchmark {
     }
 
     public void benchmark() throws IOException {
+        System.out.println(RAND_SEED);
         KearnsVaziraniDFA<Symbol> classicLearner = learnClassic(TARGET, ORACLE);
         writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
 
