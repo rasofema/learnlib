@@ -38,7 +38,6 @@ import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTree
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.commons.util.Pair;
-import net.automatalib.commons.util.Triple;
 import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
@@ -127,13 +126,11 @@ public class ContinuousDFA<I> {
     }
 
     private Pair<ICHypothesisDFA<I>, Word<I>> nextState(Boolean answer) {
-        if (applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)))) {
-            hypothesise(answer);
+        applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
+        if (hypothesise(answer) && activity == Activity.HYP) {
+            test();
         } else {
             switch (activity) {
-                case HYP:
-                    hypothesise(answer);
-                    break;
                 case TEST:
                     test(answer);
                     break;
@@ -218,12 +215,11 @@ public class ContinuousDFA<I> {
         }
     }
 
-    private boolean applyAnswers(Set<DefaultQuery<I, Boolean>> answers) {
+    private void applyAnswers(Set<DefaultQuery<I, Boolean>> answers) {
         assert checkINIT();
-        Triple<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
-            stateAdjustment = adjustStates(answers, Collections.emptySet(), tree);
-        boolean changed = stateAdjustment.getFirst();
-        tree = stateAdjustment.getSecond();
+        Pair<AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
+            stateAdjustment = adjustStates(answers, tree);
+        tree = stateAdjustment.getFirst();
         if (tree == null) {
             ICState<I, Boolean> startState = new ICState<>(Word.epsilon());
             this.alphabet.forEach(s -> startState.addIncoming(new ICTransition<>(startState, s)));
@@ -234,12 +230,8 @@ public class ContinuousDFA<I> {
             DiscriminationTreeIterators.leafIterator(tree).forEachRemaining(n -> origins.add(n.getData()));
             tree = restrictTargets(tree, origins);
         }
-        Pair<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>>
-            structureAdjustment = adjustStructure(answers, Collections.emptySet(), tree);
-        Boolean changedPrime = structureAdjustment.getFirst();
-        tree = structureAdjustment.getSecond();
+        tree = adjustStructure(answers, tree);
         assert checkINIT();
-        return (changed | changedPrime);
     }
 
     private Set<ICTransition<I, Boolean>> getTargets(AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
@@ -252,21 +244,25 @@ public class ContinuousDFA<I> {
         return targets;
     }
 
-    private Pair<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>>
+    private AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>
+    adjustStructure(Set<DefaultQuery<I, Boolean>> answers, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
+        return adjustStructure(answers, Collections.emptySet(), tree);
+    }
+
+    private AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>
     adjustStructure(Set<DefaultQuery<I, Boolean>> answers, Set<ICTransition<I, Boolean>> removed,
                     AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
         if (tree.isLeaf()) {
-            boolean disjoint = Collections.disjoint(tree.getData().incoming, removed);
             tree.getData().incoming.removeAll(removed);
             if (tree.getData().accepting != null) {
                 for (DefaultQuery<I, Boolean> answer : answers) {
                     if (answer.getInput().equals(tree.getData().accessSequence) && answer.getOutput().equals(!tree.getData().accepting)) {
                         tree.getData().accepting = !tree.getData().accepting;
-                        return Pair.of(true, tree);
+                        return tree;
                     }
                 }
             }
-            return Pair.of(!disjoint, tree);
+            return tree;
         } else {
             Set<ICTransition<I, Boolean>> removeLeft = getTargets(tree.getChild(false)).stream()
                 .filter(t -> {
@@ -304,43 +300,34 @@ public class ContinuousDFA<I> {
 
             Set<ICTransition<I, Boolean>> adjustLeft = new HashSet<>(removed);
             adjustLeft.addAll(removeLeft);
-            Pair<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>>
-                leftAdjustment = adjustStructure(answers, adjustLeft, tree.getChild(false));
-            Boolean changedLeft = leftAdjustment.getFirst();
-            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> leftPrime = leftAdjustment.getSecond();
+            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> leftPrime = adjustStructure(answers, adjustLeft, tree.getChild(false));
 
             Set<ICTransition<I, Boolean>> adjustRight = new HashSet<>(removed);
             adjustLeft.addAll(removeRight);
-            Pair<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>>
-                rightAdjustment = adjustStructure(answers, adjustRight, tree.getChild(true));
-            Boolean changedRight = rightAdjustment.getFirst();
-            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> rightPrime = rightAdjustment.getSecond();
-
-            Set<ICTransition<I, Boolean>> removeChildren = new HashSet<>(removeLeft);
-            removeChildren.addAll(removeRight);
+            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> rightPrime = adjustStructure(answers, adjustRight, tree.getChild(true));
 
             leftPrime.getData().incoming.addAll(removeRight);
             rightPrime.getData().incoming.addAll(removeLeft);
             tree.getData().incoming.removeAll(removed);
             setChildren(tree, leftPrime, rightPrime);
-
-            return Pair.of((changedLeft | changedRight) | !removeChildren.isEmpty(), tree);
+            return tree;
         }
     }
 
-    private Triple<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
+    private Pair<AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
+    adjustStates(Set<DefaultQuery<I, Boolean>> answers, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
+        return adjustStates(answers, Collections.emptySet(), tree);
+    }
+
+    private Pair<AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
     adjustStates(Set<DefaultQuery<I, Boolean>> answers, Set<ICState<I, Boolean>> removed,
                  AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
         if (tree.isLeaf()) {
             if (removed.contains(tree.getData())) {
-                return Triple.of(true, null, new HashSet<>(tree.getData().incoming));
+                return Pair.of(null, new HashSet<>(tree.getData().incoming));
             }
-            return Triple.of(false, tree, Collections.emptySet());
+            return Pair.of(tree, Collections.emptySet());
         } else {
-            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> result = null;
-            HashSet<ICTransition<I, Boolean>> extraTargets = new HashSet<>();
-            Boolean changed;
-
             Set<ICState<I, Boolean>> removeLeft = new HashSet<>();
             DiscriminationTreeIterators.leafIterator(tree.getChild(false)).forEachRemaining(l -> {
                 for (DefaultQuery<I, Boolean> query : answers) {
@@ -353,72 +340,69 @@ public class ContinuousDFA<I> {
             HashSet<ICState<I, Boolean>> adjustLeft = new HashSet<>();
             adjustLeft.addAll(removeLeft);
             adjustLeft.addAll(removed);
-            Triple<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
+            Pair<AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
                 leftAdjustment = adjustStates(answers, adjustLeft, tree.getChild(false));
-            Boolean changedLeft = leftAdjustment.getFirst();
-            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> leftPrime = leftAdjustment.getSecond();
-            Set<ICTransition<I, Boolean>> targetsLeft = leftAdjustment.getThird();
+            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> leftPrime = leftAdjustment.getFirst();
+            Set<ICTransition<I, Boolean>> targetsLeft = leftAdjustment.getSecond();
             if (leftPrime == null) {
-                Triple<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
+                Pair<AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
                     rightAdjustment = adjustStates(answers, removed, tree.getChild(true));
-                changed = rightAdjustment.getFirst();
-                AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> rightPrime = rightAdjustment.getSecond();
-                Set<ICTransition<I, Boolean>> targetsRight = rightAdjustment.getThird();
+                AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> rightPrime = rightAdjustment.getFirst();
+                Set<ICTransition<I, Boolean>> targetsRight = rightAdjustment.getSecond();
 
-                if (tree.getData() != null) {
-                    extraTargets.addAll(tree.getData().incoming);
-                }
-                extraTargets.addAll(targetsLeft);
-                extraTargets.addAll(targetsRight);
-
-                if (rightPrime != null) {
-                    rightPrime.getData().incoming.addAll(extraTargets);
-                    result = rightPrime;
-                    extraTargets.clear();
-                }
-            } else {
-                Set<ICState<I, Boolean>> removeRight = new HashSet<>();
-                DiscriminationTreeIterators.leafIterator(tree.getChild(true)).forEachRemaining(l -> {
-                    for (DefaultQuery<I, Boolean> query : answers) {
-                        if (query.getInput().equals(l.getData().accessSequence.concat(tree.getDiscriminator())) &&
-                            query.getOutput().equals(false)) {
-                            removeRight.add(l.getData());
-                        }
-                    }
-                });
-                HashSet<ICState<I, Boolean>> adjustRight = new HashSet<>();
-                adjustRight.addAll(removeRight);
-                adjustRight.addAll(removed);
-                Triple<Boolean, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
-                    rightAdjustment = adjustStates(answers, adjustRight, tree.getChild(true));
-                Boolean changedRight = rightAdjustment.getFirst();
-                AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> rightPrime = rightAdjustment.getSecond();
-                Set<ICTransition<I, Boolean>> targetsRight = rightAdjustment.getThird();
-
-                changed = (changedLeft | changedRight);
-                if (tree.getData() != null) {
-                    extraTargets.addAll(tree.getData().incoming);
-                }
-                extraTargets.addAll(targetsLeft);
-                extraTargets.addAll(targetsRight);
                 if (rightPrime == null) {
-                    leftPrime.getData().incoming.addAll(extraTargets);
-                    result = leftPrime;
-                } else {
-                    result = new BinaryDTNode<>(new ICState<>());
-                    result.getData().incoming.addAll(extraTargets);
-                    result.setDiscriminator(tree.getDiscriminator());
-                    setChildren(result, leftPrime, rightPrime);
+                    HashSet<ICTransition<I, Boolean>> extraTargets = new HashSet<>();
+                    if (tree.getData() != null) {
+                        extraTargets.addAll(tree.getData().incoming);
+                    }
+                    extraTargets.addAll(targetsLeft);
+                    extraTargets.addAll(targetsRight);
+
+                    return Pair.of(null, new HashSet<>(extraTargets));
                 }
-                extraTargets.clear();
+
+                if (tree.getData() != null) {
+                    rightPrime.getData().incoming.addAll(tree.getData().incoming);
+                }
+                rightPrime.getData().incoming.addAll(targetsLeft);
+                rightPrime.setParent(null);
+                rightPrime.setParentOutcome(null);
+                return Pair.of(rightPrime, Collections.emptySet());
+            }
+            Set<ICState<I, Boolean>> removeRight = new HashSet<>();
+            DiscriminationTreeIterators.leafIterator(tree.getChild(true)).forEachRemaining(l -> {
+                for (DefaultQuery<I, Boolean> query : answers) {
+                    if (query.getInput().equals(l.getData().accessSequence.concat(tree.getDiscriminator())) &&
+                        query.getOutput().equals(false)) {
+                        removeRight.add(l.getData());
+                    }
+                }
+            });
+            HashSet<ICState<I, Boolean>> adjustRight = new HashSet<>();
+            adjustRight.addAll(removeRight);
+            adjustRight.addAll(removed);
+            Pair<AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>, Set<ICTransition<I, Boolean>>>
+                rightAdjustment = adjustStates(answers, adjustRight, tree.getChild(true));
+            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> rightPrime = rightAdjustment.getFirst();
+            Set<ICTransition<I, Boolean>> targetsRight = rightAdjustment.getSecond();
+
+            if (rightPrime == null) {
+                if (tree.getData() != null) {
+                    leftPrime.getData().incoming.addAll(tree.getData().incoming);
+                }
+                leftPrime.getData().incoming.addAll(targetsRight);
+                leftPrime.setParent(null);
+                leftPrime.setParentOutcome(null);
+                return Pair.of(leftPrime, Collections.emptySet());
             }
 
-            if (result != null) {
-                result.setParent(null);
-                result.setParentOutcome(null);
+            AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> node = new BinaryDTNode<>(new ICState<>());
+            if (tree.getData() != null) {
+                node.getData().incoming.addAll(tree.getData().incoming);
             }
-
-            return Triple.of(changed, result, extraTargets);
+            node.setDiscriminator(tree.getDiscriminator());
+            setChildren(node, leftPrime, rightPrime);
+            return Pair.of(node, Collections.emptySet());
         }
     }
 
@@ -463,19 +447,24 @@ public class ContinuousDFA<I> {
         return result;
     }
 
-    private void hypothesise(Boolean answer) {
+    private boolean hypothesise(Boolean answer) {
         assert checkINIT();
         if (answer != null) {
-            advanceHypothesis(query, answer, Collections.emptySet(), tree);
+            tree = advanceHypothesis(query, answer, tree);
         }
         Word<I> nextQuery = hypothesisQuery(tree);
         if (nextQuery == null) {
-            query = sampleWord();
-            activity = Activity.TEST;
-        } else {
-            query = nextQuery;
+            return true;
         }
+        query = nextQuery;
+        activity = Activity.HYP;
         assert checkINIT();
+        return false;
+    }
+
+    private AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>
+    advanceHypothesis(Word<I> query, Boolean answer, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
+        return advanceHypothesis(query, answer, Collections.emptySet(), tree);
     }
 
     private AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>
@@ -483,15 +472,14 @@ public class ContinuousDFA<I> {
                       AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
         AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> newNode = new BinaryDTNode<>(tree.getData());
         if (tree.isLeaf()) {
-
             if (tree.getData().accessSequence.equals(query)) {
                 newNode.getData().accepting = answer;
             }
             extraTargets.forEach(t -> newNode.getData().addIncoming(t));
         } else {
             newNode.setDiscriminator(tree.getDiscriminator());
-            newNode.setParent(tree.getParent());
-            newNode.setParentOutcome(tree.getParentOutcome());
+            newNode.setParent(null);
+            newNode.setParentOutcome(null);
             newNode.setDepth(tree.getDepth());
 
             Set<ICTransition<I, Boolean>> allTrans = new HashSet<>(tree.getData().incoming);
@@ -512,16 +500,16 @@ public class ContinuousDFA<I> {
             remaining.forEach(t -> newNode.getData().addIncoming(t));
             if (moved.isEmpty()) {
                 setChildren(newNode,
-                    advanceHypothesis(query, answer, Collections.emptySet(), tree.getChild(false)),
-                    advanceHypothesis(query, answer, Collections.emptySet(), tree.getChild(true)));
+                    advanceHypothesis(query, answer, tree.getChild(false)),
+                    advanceHypothesis(query, answer, tree.getChild(true)));
             } else if (answer) {
                 setChildren(newNode,
-                    advanceHypothesis(query, true, Collections.emptySet(), tree.getChild(false)),
+                    advanceHypothesis(query, true, tree.getChild(false)),
                     advanceHypothesis(query, true, moved, tree.getChild(true)));
             } else {
                 setChildren(newNode,
                     advanceHypothesis(query, false, moved, tree.getChild(false)),
-                    advanceHypothesis(query, false, Collections.emptySet(), tree.getChild(true)));
+                    advanceHypothesis(query, false, tree.getChild(true)));
 
             }
         }
@@ -558,9 +546,13 @@ public class ContinuousDFA<I> {
         return Word.epsilon();
     }
 
+    private void test() {
+        test(null);
+    }
+
     private void test(Boolean answer) {
         ICHypothesisDFA<I> hyp = extractHypothesis(Collections.emptySet(), tree);
-        if (hyp.computeOutput(query) == answer) {
+        if (answer == null || hyp.computeOutput(query) == answer) {
             query = sampleWord();
             activity = Activity.TEST;
         } else {
@@ -605,26 +597,31 @@ public class ContinuousDFA<I> {
         query = Objects.requireNonNull(hyp.getState(pre.concat(u))).accessSequence.concat(v).concat(post);
     }
 
-    private HashSet<DefaultQuery<I, Boolean>>
-    treePath(Word<I> as, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
-        HashSet<DefaultQuery<I, Boolean>> decisions = new HashSet<>();
+    private Set<DefaultQuery<I, Boolean>> implications(AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> leaf,
+    AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
+        return implications(leaf, Collections.emptySet(), tree);
+    }
 
-        Iterator<AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>>> iter = DiscriminationTreeIterators.leafIterator(tree);
-        AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> node = null;
-        while (iter.hasNext()) {
-            node = iter.next();
-            if (node.getData().accessSequence.equals(as)) {
-                break;
+    private Set<DefaultQuery<I, Boolean>> implications(AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> leaf,
+    Set<DefaultQuery<I, Boolean>> current, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
+        if (tree.isLeaf()) {
+            if (tree.equals(leaf)) {
+                return current.stream()
+                    .map(q -> new DefaultQuery<>(tree.getData().accessSequence.concat(q.getInput()), q.getOutput()))
+                    .collect(Collectors.toSet());
             }
+            return Collections.emptySet();
         }
 
-        assert node != null;
-        while (!node.isRoot()) {
-            decisions.add(new DefaultQuery<>(node.getParent().getDiscriminator(), node.getParentOutcome()));
-            node = node.getParent();
-        }
+        Set<DefaultQuery<I, Boolean>> leftCur = new HashSet<>(current);
+        leftCur.add(new DefaultQuery<>(tree.getDiscriminator(), false));
+        Set<DefaultQuery<I, Boolean>> impl = new HashSet<>(implications(leaf, leftCur, tree.getChild(false)));
 
-        return decisions;
+        Set<DefaultQuery<I, Boolean>> rightCur = new HashSet<>(current);
+        rightCur.add(new DefaultQuery<>(tree.getDiscriminator(), true));
+        impl.addAll(implications(leaf, rightCur, tree.getChild(true)));
+
+        return impl;
     }
 
     private void finishCounterexample(Boolean swap, Word<I> shrt, Word<I> lng, Word<I> e) {
@@ -649,17 +646,18 @@ public class ContinuousDFA<I> {
         assert longNode.getData() != null;
         alphabet.forEach(a -> tree.getData().incoming.add(new ICTransition<>(longNode.getData(), a)));
 
-        activity = Activity.HYP;
-        Set<DefaultQuery<I, Boolean>> newImplications = treePath(shrt, tree).stream()
-            .map(q -> new DefaultQuery<>(shrt.concat(q.getInput()), q.getOutput()))
-            .collect(Collectors.toSet());
-        newImplications.addAll(treePath(lng, tree).stream()
-            .map(q -> new DefaultQuery<>(lng.concat(q.getInput()), q.getOutput()))
-            .collect(Collectors.toSet()));
-
+        Set<DefaultQuery<I, Boolean>> newImplications = implications(longNode, tree);
+        newImplications.add(new DefaultQuery<>(shrt.concat(e), swap));
         applyAnswers(newImplications);
-        hypothesise(null);
+
+        if (hypothesise(null)) {
+            test();
+        }
         assert checkINIT();
+    }
+
+    private Boolean derive(Word<I> word, AbstractWordBasedDTNode<I, Boolean, ICState<I, Boolean>> tree) {
+        return derive(word, Collections.emptySet(), tree);
     }
 
     private Boolean derive(Word<I> word, Set<DefaultQuery<I, Boolean>> values,

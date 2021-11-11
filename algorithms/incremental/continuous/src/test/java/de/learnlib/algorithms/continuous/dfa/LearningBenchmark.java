@@ -47,9 +47,9 @@ import org.testng.annotations.Test;
 @Test
 public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
-    private static Long RAND_SEED = /*(new Random()).nextLong()*/ 6748127791969163554L;
+    private static Long RAND_SEED = /*(new Random()).nextLong()*/ -6393369468915893012L;
 
-    private static CompactDFA<Symbol> TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(10, ALPHABET);
+    private static CompactDFA<Symbol> TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(3, ALPHABET);
     private static MembershipOracle.DFAMembershipOracle<Symbol> ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET);
 
     private static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
@@ -104,7 +104,7 @@ public class LearningBenchmark {
     }
 
     public void benchmark() throws IOException {
-        System.out.println(RAND_SEED);
+        System.out.println("SEED: " + RAND_SEED);
         KearnsVaziraniDFA<Symbol> classicLearner = learnClassic(TARGET, ORACLE);
         writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
 
@@ -112,6 +112,15 @@ public class LearningBenchmark {
         writeDotFile(contDFA, ALPHABET, "./continuous.dot");
 
         assert DFAs.acceptsEmptyLanguage(DFAs.xor(classicLearner.getHypothesisModel(), contDFA, ALPHABET));
+    }
+
+    public void repeat() throws IOException {
+        for (int i = 0; i < 1000; i++) {
+            RAND_SEED = new Random().nextLong();
+            TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(3, ALPHABET);
+            ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET);
+            benchmark();
+        }
     }
 
     // policy : convert into method throwing unchecked exception
