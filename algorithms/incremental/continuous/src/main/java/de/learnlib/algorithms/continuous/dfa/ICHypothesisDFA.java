@@ -16,35 +16,30 @@
 package de.learnlib.algorithms.continuous.dfa;
 
 import de.learnlib.algorithms.continuous.base.AbstractICHypothesis;
-import de.learnlib.algorithms.continuous.base.ICState;
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
+import net.automatalib.words.Word;
 
-public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Boolean, ICState<I, Boolean>>
-        implements DFA<ICState<I, Boolean>, I> {
+public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Word<I>>
+        implements DFA<Word<I>, I> {
 
     public ICHypothesisDFA(Alphabet<I> alphabet) {
         super(alphabet);
     }
 
     @Override
-    public ICState<I, Boolean> getSuccessor(ICState<I, Boolean> transition) {
+    public Word<I> getSuccessor(Word<I> transition) {
         return transition;
     }
 
     @Override
-    protected ICState<I, Boolean> mapTransition(Pair<ICState<I, Boolean>, I> internalTransition) {
+    protected Word<I> mapTransition(Pair<Word<I>, I> internalTransition) {
         return transitions.getOrDefault(internalTransition, null);
     }
 
     @Override
-    public boolean isAccepting(ICState<I, Boolean> state) {
-        return state.isAccepting();
-    }
-
-    @Override
-    public Void getTransitionProperty(ICState<I, Boolean> transition) {
+    public Void getTransitionProperty(Word<I> transition) {
         return null;
     }
 }

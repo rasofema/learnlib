@@ -19,22 +19,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.DeterministicAutomaton;
 import net.automatalib.automata.FiniteAlphabetAutomaton;
-import net.automatalib.automata.fsa.DFA;
 import net.automatalib.commons.util.Pair;
-import net.automatalib.commons.util.Triple;
 import net.automatalib.graphs.Graph;
 import net.automatalib.visualization.DefaultVisualizationHelper;
 import net.automatalib.visualization.VisualizationHelper;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.GrowingAlphabet;
+import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
 /**
@@ -45,14 +42,14 @@ import net.automatalib.words.impl.Alphabets;
  *
  * @author Malte Isberner
  */
-public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAutomaton<ICState<I, D>, I, T>,
-                                                                FiniteAlphabetAutomaton<ICState<I, D>, I, T>,
+public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomaton<Word<I>, I, T>,
+                                                                FiniteAlphabetAutomaton<Word<I>, I, T>,
                                                                 SupportsGrowingAlphabet<I> {
 
     private final Alphabet<I> alphabet;
-    public ICState<I, D> initialState;
-    public final Map<Pair<ICState<I, D>, I>, ICState<I, D>> transitions = new HashMap<>();
-    public final Map<ICState<I, D>, Boolean> acceptance = new HashMap<>();
+    public Word<I> initialState;
+    public final Map<Pair<Word<I>, I>, Word<I>> transitions = new HashMap<>();
+    public final Map<Word<I>, Boolean> acceptance = new HashMap<>();
 
     /**
      * Constructor.
@@ -65,16 +62,16 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
     }
 
     @Override
-    public ICState<I, D> getInitialState() {
+    public Word<I> getInitialState() {
         return initialState;
     }
 
     @Override
-    public T getTransition(ICState<I, D> state, I input) {
+    public T getTransition(Word<I> state, I input) {
         return mapTransition(Pair.of(state, input));
     }
 
-    protected abstract T mapTransition(Pair<ICState<I, D>, I> internalTransition);
+    protected abstract T mapTransition(Pair<Word<I>, I> internalTransition);
 
     @Override
     public Alphabet<I> getInputAlphabet() {
@@ -96,7 +93,7 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
     }
 
     @Override
-    public Collection<ICState<I, D>> getStates() {
+    public Collection<Word<I>> getStates() {
         return Collections.unmodifiableSet(acceptance.keySet());
     }
 
@@ -105,39 +102,44 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
         return acceptance.size();
     }
 
-    public void setInitial(ICState<I, D> initial) {
+    public void setInitial(Word<I> initial) {
         initialState = initial;
     }
 
-    public void setAccepting(ICState<I, D> state, boolean accepting) {
+    public void setAccepting(Word<I> state, boolean accepting) {
         acceptance.put(state, accepting);
     }
 
-    public void addTransition(ICState<I, D> start, I input, ICState<I, D> dest) {
+    public boolean isAccepting(Word<I> state) {
+        return acceptance.getOrDefault(state, false);
+    }
+
+
+    public void addTransition(Word<I> start, I input, Word<I> dest) {
         transitions.put(Pair.of(start, input), dest);
     }
 
-    public static final class ICEdge<I, D> {
+    public static final class ICEdge<I> {
 
-        public final Pair<ICState<I, D>, I> transition;
-        public final ICState<I, D> target;
+        public final Pair<Word<I>, I> transition;
+        public final Word<I> target;
 
-        public ICEdge(Pair<ICState<I, D>, I> transition, ICState<I, D> target) {
+        public ICEdge(Pair<Word<I>, I> transition, Word<I> target) {
             this.transition = transition;
             this.target = target;
         }
     }
 
-    public class GraphView implements Graph<ICState<I, D>, ICEdge<I, D>> {
+    public class GraphView implements Graph<Word<I>, ICEdge<I>> {
 
         @Override
-        public Collection<ICState<I, D>> getNodes() {
+        public Collection<Word<I>> getNodes() {
             return acceptance.keySet();
         }
 
         @Override
-        public Collection<ICEdge<I, D>> getOutgoingEdges(ICState<I, D> node) {
-            List<ICEdge<I, D>> result = new ArrayList<>();
+        public Collection<ICEdge<I>> getOutgoingEdges(Word<I> node) {
+            List<ICEdge<I>> result = new ArrayList<>();
             transitions.entrySet().stream()
                 .filter(e -> e.getKey().getFirst().equals(node))
                 .forEach(e -> result.add(new ICEdge<>(e.getKey(), e.getValue())));
@@ -145,18 +147,18 @@ public abstract class AbstractICHypothesis<I, D, T> implements DeterministicAuto
         }
 
         @Override
-        public ICState<I, D> getTarget(ICEdge<I, D> edge) {
+        public Word<I> getTarget(ICEdge<I> edge) {
             return edge.target;
         }
 
         @Override
-        public VisualizationHelper<ICState<I, D>, ICEdge<I, D>> getVisualizationHelper() {
-            return new DefaultVisualizationHelper<ICState<I, D>, ICEdge<I, D>>() {
+        public VisualizationHelper<Word<I>, ICEdge<I>> getVisualizationHelper() {
+            return new DefaultVisualizationHelper<Word<I>, ICEdge<I>>() {
 
                 @Override
-                public boolean getEdgeProperties(ICState<I, D> src,
-                                                 ICEdge<I, D> edge,
-                                                 ICState<I, D> tgt,
+                public boolean getEdgeProperties(Word<I> src,
+                                                 ICEdge<I> edge,
+                                                 Word<I> tgt,
                                                  Map<String, String> properties) {
                     properties.put(EdgeAttrs.LABEL, String.valueOf(edge.transition.getSecond()));
                     return true;
