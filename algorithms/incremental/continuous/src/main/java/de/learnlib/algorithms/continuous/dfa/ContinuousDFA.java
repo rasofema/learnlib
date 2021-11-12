@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
@@ -84,9 +83,7 @@ public class ContinuousDFA<I> {
 
     private boolean checkINIT() {
         HashSet<Word<I>> targets = new HashSet<>();
-        DiscriminationTreeIterators.nodeIterator(tree).forEachRemaining(t -> {
-            targets.addAll(((ICNode<I>) t).targets);
-        });
+        DiscriminationTreeIterators.nodeIterator(tree).forEachRemaining(t -> targets.addAll(((ICNode<I>) t).targets));
         return targets.stream()
             .filter(s -> s.equals(Word.epsilon()))
             .count() == 1;
@@ -361,7 +358,7 @@ public class ContinuousDFA<I> {
                 return Pair.of(leftPrime, Collections.emptySet());
             }
 
-            ICNode<I> node = new ICNode<I>();
+            ICNode<I> node = new ICNode<>();
             node.targets.addAll(tree.targets);
             node.setDiscriminator(tree.getDiscriminator());
             setChildren(node, leftPrime, rightPrime);

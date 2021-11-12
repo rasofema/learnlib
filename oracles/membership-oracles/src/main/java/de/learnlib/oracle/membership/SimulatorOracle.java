@@ -41,7 +41,7 @@ import net.automatalib.words.Word;
  */
 public class SimulatorOracle<I, D> implements SingleQueryOracle<I, D> {
 
-    private final SuffixOutput<I, D> automaton;
+    protected SuffixOutput<I, D> automaton;
 
     /**
      * Constructor.

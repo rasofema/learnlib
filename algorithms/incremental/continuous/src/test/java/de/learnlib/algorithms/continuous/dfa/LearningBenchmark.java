@@ -19,17 +19,18 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
-import de.learnlib.algorithms.ikv.dfa.SimpleDFA;
+import de.learnlib.algorithms.continuous.util.PhiMetric;
 import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFA;
-import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFAState;
 import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.filter.statistic.oracle.DFACounterOracle;
 import de.learnlib.oracle.equivalence.WpMethodEQOracle;
+import de.learnlib.oracle.membership.MutatingSimulatorOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
 import de.learnlib.util.Experiment;
 import net.automatalib.automata.Automaton;
@@ -88,30 +89,45 @@ public class LearningBenchmark {
 
     }
 
-    private CompactDFA<Symbol> learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
+    private List<CompactDFA<Symbol>> learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
         long startTime = System.nanoTime();
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
 
         ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, memOracle);
-        List<CompactDFA<Symbol>> results = learner.learn(10000);
+        List<CompactDFA<Symbol>> results = learner.learn(2000);
 
         System.out.println("Number of total queries: " + queryOracle.getCount());
         System.out.println("Number of membership queries: " + memOracle.getCount());
         long endTime = System.nanoTime();
         System.out.println(endTime - startTime);
-        return results.get(results.size() - 1);
+        return results;
     }
 
     public void benchmark() throws IOException {
-        System.out.println("SEED: " + RAND_SEED);
-        KearnsVaziraniDFA<Symbol> classicLearner = learnClassic(TARGET, ORACLE);
-        writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
+//        System.out.println("SEED: " + RAND_SEED);
+//        KearnsVaziraniDFA<Symbol> classicLearner = learnClassic(TARGET, ORACLE);
+//        writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
 
-        CompactDFA<Symbol> contDFA = learnContinuous(ORACLE);
-        writeDotFile(contDFA, ALPHABET, "./continuous.dot");
+        long RAND_SEED1 = (new Random()).nextLong();
+        long RAND_SEED2 = (new Random()).nextLong();
+        CompactDFA<Symbol> TARGET1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(10, ALPHABET);
+        CompactDFA<Symbol> TARGET2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(10, ALPHABET);
+        List<CompactDFA<Symbol>> targets = new LinkedList<>();
+        targets.add(TARGET1);
+        targets.add(TARGET2);
+        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(1000, targets);
 
-        assert DFAs.acceptsEmptyLanguage(DFAs.xor(classicLearner.getHypothesisModel(), contDFA, ALPHABET));
+        List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
+        writeDotFile(dfas.get(dfas.size() - 1), ALPHABET, "./continuous.dot");
+
+        List<Double> metrics = new LinkedList<>();
+        PhiMetric<Symbol> pd = new PhiMetric<>(ALPHABET, 0.9);
+        for (int i = 0; i < dfas.size(); i++) {
+            metrics.add(pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), dfas.get(i)));
+        }
+
+        assert DFAs.acceptsEmptyLanguage(DFAs.xor(TARGET2, dfas.get(dfas.size() - 1), ALPHABET));
     }
 
     public void repeat() throws IOException {
