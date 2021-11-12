@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -132,8 +133,7 @@ public class ContinuousDFA<I> {
         }
 
         if (activity != Activity.TEST) {
-            // TODO: this assignment is reversed in pseudocode.
-            Boolean nextAnswer = derive(query, Collections.emptySet(), tree);
+            Boolean nextAnswer = derive(query, tree);
             if (nextAnswer != null) {
                 return nextState(nextAnswer);
             }
@@ -151,11 +151,6 @@ public class ContinuousDFA<I> {
                 initial = localTree.accessSequence;
             }
 
-            // TODO: Does this still apply?
-            if (localTree.accepting == null) {
-                localTree.accepting = false;
-            }
-
             ICHypothesisDFA<I> hyp = new ICHypothesisDFA<>(alphabet);
             hyp.setInitial(initial);
 
@@ -171,7 +166,9 @@ public class ContinuousDFA<I> {
                 }
             }
 
-            hyp.setAccepting(localTree.accessSequence, localTree.accepting);
+            hyp.setAccepting(localTree.accessSequence, localTree.accepting != null
+                ? localTree.accepting
+                : false);
 
             return hyp;
         } else {
@@ -210,7 +207,7 @@ public class ContinuousDFA<I> {
             stateAdjustment = adjustStates(answers, tree);
         tree = stateAdjustment.getFirst();
         if (tree == null) {
-            this.tree = new ICNode<I>(Word.epsilon());
+            this.tree = new ICNode<>(Word.epsilon());
             tree.targets.add(Word.epsilon());
             this.alphabet.forEach(s ->  tree.targets.add(Word.fromSymbols(s)));
         } else {
@@ -389,6 +386,8 @@ public class ContinuousDFA<I> {
     private ICNode<I> restrictTargets(ICNode<I> tree, Set<Word<I>> origins) {
         assert checkINIT();
         ICNode<I> result = new ICNode<>();
+        result.accessSequence = tree.accessSequence;
+        result.accepting = tree.accepting;
         HashSet<Word<I>> oldTargets = new HashSet<>(tree.targets);
         result.targets.clear();
         for (Word<I> target : oldTargets) {
@@ -402,9 +401,7 @@ public class ContinuousDFA<I> {
             result.targets.add(Word.epsilon());
         }
 
-        if (tree.isLeaf()) {
-            result.accessSequence = tree.accessSequence;
-        } else {
+        if (!tree.isLeaf()) {
             result.setDiscriminator(tree.getDiscriminator());
             setChildren(result,
                 restrictTargets(tree.getChild(false), origins),
@@ -439,10 +436,13 @@ public class ContinuousDFA<I> {
     ICNode<I> tree) {
         ICNode<I> newNode = new ICNode<>();
         if (tree.isLeaf()) {
+            newNode.accessSequence = tree.accessSequence;
+            newNode.targets.addAll(tree.targets);
+            newNode.targets.addAll(extraTargets);
+            newNode.accepting = tree.accepting;
             if (tree.accessSequence.equals(query)) {
                 newNode.accepting = answer;
             }
-            newNode.targets.addAll(extraTargets);
         } else {
             newNode.setDiscriminator(tree.getDiscriminator());
             newNode.setParent(null);
@@ -584,31 +584,47 @@ public class ContinuousDFA<I> {
         return impl;
     }
 
+    private ICNode<I> replaceLeaf(Word<I> s, ICNode<I> node, ICNode<I> tree) {
+        if (tree.isLeaf() && tree.accessSequence.equals(s)) {
+            node.targets.addAll(tree.targets);
+            return node;
+        }
+        if (!tree.isLeaf()) {
+            setChildren(tree,
+                replaceLeaf(s, node, tree.getChild(false)),
+                replaceLeaf(s, node, tree.getChild(true)));
+            return tree;
+        }
+        return tree;
+    }
+
     private void finishCounterexample(Boolean swap, Word<I> shrt, Word<I> lng, Word<I> e) {
         assert checkINIT();
+        ICNode<I> node = new ICNode<>();
+        node.setDiscriminator(e);
+
         ICNode<I> longNode = new ICNode<>(lng);
-        AtomicReference<ICNode<I>> shortNode = new AtomicReference<>();
+        ICNode<I> shortNode = new ICNode<>(shrt);
+        setChildren(node,
+            swap ? longNode : shortNode,
+            swap ? shortNode : longNode);
+
+        AtomicBoolean duplicate = new AtomicBoolean(false);
         DiscriminationTreeIterators.leafIterator(tree).forEachRemaining(n -> {
-            if (((ICNode<I>) n).accessSequence.equals(shrt)) {
-                shortNode.set(((ICNode<I>) n));
+            if (((ICNode<I>) n).accessSequence.equals(lng)) {
+                duplicate.set(true);
             }
         });
-        ICNode<I> newShort = new ICNode<>(shortNode.get());
-        shortNode.get().setDiscriminator(e);
-        setChildren(shortNode.get(),
-            swap ? longNode : newShort,
-            swap ? newShort : longNode);
 
-        shortNode.get().targets.addAll(newShort.targets);
-        newShort.targets.clear();
+        tree = replaceLeaf(shrt, node, tree);
 
-        assert longNode.getData() != null;
-        alphabet.forEach(a -> tree.targets.add(lng.append(a)));
+        if (!duplicate.get()) {
+            alphabet.forEach(a -> tree.targets.add(lng.append(a)));
+        }
 
         Set<DefaultQuery<I, Boolean>> newImplications = implications(longNode, tree);
         newImplications.add(new DefaultQuery<>(shrt.concat(e), swap));
         applyAnswers(newImplications);
-
         if (hypothesise(null)) {
             test();
         }
@@ -627,7 +643,7 @@ public class ContinuousDFA<I> {
             } else {
                 Set<DefaultQuery<I, Boolean>> queries = new HashSet<>();
                 values.forEach(value -> tree.targets.forEach(t -> {
-                    queries.add(new DefaultQuery<>(value.getInput(), value.getOutput()));
+                    queries.add(new DefaultQuery<>(tree.accessSequence.concat(value.getInput()), value.getOutput()));
                     queries.add(new DefaultQuery<>(t.concat(value.getInput()), value.getOutput()));
                 }));
 

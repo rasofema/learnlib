@@ -47,9 +47,9 @@ import org.testng.annotations.Test;
 @Test
 public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
-    private static Long RAND_SEED = /*(new Random()).nextLong()*/ -6393369468915893012L;
+    private static Long RAND_SEED = (new Random()).nextLong();
 
-    private static CompactDFA<Symbol> TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(3, ALPHABET);
+    private static CompactDFA<Symbol> TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(10, ALPHABET);
     private static MembershipOracle.DFAMembershipOracle<Symbol> ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET);
 
     private static int testLearnModel(DFA<?, Symbol> target, Alphabet<Symbol> alphabet,
@@ -117,7 +117,7 @@ public class LearningBenchmark {
     public void repeat() throws IOException {
         for (int i = 0; i < 1000; i++) {
             RAND_SEED = new Random().nextLong();
-            TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(3, ALPHABET);
+            TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(10, ALPHABET);
             ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET);
             benchmark();
         }

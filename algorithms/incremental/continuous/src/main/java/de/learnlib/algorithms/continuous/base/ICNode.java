@@ -13,7 +13,7 @@ public class ICNode<I> extends BinaryDTNode<I, Object> {
     public final Set<Word<I>> targets = new HashSet<>();
 
     public ICNode(ICNode<I> node) {
-        super(node);
+        super((Object) null);
         this.accepting = node.accepting;
         this.accessSequence = node.accessSequence;
         this.targets.addAll(node.targets);
