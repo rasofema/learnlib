@@ -100,7 +100,7 @@ public class LearningBenchmark {
         return learner.learn(8000);
     }
 
-    public List<Double> benchmark(Random RAND) throws IOException {
+    private List<Double> benchmark(Random RAND) throws IOException {
         List<CompactDFA<Symbol>> targets = new LinkedList<>();
         for (int i = 0; i < 2; i++) {
             targets.add((new RandomAutomata(RAND)).randomDFA(10, ALPHABET));
@@ -120,7 +120,7 @@ public class LearningBenchmark {
         return metrics;
     }
 
-    public List<Double> acceptanceMutation(Random RAND) throws IOException {
+    private List<Double> acceptanceMutation(Random RAND) throws IOException {
         List<CompactDFA<Symbol>> targets = new LinkedList<>();
         targets.add((new RandomAutomata(RAND)).randomDFA(10, ALPHABET));
 
@@ -144,7 +144,7 @@ public class LearningBenchmark {
         return metrics;
     }
 
-    public List<Double> transitionMutation(Random RAND) {
+    private List<Double> transitionMutation(Random RAND) {
         List<CompactDFA<Symbol>> targets = new LinkedList<>();
         targets.add((new RandomAutomata(RAND)).randomDFA(20, ALPHABET));
 
