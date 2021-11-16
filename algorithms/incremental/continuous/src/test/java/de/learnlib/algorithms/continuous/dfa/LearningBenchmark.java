@@ -19,9 +19,15 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.util.PhiMetric;
@@ -70,7 +76,6 @@ public class LearningBenchmark {
     }
 
     private KearnsVaziraniDFA<Symbol> learnClassic(DFA<?, Symbol> target, MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
-        long startTime = System.nanoTime();
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
         EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 8);
@@ -83,40 +88,24 @@ public class LearningBenchmark {
         System.out.println("Number of membership queries: " + memOracle.getCount());
         System.out.println("Number of equivalence queries: " + cexCounter);
         System.out.println("Number of queries used in equivalence: " + (queryOracle.getCount() - memOracle.getCount()));
-        long endTime = System.nanoTime();
-        System.out.println(endTime - startTime);
         return learner;
 
     }
 
     private List<CompactDFA<Symbol>> learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
-        long startTime = System.nanoTime();
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
 
         ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, memOracle);
-        List<CompactDFA<Symbol>> results = learner.learn(2000);
-
-        System.out.println("Number of total queries: " + queryOracle.getCount());
-        System.out.println("Number of membership queries: " + memOracle.getCount());
-        long endTime = System.nanoTime();
-        System.out.println(endTime - startTime);
-        return results;
+        return learner.learn(8000);
     }
 
-    public void benchmark() throws IOException {
-//        System.out.println("SEED: " + RAND_SEED);
-//        KearnsVaziraniDFA<Symbol> classicLearner = learnClassic(TARGET, ORACLE);
-//        writeDotFile(classicLearner.getHypothesisModel(), ALPHABET, "./classic.dot");
-
-        long RAND_SEED1 = (new Random()).nextLong();
-        long RAND_SEED2 = (new Random()).nextLong();
-        CompactDFA<Symbol> TARGET1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(10, ALPHABET);
-        CompactDFA<Symbol> TARGET2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(10, ALPHABET);
+    public List<Double> benchmark(Random RAND) throws IOException {
         List<CompactDFA<Symbol>> targets = new LinkedList<>();
-        targets.add(TARGET1);
-        targets.add(TARGET2);
-        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(1000, targets);
+        for (int i = 0; i < 2; i++) {
+            targets.add((new RandomAutomata(RAND)).randomDFA(10, ALPHABET));
+        }
+        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(2000, targets);
 
         List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
         writeDotFile(dfas.get(dfas.size() - 1), ALPHABET, "./continuous.dot");
@@ -127,16 +116,96 @@ public class LearningBenchmark {
             metrics.add(pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), dfas.get(i)));
         }
 
-        assert DFAs.acceptsEmptyLanguage(DFAs.xor(TARGET2, dfas.get(dfas.size() - 1), ALPHABET));
+        assert metrics.stream().filter(m -> m == 1.0).count() >= targets.size();
+        return metrics;
     }
 
-    public void repeat() throws IOException {
-        for (int i = 0; i < 1000; i++) {
-            RAND_SEED = new Random().nextLong();
-            TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(10, ALPHABET);
-            ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET);
-            benchmark();
+    public List<Double> acceptanceMutation(Random RAND) throws IOException {
+        List<CompactDFA<Symbol>> targets = new LinkedList<>();
+        targets.add((new RandomAutomata(RAND)).randomDFA(10, ALPHABET));
+
+        CompactDFA<Symbol> t1 = new CompactDFA<>(targets.get(0));
+        Integer state = RAND.nextInt(11);
+        t1.setAccepting(state, !t1.isAccepting(state));
+        targets.add(t1);
+
+        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(2000, targets);
+
+        List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
+        writeDotFile(dfas.get(dfas.size() - 1), ALPHABET, "./continuous.dot");
+
+        List<Double> metrics = new LinkedList<>();
+        PhiMetric<Symbol> pd = new PhiMetric<>(ALPHABET, 0.9);
+        for (int i = 0; i < dfas.size(); i++) {
+            metrics.add(pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), dfas.get(i)));
         }
+
+        assert metrics.stream().filter(m -> m == 1.0).count() >= targets.size();
+        return metrics;
+    }
+
+    public List<Double> transitionMutation(Random RAND) {
+        List<CompactDFA<Symbol>> targets = new LinkedList<>();
+        targets.add((new RandomAutomata(RAND)).randomDFA(20, ALPHABET));
+
+        CompactDFA<Symbol> t1 = new CompactDFA<>(targets.get(0));
+        Integer stateFrom = RAND.nextInt(21);
+        Integer stateTo = RAND.nextInt(21);
+        Symbol symbol = ALPHABET.getSymbol(RAND.nextInt(ALPHABET.size()));
+
+        t1.removeTransition(stateFrom, symbol, t1.getTransition(stateFrom, symbol));
+        t1.addTransition(stateFrom, symbol, stateTo);
+
+        targets.add(t1);
+
+        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(4000, targets);
+
+        List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
+
+        Map<Integer, Double> metrics = new ConcurrentHashMap<>();
+        PhiMetric<Symbol> pd = new PhiMetric<>(ALPHABET, 0.9);
+        IntStream.range(0, dfas.size()).boxed()
+            .parallel()
+            .forEach(i -> metrics.put(i, pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), dfas.get(i))));
+
+        List<Double> metricsList = new LinkedList<>();
+        for (int i = 0; i < dfas.size(); i++) {
+            metricsList.add(metrics.get(i) > 0.999 ? 1.0 : metrics.get(i));
+        }
+
+//        assert metricsList.stream().filter(m -> m == 1.0).count() >= targets.size();
+        return metricsList;
+    }
+
+    public void repeat() {
+        Random RAND = new Random();
+        long seed = /*RAND.nextLong()*/ 1673067670938585872L;
+        System.out.println("SEED: " + seed);
+        RAND.setSeed(seed);
+        List<List<Double>> allMetrics = new LinkedList<>();
+
+        AtomicInteger progress = new AtomicInteger(0);
+        IntStream.range(0, 200).boxed()
+            .parallel()
+            .forEach(i -> {
+                System.out.println("ITER: " + progress.incrementAndGet());
+                allMetrics.add(transitionMutation(RAND));
+            });
+
+        List<Double> averageMetrics = new LinkedList<>(allMetrics.get(0));
+        allMetrics.remove(0);
+
+        for (List<Double> metrics : allMetrics) {
+            for (int i = 0; i < metrics.size(); i++) {
+                averageMetrics.set(i, averageMetrics.get(i) + metrics.get(i));
+            }
+        }
+
+        for (int i = 0; i < averageMetrics.size(); i++) {
+            averageMetrics.set(i, averageMetrics.get(i) / (allMetrics.size() + 1));
+        }
+
+        averageMetrics.forEach(m -> System.out.println(m > 0.999 ? 1.0 : m));
     }
 
     // policy : convert into method throwing unchecked exception

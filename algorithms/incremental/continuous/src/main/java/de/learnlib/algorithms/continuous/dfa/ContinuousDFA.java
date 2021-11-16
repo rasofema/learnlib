@@ -108,7 +108,6 @@ public class ContinuousDFA<I> {
         this.tree = new ICNode<>(Word.epsilon());
         tree.targets.add(Word.epsilon());
         this.alphabet.forEach(s ->  tree.targets.add(Word.fromSymbols(s)));
-
     }
 
     private Pair<ICHypothesisDFA<I>, Word<I>> nextState(Boolean answer) {
