@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -55,6 +56,7 @@ import org.testng.annotations.Test;
 public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
     private static Long RAND_SEED = (new Random()).nextLong();
+    private static Logger log = Logger.getLogger("LearningBenchmark");
 
     private static CompactDFA<Symbol> TARGET = (new RandomAutomata(new Random(RAND_SEED))).randomDFA(10, ALPHABET);
     private static MembershipOracle.DFAMembershipOracle<Symbol> ORACLE = new SimulatorOracle.DFASimulatorOracle<>(TARGET);
@@ -73,23 +75,6 @@ public class LearningBenchmark {
         Assert.assertEquals(experiment.getFinalHypothesis().size(), DFAs.minimize(target, alphabet).size());
         Assert.assertTrue(DFAs.acceptsEmptyLanguage(DFAs.xor(experiment.getFinalHypothesis(), DFAs.minimize(target, alphabet), alphabet)));
         return (int) experiment.getRounds().getCount();
-    }
-
-    private KearnsVaziraniDFA<Symbol> learnClassic(DFA<?, Symbol> target, MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
-        DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
-        DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
-        EquivalenceOracle<? super DFA<?, Symbol>, Symbol, Boolean> eqOracle = new WpMethodEQOracle<>(queryOracle, 8);
-
-        KearnsVaziraniDFA<Symbol> learner = new KearnsVaziraniDFA<>(ALPHABET, memOracle, true, AcexAnalyzers.LINEAR_FWD);
-
-        int cexCounter = testLearnModel(target, ALPHABET, learner, eqOracle);
-
-        System.out.println("Number of total queries: " + queryOracle.getCount());
-        System.out.println("Number of membership queries: " + memOracle.getCount());
-        System.out.println("Number of equivalence queries: " + cexCounter);
-        System.out.println("Number of queries used in equivalence: " + (queryOracle.getCount() - memOracle.getCount()));
-        return learner;
-
     }
 
     private List<CompactDFA<Symbol>> learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
@@ -180,7 +165,7 @@ public class LearningBenchmark {
     public void repeat() {
         Random RAND = new Random();
         long seed = /*RAND.nextLong()*/ 1673067670938585872L;
-        System.out.println("SEED: " + seed);
+        log.info("SEED: " + seed);
         RAND.setSeed(seed);
         List<List<Double>> allMetrics = new LinkedList<>();
 
@@ -188,7 +173,7 @@ public class LearningBenchmark {
         IntStream.range(0, 200).boxed()
             .parallel()
             .forEach(i -> {
-                System.out.println("ITER: " + progress.incrementAndGet());
+                log.info("ITER: " + progress.incrementAndGet());
                 allMetrics.add(transitionMutation(RAND));
             });
 
@@ -205,7 +190,7 @@ public class LearningBenchmark {
             averageMetrics.set(i, averageMetrics.get(i) / (allMetrics.size() + 1));
         }
 
-        averageMetrics.forEach(m -> System.out.println(m > 0.999 ? 1.0 : m));
+        averageMetrics.forEach(m -> log.info(m > 0.999 ? "1.0" : m.toString()));
     }
 
     // policy : convert into method throwing unchecked exception
