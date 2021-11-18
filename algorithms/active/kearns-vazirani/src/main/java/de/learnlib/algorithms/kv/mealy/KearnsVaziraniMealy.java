@@ -65,13 +65,13 @@ public class KearnsVaziraniMealy<I, O>
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KearnsVaziraniMealy.class);
 
-    private final Alphabet<I> alphabet;
-    private final MembershipOracle<I, Word<O>> oracle;
-    private final boolean repeatedCounterexampleEvaluation;
-    private final AcexAnalyzer ceAnalyzer;
-    private MultiDTree<I, Word<O>, StateInfo<I, Word<O>>> discriminationTree;
+    protected final Alphabet<I> alphabet;
+    protected final MembershipOracle<I, Word<O>> oracle;
+    protected final boolean repeatedCounterexampleEvaluation;
+    protected final AcexAnalyzer ceAnalyzer;
+    protected MultiDTree<I, Word<O>, StateInfo<I, Word<O>>> discriminationTree;
     protected List<StateInfo<I, Word<O>>> stateInfos = new ArrayList<>();
-    private CompactMealy<I, O> hypothesis;
+    protected CompactMealy<I, O> hypothesis;
 
     @GenerateBuilder
     public KearnsVaziraniMealy(Alphabet<I> alphabet,

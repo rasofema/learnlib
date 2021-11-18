@@ -46,15 +46,15 @@ public class KearnsVaziraniMealyState<I, O> {
         this.stateInfos = stateInfos;
     }
 
-    CompactMealy<I, O> getHypothesis() {
+    public CompactMealy<I, O> getHypothesis() {
         return hypothesis;
     }
 
-    MultiDTree<I, Word<O>, StateInfo<I, Word<O>>> getDiscriminationTree() {
+    public MultiDTree<I, Word<O>, StateInfo<I, Word<O>>> getDiscriminationTree() {
         return discriminationTree;
     }
 
-    List<StateInfo<I, Word<O>>> getStateInfos() {
+    public List<StateInfo<I, Word<O>>> getStateInfos() {
         return stateInfos;
     }
 }
