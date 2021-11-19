@@ -18,7 +18,7 @@ public class PhiMetric<I> {
     }
 
     public double diff(CompactDFA<I> dfa1, CompactDFA<I> dfa2) {
-        return langValue(DFAs.xor(dfa1, dfa2, alphabet));
+        return langValue(DFAs.minimize(DFAs.xor(DFAs.minimize(dfa1), DFAs.minimize(dfa2), alphabet)));
     }
 
     public double sim(CompactDFA<I> dfa1, CompactDFA<I> dfa2) {
