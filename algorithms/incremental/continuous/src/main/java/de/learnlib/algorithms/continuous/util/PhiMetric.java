@@ -101,7 +101,7 @@ public class PhiMetric<I> {
 
         private final int m;      // number of rows
         private final int n;      // number of columns
-        private List<List<Double>> a;     // m-by-(n+1) augmented matrix
+        private final double[][] a;     // m-by-(n+1) augmented matrix
 
         /**
          * Solves the linear system of equations <em>Ax</em> = <em>b</em>,
@@ -115,8 +115,9 @@ public class PhiMetric<I> {
         public GaussianElimination(List<List<Double>> A) {
             m = A.size();
             n = A.get(0).size() - 1;
-            a = A;
-
+            a = A.stream()
+                .map(l -> l.stream().mapToDouble(Double::doubleValue).toArray())
+                .toArray(double[][]::new);
             forwardElimination();
         }
 
@@ -127,7 +128,7 @@ public class PhiMetric<I> {
                 // find pivot row using partial pivoting
                 int max = p;
                 for (int i = p+1; i < m; i++) {
-                    if (Math.abs(a.get(i).get(p)) > Math.abs(a.get(max).get(p))) {
+                    if (Math.abs(a[i][p]) > Math.abs(a[max][p])) {
                         max = i;
                     }
                 }
@@ -136,7 +137,7 @@ public class PhiMetric<I> {
                 swap(p, max);
 
                 // singular or nearly singular
-                if (Math.abs(a.get(p).get(p)) <= EPSILON) {
+                if (Math.abs(a[p][p]) <= EPSILON) {
                     continue;
                 }
 
@@ -147,17 +148,17 @@ public class PhiMetric<I> {
 
         // swap row1 and row2
         private void swap(int row1, int row2) {
-            List<Double> temp = a.get(row1);
-            a.set(row1, a.get(row2));
-            a.set(row2, temp);
+            double[] temp = a[row1];
+            a[row1] = a[row2];
+            a[row2] = temp;
         }
 
         // pivot on a[p][p]
         private void pivot(int p) {
             for (int i = p+1; i < m; i++) {
-                double alpha = a.get(i).get(p) / a.get(p).get(p);
+                double alpha = a[i][p] / a[p][p];
                 for (int j = p; j <= n; j++) {
-                    a.get(i).set(j, a.get(i).get(j) - alpha * a.get(p).get(j));
+                    a[i][j] -= alpha * a[p][j];
                 }
             }
         }
@@ -174,12 +175,12 @@ public class PhiMetric<I> {
             for (int i = Math.min(n-1, m-1); i >= 0; i--) {
                 double sum = 0.0;
                 for (int j = i+1; j < n; j++) {
-                    sum += a.get(i).get(j) * x[j];
+                    sum += a[i][j] * x[j];
                 }
 
-                if (Math.abs(a.get(i).get(i)) > EPSILON)
-                    x[i] = (a.get(i).get(n) - sum) / a.get(i).get(i);
-                else if (Math.abs(a.get(i).get(n) - sum) > EPSILON)
+                if (Math.abs(a[i][i]) > EPSILON)
+                    x[i] = (a[i][n] - sum) / a[i][i];
+                else if (Math.abs(a[i][n] - sum) > EPSILON)
                     return null;
             }
 
@@ -187,12 +188,23 @@ public class PhiMetric<I> {
             for (int i = n; i < m; i++) {
                 double sum = 0.0;
                 for (int j = 0; j < n; j++) {
-                    sum += a.get(i).get(j) * x[j];
+                    sum += a[i][j] * x[j];
                 }
-                if (Math.abs(a.get(i).get(n) - sum) > EPSILON)
+                if (Math.abs(a[i][n] - sum) > EPSILON)
                     return null;
             }
             return x;
+        }
+
+        /**
+         * Returns true if there exists a solution to the linear system of
+         * equations <em>Ax</em> = <em>b</em>.
+         *
+         * @return {@code true} if there exists a solution to the linear system
+         *         of equations <em>Ax</em> = <em>b</em>; {@code false} otherwise
+         */
+        public boolean isFeasible() {
+            return primal() != null;
         }
     }
 

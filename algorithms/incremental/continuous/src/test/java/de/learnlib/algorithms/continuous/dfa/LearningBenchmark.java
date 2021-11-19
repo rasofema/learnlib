@@ -204,18 +204,20 @@ public class LearningBenchmark {
         List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
         // Sample every 10, otherwise too slow.
         List<CompactDFA<Symbol>> sample = IntStream.range(0, dfas.size())
-            .filter(n -> n % 10 == 0)
+            .filter(n -> n % 5 == 0)
             .mapToObj(dfas::get)
             .collect(Collectors.toList());
 
         Map<Integer, Double> metrics = new ConcurrentHashMap<>();
-        IntStream.range(0, dfas.size()).boxed()
+        IntStream.range(0, sample.size()).boxed()
             .parallel()
             .forEach(i -> metrics.put(i, pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), sample.get(i))));
 
         List<Double> metricsList = new LinkedList<>();
         for (int i = 0; i < sample.size(); i++) {
-            metricsList.add(metrics.get(i) > 0.999 ? 1.0 : metrics.get(i));
+            for (int j = 0; j < 5; j++) {
+                metricsList.add(metrics.get(i) > 0.999 ? 1.0 : metrics.get(i));
+            }
         }
 
 //        assert metricsList.stream().filter(m -> m == 1.0).count() >= targets.size();
