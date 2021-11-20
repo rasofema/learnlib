@@ -21,7 +21,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -202,25 +205,22 @@ public class LearningBenchmark {
         MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(4000, targets);
 
         List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
-        // Sample every 10, otherwise too slow.
-        List<CompactDFA<Symbol>> sample = IntStream.range(0, dfas.size())
-            .filter(n -> n % 5 == 0)
-            .mapToObj(dfas::get)
-            .collect(Collectors.toList());
 
-        Map<Integer, Double> metrics = new ConcurrentHashMap<>();
-        IntStream.range(0, sample.size()).boxed()
+        // Sample every 5, otherwise too slow.
+        ConcurrentHashMap<Integer, Double> metrics = new ConcurrentHashMap<>();
+        IntStream.range(0, dfas.size()).boxed()
+            .filter(n -> n % 10 == 0)
             .parallel()
-            .forEach(i -> metrics.put(i, pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), sample.get(i))));
+            .forEach(i -> metrics.put(i, pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), dfas.get(i))));
 
         List<Double> metricsList = new LinkedList<>();
-        for (int i = 0; i < sample.size(); i++) {
-            for (int j = 0; j < 5; j++) {
-                metricsList.add(metrics.get(i) > 0.999 ? 1.0 : metrics.get(i));
+        TreeMap<Integer, Double> orderedMetrics = new TreeMap<>(metrics);
+        for (Double metric : orderedMetrics.values()) {
+            for (int j = 0; j < 10; j++) {
+                metricsList.add(metric > 0.999 ? 1.0 : metric);
             }
         }
 
-//        assert metricsList.stream().filter(m -> m == 1.0).count() >= targets.size();
         return Pair.of(classicMetrics, metricsList);
     }
 
@@ -256,18 +256,18 @@ public class LearningBenchmark {
         long seed = /*RAND.nextLong()*/ 1673067670938585872L;
         System.out.println("SEED: " + seed);
         RAND.setSeed(seed);
-        List<Pair<List<Double>, List<Double>>> allMetrics = new LinkedList<>();
+        ConcurrentHashMap<Integer, Pair<List<Double>, List<Double>>> allMetrics = new ConcurrentHashMap<>();
         AtomicInteger progress = new AtomicInteger(0);
-        IntStream.range(0, 1).boxed()
+        IntStream.range(0, 10).boxed()
             .parallel()
             .forEach(i -> {
                 System.out.println("ITER: " + progress.incrementAndGet());
-                allMetrics.add(transitionMutation(RAND));
+                allMetrics.put(i, transitionMutation(RAND));
             });
 
-        List<List<Double>> classicMetrics = allMetrics.stream()
+        List<List<Double>> classicMetrics = allMetrics.values().stream()
             .map(Pair::getFirst).collect(Collectors.toList());
-        List<List<Double>> continuousMetrics = allMetrics.stream()
+        List<List<Double>> continuousMetrics = allMetrics.values().stream()
             .map(Pair::getSecond).collect(Collectors.toList());
 
         System.out.println("=== CLASSIC ===");
