@@ -686,7 +686,6 @@ public class ContinuousDFA<I> {
             hyps.add(DFAs.or(hyp, hyp, alphabet));
             Word<I> query = pair.getSecond();
             answer = oracle.answerQuery(query);
-
         }
         return hyps;
     }

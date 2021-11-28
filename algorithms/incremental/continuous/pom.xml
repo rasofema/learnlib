@@ -77,13 +77,11 @@ limitations under the License.
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-membership-oracles</artifactId>
             <version>0.17.0-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-equivalence-oracles</artifactId>
             <version>0.17.0-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>de.learnlib.testsupport</groupId>
@@ -124,6 +122,11 @@ limitations under the License.
             <groupId>net.automatalib</groupId>
             <artifactId>automata-serialization-dot</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-ikv</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
