@@ -33,7 +33,7 @@ public class MutatingSimulatorOracle<I, D> extends SimulatorOracle<I, D> {
     }
 
     public SuffixOutput<I, D> getTarget(int n) {
-        return automata.get(n / limit);
+        return automata.get((n - 1) / limit);
     }
 
     public static class DFAMutatingSimulatorOracle<I> extends MutatingSimulatorOracle<I, Boolean> implements SingleQueryOracleDFA<I> {

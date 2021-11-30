@@ -25,13 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.dfa.ContinuousDFA;
@@ -120,31 +114,11 @@ public class LearningBenchmark {
         return results;
     }
 
-    private static List<CompactDFA<Symbol>> learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle) {
+    private static List<Pair<Integer, CompactDFA<Symbol>>>  learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
-        DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(queryOracle, "Number of membership queries");
 
-        ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, memOracle);
-        return learner.learn(8000);
-    }
-
-    private List<Double> benchmark(Random RAND) {
-        List<CompactDFA<Symbol>> targets = new LinkedList<>();
-        for (int i = 0; i < 2; i++) {
-            targets.add((new RandomAutomata(RAND)).randomDFA(10, ALPHABET));
-        }
-        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(2000, targets);
-
-        List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
-
-        List<Double> metrics = new LinkedList<>();
-        PhiMetric<Symbol> pd = new PhiMetric<>(ALPHABET, 0.9);
-        for (int i = 0; i < dfas.size(); i++) {
-            metrics.add(pd.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), dfas.get(i)));
-        }
-
-        assert metrics.stream().filter(m -> m == 1.0).count() >= targets.size();
-        return metrics;
+        ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, queryOracle);
+        return learner.learn(queryOracle.getCounter(), limit, limit / 2 / 100);
     }
 
     public static void runClassic(List<CompactDFA<Symbol>> targets, int limit) {
@@ -196,7 +170,8 @@ public class LearningBenchmark {
             System.out.println(metric.toString());
         }
 
-        List<Pair<Integer, Double>> incremental = learnIncremental(learnRes.getFirst(), new SimulatorOracle.DFASimulatorOracle<>(targets.get(1)), limit).stream()
+        List<Pair<Integer, CompactDFA<Symbol>>> result = learnIncremental(learnRes.getFirst(), new SimulatorOracle.DFASimulatorOracle<>(targets.get(1)), limit);
+        List<Pair<Integer, Double>> incremental = result.stream()
             .parallel()
             .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(1), p.getSecond())))
             .collect(Collectors.toList());
@@ -217,21 +192,28 @@ public class LearningBenchmark {
         }
     }
 
-    public static void runContinuous(List<CompactDFA<Symbol>> targets, int limit, int sample) {
+    public static void runContinuous(List<CompactDFA<Symbol>> targets, int limit) {
         MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(limit, targets);
         System.out.println("=== CONTINUOUS ===");
-        List<CompactDFA<Symbol>> dfas = learnContinuous(ORACLE);
-        ConcurrentHashMap<Integer, Double> metrics = new ConcurrentHashMap<>();
-        IntStream.range(0, dfas.size()).boxed()
-            .filter(n -> n % sample == 0)
+        List<Pair<Integer, CompactDFA<Symbol>>> result = learnContinuous(ORACLE, limit * targets.size());
+        List<Pair<Integer, Double>> dfas = result.stream()
             .parallel()
-            .forEach(i -> metrics.put(i, PD.sim((CompactDFA<Symbol>) ORACLE.getTarget(i), dfas.get(i))));
-
-        TreeMap<Integer, Double> orderedMetrics = new TreeMap<>(metrics);
-        for (Double metric : orderedMetrics.values()) {
-            for (int j = 0; j < sample; j++) {
-                System.out.println(metric);
+            .map(p -> Pair.of(p.getFirst(), PD.sim((CompactDFA<Symbol>) ORACLE.getTarget(p.getFirst()), p.getSecond())))
+            .collect(Collectors.toList());
+        List<Double> run = new LinkedList<>();
+        for (int i = 0; i < dfas.size() - 1; i++) {
+            while (run.size() < dfas.get(i + 1).getFirst()) {
+                run.add(dfas.get(i).getSecond());
             }
+        }
+
+        run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
+        while (run.size() < limit * targets.size()) {
+            run.add(dfas.get(dfas.size() - 1).getSecond());
+        }
+
+        for (Double metric : run) {
+            System.out.println(metric.toString());
         }
     }
 
@@ -350,7 +332,7 @@ public class LearningBenchmark {
 
         runClassic(targets, limit);
         runIncremental(targets, limit);
-        runContinuous(targets, limit, 10);
+        runContinuous(targets, limit);
     }
 
     public static void benchmarkMutation(Random random, int size, int limit) {

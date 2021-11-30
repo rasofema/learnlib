@@ -39,18 +39,20 @@ public class PhiMetric<I> {
         return coef;
     }
 
-    private List<Double> getRow(CompactDFA<I> dfa, Integer q) {
+    private double[] getRow(CompactDFA<I> dfa, Integer q) {
         Integer initial = dfa.getInitialState();
         List<Integer> states = dfa.getStates().stream()
             .filter(s -> !s.equals(initial))
             .collect(Collectors.toList());
         states.add(initial);
 
-        List<Double> row = states.stream()
-            .map(s -> coefficient(dfa, q, s))
-            .collect(Collectors.toList());
-        row.add(dfa.isAccepting(q) ? (1 - alpha) : 0);
-        return row;
+        double[] finalRow = new double[states.size() + 1];
+        for (int i = 0; i < states.size(); i++) {
+            finalRow[i] = coefficient(dfa, q, states.get(i));
+        }
+
+        finalRow[states.size()] = dfa.isAccepting(q) ? (1 - alpha) : 0;
+        return finalRow;
     }
 
     private double langValue(CompactDFA<I> dfa) {
@@ -60,9 +62,10 @@ public class PhiMetric<I> {
             .collect(Collectors.toList());
         states.add(initial);
 
-        List<List<Double>> matrix = states.stream()
-            .map(q -> getRow(dfa, q))
-            .collect(Collectors.toList());
+        double[][] matrix = new double[states.size()][];
+        for (int i = 0; i < states.size(); i++) {
+            matrix[i] = getRow(dfa, states.get(i));
+        }
 
         double[] solution = new GaussianElimination(matrix).primal();
         return solution[solution.length - 1];
@@ -112,12 +115,10 @@ public class PhiMetric<I> {
          * @throws IllegalArgumentException if the dimensions disagree, i.e.,
          *         the length of {@code b} does not equal {@code m}
          */
-        public GaussianElimination(List<List<Double>> A) {
-            m = A.size();
-            n = A.get(0).size() - 1;
-            a = A.stream()
-                .map(l -> l.stream().mapToDouble(Double::doubleValue).toArray())
-                .toArray(double[][]::new);
+        public GaussianElimination(double[][] A) {
+            m = A.length;
+            n = A[0].length - 1;
+            a = A;
             forwardElimination();
         }
 
