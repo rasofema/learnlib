@@ -118,7 +118,7 @@ public class LearningBenchmark {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
 
         ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, queryOracle);
-        return learner.learn(queryOracle.getCounter(), limit, limit / 2 / 100);
+        return learner.learn(limit, /*limit / 2 / 100*/ 1);
     }
 
     public static void runClassic(List<CompactDFA<Symbol>> targets, int limit) {
