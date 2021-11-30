@@ -31,8 +31,10 @@ import com.github.misberner.buildergen.annotations.GenerateBuilder;
 import de.learnlib.algorithms.continuous.base.ICNode;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.api.query.Query;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
+import de.learnlib.filter.statistic.Counter;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.fsa.DFAs;
@@ -71,6 +73,23 @@ public class ContinuousDFA<I> {
         }
     }
 
+    private class TestState {
+        public Set<Word<I>> queue;
+        public Word<I> shrt;
+        public Word<I> lng;
+        public Word<I> post;
+        public Boolean swap;
+
+
+        public TestState(Set<Word<I>> queue, Word<I> shrt, Word<I> lng, Word<I> post, Boolean swap) {
+            this.queue = queue;
+            this.shrt = shrt;
+            this.lng = lng;
+            this.post = post;
+            this.swap = swap;
+        }
+    }
+
     private final Alphabet<I> alphabet;
     private final double alpha;
     private final MembershipOracle<I, Boolean> oracle;
@@ -80,6 +99,7 @@ public class ContinuousDFA<I> {
 
     private Word<I> activityINIT;
     private BinarySearchState activityCEX;
+    private TestState activityTEST;
 
     /**
      * Constructor.
@@ -106,11 +126,13 @@ public class ContinuousDFA<I> {
     private Pair<ICHypothesisDFA<I>, Word<I>> nextState(Boolean answer) {
         applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
         if (hypothesise(answer) && activity == Activity.HYP) {
-            test();
+            testRandom();
         } else {
             switch (activity) {
                 case TEST:
                     test(answer);
+                    break;
+                case HYP:
                     break;
                 case INIT:
                     initialiseCounterexample(answer, activityINIT);
@@ -131,7 +153,6 @@ public class ContinuousDFA<I> {
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
         return Pair.of(hyp, query);
     }
-
 
     private ICHypothesisDFA<I> extractHypothesis(Set<Word<I>> extraTargets, ICNode<I> localTree) {
         if (localTree.isLeaf()) {
@@ -489,26 +510,73 @@ public class ContinuousDFA<I> {
         return Word.epsilon();
     }
 
+    private void testRandom() {
+        query = sampleWord();
+        activity = Activity.TEST;
+        activityTEST = null;
+    }
+
     private void test() {
         test(null);
     }
 
     private void test(Boolean answer) {
-        ICHypothesisDFA<I> hyp = extractHypothesis(Collections.emptySet(), tree);
-        if (answer == null || hyp.computeOutput(query) == answer) {
-            query = sampleWord();
-            activity = Activity.TEST;
+        ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
+        if (activityTEST != null) {
+            if (activityTEST.queue.isEmpty()) {
+                finishCounterexample(activityTEST.swap, activityTEST.shrt, activityTEST.lng, activityTEST.post);
+            } else {
+                activity = Activity.TEST;
+                query = activityTEST.queue.iterator().next();
+                activityTEST.queue.remove(query);
+            }
         } else {
-            activity = Activity.INIT;
-            activityINIT = query;
-            query = hyp.getInitialState().concat(query);
+            if (answer == null || hyp.computeOutput(query) == answer) {
+                testRandom();
+            } else {
+                activity = Activity.INIT;
+                activityINIT = query;
+                query = hyp.getInitialState().concat(query);
+            }
         }
+    }
+    private List<DefaultQuery<I, Boolean>> treePath(Word<I> find, ICNode<I> currentTree) {
+        return treePath(find, currentTree, new LinkedList<>());
+    }
+
+    private List<DefaultQuery<I, Boolean>> treePath(Word<I> find, ICNode<I> currentTree, List<DefaultQuery<I, Boolean>> current) {
+        if (currentTree.isLeaf()) {
+            if (currentTree.accessSequence.equals(find)) {
+                return current;
+            }
+            return new LinkedList<>();
+        }
+        List<DefaultQuery<I, Boolean>> leftCurrent = new LinkedList<>(current);
+        leftCurrent.add(0, new DefaultQuery<>(currentTree.getDiscriminator(), false));
+        List<DefaultQuery<I, Boolean>> left = treePath(find, currentTree.getChild(false), leftCurrent);
+
+        List<DefaultQuery<I, Boolean>> rightCurrent = new LinkedList<>(current);
+        rightCurrent.add(0, new DefaultQuery<>(currentTree.getDiscriminator(), true));
+        List<DefaultQuery<I, Boolean>> right = treePath(find, currentTree.getChild(true), rightCurrent);
+
+        List<DefaultQuery<I, Boolean>> result = new LinkedList<>(left);
+        result.addAll(right);
+        return result;
+    }
+
+    private void checkSplit(Word<I> shrt, Word<I> lng, Word<I> post, Boolean answer) {
+        Set<Word<I>> queue = treePath(shrt, tree).stream()
+            .map(Query::getInput)
+            .map(shrt::concat)
+            .collect(Collectors.toSet());
+        activityTEST = new TestState(queue, shrt, lng, post, answer);
+        test(answer);
     }
 
     private void initialiseCounterexample(Boolean answer, Word<I> cex) {
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
         if (hyp.computeOutput(cex) == answer) {
-            finishCounterexample(answer, hyp.getInitialState(), Word.epsilon(), cex);
+            checkSplit(hyp.getInitialState(), Word.epsilon(), cex, answer);
         } else {
             splitCounterexample(Word.epsilon(), cex, Word.epsilon());
         }
@@ -517,10 +585,9 @@ public class ContinuousDFA<I> {
     private void handleCounterexample(Boolean answer, BinarySearchState bsState) {
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
         if (bsState.u.size() == 1 && bsState.v.equals(Word.epsilon())) {
-            finishCounterexample(answer,
-                Objects.requireNonNull(hyp.getState(bsState.pre.concat(bsState.u))),
-                Objects.requireNonNull(hyp.getState(bsState.pre)).concat(bsState.u),
-                bsState.post);
+            checkSplit(Objects.requireNonNull(hyp.getState(bsState.pre.concat(bsState.u))),
+                       Objects.requireNonNull(hyp.getState(bsState.pre)).concat(bsState.u),
+                       bsState.post, answer);
         } else if (hyp.computeOutput(query) == answer) {
             splitCounterexample(bsState.pre, bsState.u, bsState.v.concat(bsState.post));
         } else {
@@ -607,7 +674,7 @@ public class ContinuousDFA<I> {
         newImplications.add(new DefaultQuery<>(shrt.concat(e), swap));
         applyAnswers(newImplications);
         if (hypothesise(null)) {
-            test();
+            testRandom();
         }
     }
 
