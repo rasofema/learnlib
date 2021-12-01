@@ -52,11 +52,12 @@ public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
     private static final double ALPHA = 0.9;
     private static final PhiMetric<Symbol> PD = new PhiMetric<>(ALPHABET, ALPHA);
+    private static Random RAND = new Random();
 
     private static Word<Symbol> sampleWord() {
-        if ((new Random()).nextFloat() < ALPHA) {
+        if (RAND.nextFloat() < ALPHA) {
             List<Symbol> alphas = new LinkedList<>(ALPHABET);
-            Collections.shuffle(alphas);
+            Collections.shuffle(alphas, RAND);
             return Word.fromSymbols(alphas.get(0)).concat(sampleWord());
         }
         return Word.epsilon();
@@ -118,7 +119,7 @@ public class LearningBenchmark {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
 
         ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, queryOracle);
-        return learner.learn(limit, /*limit / 2 / 100*/ 1);
+        return learner.learn(limit, limit / 2 / 100);
     }
 
     public static void runClassic(List<CompactDFA<Symbol>> targets, int limit) {
@@ -212,24 +213,26 @@ public class LearningBenchmark {
             run.add(dfas.get(dfas.size() - 1).getSecond());
         }
 
+        assert run.get(run.size() - 1).equals(1.0);
+
         for (Double metric : run) {
             System.out.println(metric.toString());
         }
     }
 
-    public static CompactDFA<Symbol> randomAutomatonGen(Random random, int size) {
-        CompactDFA<Symbol> aut = new RandomAutomata(random).randomDFA(size, ALPHABET, true);
+    public static CompactDFA<Symbol> randomAutomatonGen(int size) {
+        CompactDFA<Symbol> aut = new RandomAutomata(RAND).randomDFA(size, ALPHABET, true);
         while (aut.size() != size) {
-            aut = new RandomAutomata(random).randomDFA(size, ALPHABET, true);
+            aut = new RandomAutomata(RAND).randomDFA(size, ALPHABET, true);
         }
         return aut;
     }
 
-    public static CompactDFA<Symbol> randomTransMutation(Random random, CompactDFA<Symbol> source) {
+    public static CompactDFA<Symbol> randomTransMutation(CompactDFA<Symbol> source) {
         CompactDFA<Symbol> aut = new CompactDFA<>(source);
-        Integer stateFrom = random.nextInt(source.size() - 1);
-        Integer stateTo = random.nextInt(source.size() - 1);
-        Symbol symbol = source.getInputAlphabet().getSymbol(random.nextInt(source.getInputAlphabet().size()));
+        Integer stateFrom = RAND.nextInt(source.size() - 1);
+        Integer stateTo = RAND.nextInt(source.size() - 1);
+        Symbol symbol = source.getInputAlphabet().getSymbol(RAND.nextInt(source.getInputAlphabet().size()));
 
         aut.removeTransition(stateFrom, symbol, aut.getTransition(stateFrom, symbol));
         aut.addTransition(stateFrom, symbol, stateTo);
@@ -237,36 +240,36 @@ public class LearningBenchmark {
         return aut;
     }
 
-    public static CompactDFA<Symbol> randomAcceptanceMutation(Random random, CompactDFA<Symbol> source) {
+    public static CompactDFA<Symbol> randomAcceptanceMutation(CompactDFA<Symbol> source) {
         CompactDFA<Symbol> aut = new CompactDFA<>(source);
-        Integer state = random.nextInt(source.size() - 1);
+        Integer state = RAND.nextInt(source.size() - 1);
         aut.setAccepting(state, !aut.isAccepting(state));
         return aut;
     }
 
-    public static CompactDFA<Symbol> randomAddStateMutation(Random random, CompactDFA<Symbol> source) {
+    public static CompactDFA<Symbol> randomAddStateMutation(CompactDFA<Symbol> source) {
         CompactDFA<Symbol> aut = new CompactDFA<>(source);
-        Integer state = aut.addState(random.nextBoolean());
+        Integer state = aut.addState(RAND.nextBoolean());
 
         for (Symbol a : source.getInputAlphabet()) {
-            Integer sourceState = random.nextInt(aut.size() - 1);
+            Integer sourceState = RAND.nextInt(aut.size() - 1);
             aut.removeTransition(sourceState, a, aut.getTransition(sourceState, a));
             aut.addTransition(sourceState, a, state);
         }
 
         for (Symbol a : source.getInputAlphabet()) {
-            aut.addTransition(state, a, random.nextInt(aut.size() - 1));
+            aut.addTransition(state, a, RAND.nextInt(aut.size() - 1));
         }
 
         return aut;
     }
 
-    public static CompactDFA<Symbol> randomRemoveStateMutation(Random random, CompactDFA<Symbol> source) {
+    public static CompactDFA<Symbol> randomRemoveStateMutation(CompactDFA<Symbol> source) {
         CompactDFA<Symbol> aut = new CompactDFA<>(source);
 
         Integer state = aut.getInitialState();
         while (Objects.equals(state, aut.getInitialState())) {
-            state = random.nextInt(aut.size() - 1);
+            state = RAND.nextInt(aut.size() - 1);
         }
 
         Set<Triple<Integer, Symbol, Integer>> transitions = new HashSet<>();
@@ -283,7 +286,7 @@ public class LearningBenchmark {
         for (Triple<Integer, Symbol, Integer> t : transitions) {
             Integer newTarget = state;
             while (newTarget.equals(state)) {
-                newTarget = random.nextInt(aut.size() - 1);
+                newTarget = RAND.nextInt(aut.size() - 1);
             }
 
             aut.removeTransition(t.getFirst(), t.getSecond(), t.getThird());
@@ -293,14 +296,14 @@ public class LearningBenchmark {
         return aut;
     }
 
-    public static CompactDFA<Symbol> randomAddFeature(Random random, CompactDFA<Symbol> source, int featureSize) {
+    public static CompactDFA<Symbol> randomAddFeature(CompactDFA<Symbol> source, int featureSize) {
         CompactDFA<Symbol> aut = new CompactDFA<>(source);
-        CompactDFA<Symbol> feature = randomAutomatonGen(random, featureSize);
+        CompactDFA<Symbol> feature = randomAutomatonGen(featureSize);
 
         Set<Triple<Integer, Symbol, Integer>> sourceTransitions = new HashSet<>();
         for (int i = 0; i < aut.size() / 10; i++) {
             for (Symbol a : aut.getInputAlphabet()) {
-                Integer sourceState = random.nextInt(aut.size() - 1);
+                Integer sourceState = RAND.nextInt(aut.size() - 1);
                 sourceTransitions.add(Triple.of(sourceState, a, aut.getTransition(sourceState, a)));
             }
         }
@@ -335,37 +338,38 @@ public class LearningBenchmark {
         runContinuous(targets, limit);
     }
 
-    public static void benchmarkMutation(Random random, int size, int limit) {
-        CompactDFA<Symbol> base = randomAutomatonGen(random, size);
+    public static void benchmarkMutation(int size, int limit) {
+        CompactDFA<Symbol> base = randomAutomatonGen(size);
 
-        CompactDFA<Symbol> mutateTrans = randomTransMutation(random, base);
-        CompactDFA<Symbol> mutateAcceptance = randomAcceptanceMutation(random, mutateTrans);
-        CompactDFA<Symbol> mutateAddState = randomAddStateMutation(random, mutateAcceptance);
-        CompactDFA<Symbol> mutation = randomRemoveStateMutation(random, mutateAddState);
+        CompactDFA<Symbol> mutateTrans = randomTransMutation(base);
+        CompactDFA<Symbol> mutateAcceptance = randomAcceptanceMutation(mutateTrans);
+        CompactDFA<Symbol> mutateAddState = randomAddStateMutation(mutateAcceptance);
+        CompactDFA<Symbol> mutation = randomRemoveStateMutation(mutateAddState);
 
         benchmark(base, mutation, limit);
     }
 
-    public static void benchmarkFeature(Random random, int size, int limit) {
-        CompactDFA<Symbol> base = randomAutomatonGen(random, size);
-        CompactDFA<Symbol> baseWithFeature = randomAddFeature(random, base, size / 10);
+    public static void benchmarkFeature(int size, int limit) {
+        CompactDFA<Symbol> base = randomAutomatonGen(size);
+        CompactDFA<Symbol> baseWithFeature = randomAddFeature(base, size / 10);
 
         benchmark(base, baseWithFeature, limit);
     }
 
     public static void main(String[] args) {
-        Random RAND = new Random();
-        long seed = RAND.nextLong();
-        RAND.setSeed(seed);
-        System.out.println("# SEED: " + seed);
+        while (true) {
+            long seed = RAND.nextLong();
+            RAND.setSeed(seed);
+            System.out.println("# SEED: " + seed);
 
-        int baseSize = Integer.parseInt(args[0]);
-        int limit = Integer.parseInt(args[2]);
+            int baseSize = Integer.parseInt(args[0]);
+            int limit = Integer.parseInt(args[2]);
 
-        if (args[1].equals("MUT")) {
-            benchmarkMutation(RAND, baseSize, limit);
-        } else {
-            benchmarkFeature(RAND, baseSize, limit);
+            if (args[1].equals("MUT")) {
+                benchmarkMutation(baseSize, limit);
+            } else {
+                benchmarkFeature(baseSize, limit);
+            }
         }
     }
 }
