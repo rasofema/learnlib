@@ -213,8 +213,6 @@ public class LearningBenchmark {
             run.add(dfas.get(dfas.size() - 1).getSecond());
         }
 
-        assert run.get(run.size() - 1).equals(1.0);
-
         for (Double metric : run) {
             System.out.println(metric.toString());
         }
@@ -357,19 +355,17 @@ public class LearningBenchmark {
     }
 
     public static void main(String[] args) {
-        while (true) {
-            long seed = RAND.nextLong();
-            RAND.setSeed(seed);
-            System.out.println("# SEED: " + seed);
+        long seed = RAND.nextLong();
+        RAND.setSeed(seed);
+        System.out.println("# SEED: " + seed);
 
-            int baseSize = Integer.parseInt(args[0]);
-            int limit = Integer.parseInt(args[2]);
+        int baseSize = Integer.parseInt(args[0]);
+        int limit = Integer.parseInt(args[2]);
 
-            if (args[1].equals("MUT")) {
-                benchmarkMutation(baseSize, limit);
-            } else {
-                benchmarkFeature(baseSize, limit);
-            }
+        if (args[1].equals("MUT")) {
+            benchmarkMutation(baseSize, limit);
+        } else {
+            benchmarkFeature(baseSize, limit);
         }
     }
 }
