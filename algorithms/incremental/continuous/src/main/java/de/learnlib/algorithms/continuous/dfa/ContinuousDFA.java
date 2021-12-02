@@ -27,14 +27,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.github.misberner.buildergen.annotations.GenerateBuilder;
 import de.learnlib.algorithms.continuous.base.ICNode;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.api.query.Query;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
-import de.learnlib.filter.statistic.Counter;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.fsa.DFAs;
@@ -93,6 +91,7 @@ public class ContinuousDFA<I> {
     private final Alphabet<I> alphabet;
     private final double alpha;
     private final MembershipOracle<I, Boolean> oracle;
+    private final Random RAND;
     private Activity activity;
     private ICNode<I> tree;
     private Word<I> query;
@@ -109,9 +108,7 @@ public class ContinuousDFA<I> {
      * @param oracle
      *         the membership oracle
      */
-    @GenerateBuilder
-    public ContinuousDFA(Alphabet<I> alphabet, double alpha,
-                              MembershipOracle<I, Boolean> oracle) {
+    public ContinuousDFA(Alphabet<I> alphabet, double alpha, MembershipOracle<I, Boolean> oracle, Random random) {
         // TODO: State.
         this.alphabet = alphabet;
         this.alpha = alpha;
@@ -121,11 +118,12 @@ public class ContinuousDFA<I> {
         this.tree = new ICNode<>(Word.epsilon());
         tree.targets.add(Word.epsilon());
         this.alphabet.forEach(s ->  tree.targets.add(Word.fromSymbols(s)));
+        this.RAND = random;
     }
 
     private Pair<ICHypothesisDFA<I>, Word<I>> nextState(Boolean answer) {
         applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
-        if (hypothesise(answer) && activity == Activity.HYP) {
+        if (activity == Activity.HYP && hypothesise(answer)) {
             testRandom();
         } else {
             switch (activity) {
@@ -502,9 +500,9 @@ public class ContinuousDFA<I> {
     }
 
     private Word<I> sampleWord() {
-        if ((new Random()).nextFloat() < alpha) {
+        if (RAND.nextFloat() < alpha) {
             List<I> alphas = new LinkedList<>(alphabet);
-            Collections.shuffle(alphas);
+            Collections.shuffle(alphas, RAND);
             return Word.fromSymbols(alphas.get(0)).concat(sampleWord());
         }
         return Word.epsilon();
@@ -514,10 +512,6 @@ public class ContinuousDFA<I> {
         query = sampleWord();
         activity = Activity.TEST;
         activityTEST = null;
-    }
-
-    private void test() {
-        test(null);
     }
 
     private void test(Boolean answer) {

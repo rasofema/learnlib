@@ -118,7 +118,7 @@ public class LearningBenchmark {
     private static List<Pair<Integer, CompactDFA<Symbol>>>  learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
 
-        ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, queryOracle);
+        ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, queryOracle, RAND);
         return learner.learn(limit, limit / 2 / 100);
     }
 
@@ -355,7 +355,7 @@ public class LearningBenchmark {
     }
 
     public static void main(String[] args) {
-        long seed = RAND.nextLong();
+        long seed = System.nanoTime();
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 
