@@ -141,13 +141,6 @@ public class ContinuousDFA<I> {
             }
         }
 
-        if (activity != Activity.TEST) {
-            Boolean nextAnswer = derive(query, tree);
-            if (nextAnswer != null) {
-                return nextState(nextAnswer);
-            }
-        }
-
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
         return Pair.of(hyp, query);
     }
@@ -590,7 +583,6 @@ public class ContinuousDFA<I> {
     }
 
     private void splitCounterexample(Word<I> pre, Word<I> middle, Word<I> post) {
-        // TODO: Check if this is correct. maybe off by 1.
         Word<I> u =  middle.prefix((middle.length() + 1) / 2);
         Word<I> v =  middle.suffix((middle.length()) / 2);
 
@@ -732,6 +724,15 @@ public class ContinuousDFA<I> {
                 hyps.add(Pair.of(i, DFAs.or(hyp, hyp, alphabet)));
             }
             Word<I> query = pair.getSecond();
+            if (activity != Activity.TEST) {
+                Boolean nextAnswer = derive(query, tree);
+                if (nextAnswer != null) {
+                    answer = nextAnswer;
+                    i--;
+                    continue;
+                }
+            }
+
             answer = oracle.answerQuery(query);
         }
         return hyps;

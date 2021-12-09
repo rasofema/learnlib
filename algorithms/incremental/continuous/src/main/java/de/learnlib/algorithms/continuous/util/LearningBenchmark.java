@@ -16,6 +16,7 @@
 package de.learnlib.algorithms.continuous.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,7 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.dfa.ContinuousDFA;
@@ -50,11 +53,11 @@ import net.automatalib.words.impl.Symbol;
 
 public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
-    private static final double ALPHA = 0.9;
-    private static final PhiMetric<Symbol> PD = new PhiMetric<>(ALPHABET, ALPHA);
-    private static Random RAND = new Random();
+    private static final PhiMetric<Symbol> PD = new PhiMetric<>(ALPHABET, 0.999);
+    private static final Random RAND = new Random();
 
     private static Word<Symbol> sampleWord() {
+        double ALPHA = 0.9;
         if (RAND.nextFloat() < ALPHA) {
             List<Symbol> alphas = new LinkedList<>(ALPHABET);
             Collections.shuffle(alphas, RAND);
@@ -349,9 +352,45 @@ public class LearningBenchmark {
 
     public static void benchmarkFeature(int size, int limit) {
         CompactDFA<Symbol> base = randomAutomatonGen(size);
-        CompactDFA<Symbol> baseWithFeature = randomAddFeature(base, size / 10);
+        CompactDFA<Symbol> baseWithFeature = randomAddFeature(base, 3);
 
         benchmark(base, baseWithFeature, limit);
+    }
+
+    private static double calculateSD(double[] runs) {
+        double sum = 0.0, standardDeviation = 0.0;
+        int length = runs.length;
+        for(double num : runs) {
+            sum += num;
+        }
+        double mean = sum/length;
+        for(double num: runs) {
+            standardDeviation += Math.pow(num - mean, 2);
+        }
+        return Math.sqrt(standardDeviation/length);
+    }
+
+    private static double computeSim(int size) {
+        CompactDFA<Symbol> t0 = randomAutomatonGen(size);
+        CompactDFA<Symbol> t1 = randomAutomatonGen(size);
+        return PD.sim(t0, t1);
+    }
+
+    private static double[] averageSim(int n, int size) {
+        ConcurrentHashMap<Integer, Double> metric = new ConcurrentHashMap<>();
+        IntStream.range(0, n).parallel()
+            .forEach(i -> metric.put(i, computeSim(size)));
+        double[] runs = new double[n];
+        for (int i  = 0; i < n; i++) {
+            runs[i] = metric.get(i);
+        }
+        return runs;
+    }
+
+    public static void benchmarkAverage(int n, int size) {
+        double[] results = averageSim(n, size);
+        System.out.println("AVER: " + Arrays.stream(results).average().orElse(0.0));
+        System.out.println("DEV: " + calculateSD(results));
     }
 
     public static void main(String[] args) {
@@ -362,10 +401,16 @@ public class LearningBenchmark {
         int baseSize = Integer.parseInt(args[0]);
         int limit = Integer.parseInt(args[2]);
 
-        if (args[1].equals("MUT")) {
-            benchmarkMutation(baseSize, limit);
-        } else {
-            benchmarkFeature(baseSize, limit);
+        switch (args[1]) {
+            case "MUT":
+                benchmarkMutation(baseSize, limit);
+                break;
+            case "FEAT":
+                benchmarkFeature(baseSize, limit);
+                break;
+            default:
+                benchmarkAverage(limit, baseSize);
+                break;
         }
     }
 }
