@@ -49,7 +49,7 @@ public class CanonicalTest {
             .create();
         MembershipOracle<Integer, Boolean> oracle = new SimulatorOracle.DFASimulatorOracle<>(target);
         EquivalenceOracle<DFA<?, Integer>, Integer, Boolean> eqOracle = new WpMethodEQOracle<>(oracle, 5);
-        KearnsVaziraniDFA<Integer> learner = new KearnsVaziraniDFA<>(alphabet, oracle, true, true, AcexAnalyzers.LINEAR_FWD);
+        KearnsVaziraniDFA<Integer> learner = new KearnsVaziraniDFA<>(alphabet, oracle, true, AcexAnalyzers.LINEAR_FWD);
 
         learner.startLearning();
 

@@ -66,7 +66,7 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
                               MembershipOracle<I, Boolean> oracle,
                               AcexAnalyzer counterexampleAnalyzer,
                               KearnsVaziraniDFAState<I> startingState) {
-        super(alphabet, oracle, true, true, counterexampleAnalyzer);
+        super(alphabet, oracle, true, counterexampleAnalyzer);
         super.discriminationTree = startingState.getDiscriminationTree();
         super.discriminationTree.setOracle(oracle);
         super.hypothesis = startingState.getHypothesis();
@@ -85,12 +85,6 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
     private void initialize() {
         // Minimising the tree at the start allows us the make the tree smaller, limiting sift depth.
         minimiseTree();
-
-        DefaultQuery<I, Boolean> nonCanonCex = analyseTree();
-        while (nonCanonCex != null) {
-            while (refineHypothesisSingle(nonCanonCex.getInput(), nonCanonCex.getOutput())) {}
-            nonCanonCex = analyseTree();
-        }
     }
 
     @Override
@@ -105,14 +99,6 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
         }
         if (repeatedCounterexampleEvaluation) {
             while (refineHypothesisSingle(input, output)) {}
-        }
-
-        if (ensureCanonical) {
-            DefaultQuery<I, Boolean> nonCanonCex = analyseTree();
-            while (nonCanonCex != null) {
-                while (refineHypothesisSingle(nonCanonCex.getInput(), nonCanonCex.getOutput())) {}
-                nonCanonCex = analyseTree();
-            }
         }
 
         return true;

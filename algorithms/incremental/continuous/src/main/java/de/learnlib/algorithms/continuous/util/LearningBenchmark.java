@@ -83,7 +83,7 @@ public class LearningBenchmark {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACacheOracle<Symbol> cacheOracle = new DFACacheOracle<>(queryOracle);
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(cacheOracle, "Number of membership queries");
-        KearnsVaziraniDFA<Symbol> learner = new KearnsVaziraniDFA<>(ALPHABET, memOracle, false, false, AcexAnalyzers.BINARY_SEARCH_BWD);
+        KearnsVaziraniDFA<Symbol> learner = new KearnsVaziraniDFA<>(ALPHABET, memOracle, false, AcexAnalyzers.BINARY_SEARCH_BWD);
 
         learner.startLearning();
         results.add(Pair.of((int) queryOracle.getCount(), new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
@@ -212,6 +212,7 @@ public class LearningBenchmark {
         }
 
         run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
+//        assert run.get(run.size() - 1).equals(1.0);
         while (run.size() < limit * targets.size()) {
             run.add(dfas.get(dfas.size() - 1).getSecond());
         }
@@ -334,8 +335,8 @@ public class LearningBenchmark {
         targets.add(base);
         targets.add(target);
 
-        runClassic(targets, limit);
-        runIncremental(targets, limit);
+//        runClassic(targets, limit);
+//        runIncremental(targets, limit);
         runContinuous(targets, limit);
     }
 
@@ -394,7 +395,7 @@ public class LearningBenchmark {
     }
 
     public static void main(String[] args) {
-        long seed = System.nanoTime();
+        long seed = 112778190989625L /*System.nanoTime()*/;
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 

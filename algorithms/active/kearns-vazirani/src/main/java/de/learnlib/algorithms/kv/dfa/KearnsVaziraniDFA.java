@@ -69,7 +69,6 @@ public class KearnsVaziraniDFA<I>
     protected final Alphabet<I> alphabet;
     protected final MembershipOracle<I, Boolean> oracle;
     protected final boolean repeatedCounterexampleEvaluation;
-    protected final boolean ensureCanonical;
     protected final AcexAnalyzer ceAnalyzer;
     protected BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
     protected Map<Integer, StateInfo<I, Boolean>> stateInfos = new HashMap<>();
@@ -87,22 +86,13 @@ public class KearnsVaziraniDFA<I>
     public KearnsVaziraniDFA(Alphabet<I> alphabet,
                              MembershipOracle<I, Boolean> oracle,
                              boolean repeatedCounterexampleEvaluation,
-                             boolean ensureCanonical,
                              AcexAnalyzer counterexampleAnalyzer) {
         this.alphabet = alphabet;
         this.hypothesis = new CompactDFA<>(alphabet);
         this.discriminationTree = new BinaryDTree<>(oracle);
         this.oracle = oracle;
         this.repeatedCounterexampleEvaluation = repeatedCounterexampleEvaluation;
-        this.ensureCanonical = ensureCanonical;
         this.ceAnalyzer = counterexampleAnalyzer;
-    }
-
-    public KearnsVaziraniDFA(Alphabet<I> alphabet,
-                             MembershipOracle<I, Boolean> oracle,
-                             boolean repeatedCounterexampleEvaluation,
-                             AcexAnalyzer counterexampleAnalyzer) {
-        this(alphabet, oracle, repeatedCounterexampleEvaluation, false, counterexampleAnalyzer);
     }
 
     @Override
@@ -122,14 +112,6 @@ public class KearnsVaziraniDFA<I>
         }
         if (repeatedCounterexampleEvaluation) {
             while (refineHypothesisSingle(input, output)) {}
-        }
-
-        if (ensureCanonical) {
-            DefaultQuery<I, Boolean> nonCanonCex = analyseTree();
-            while (nonCanonCex != null) {
-                while (refineHypothesisSingle(nonCanonCex.getInput(), nonCanonCex.getOutput())) {}
-                nonCanonCex = analyseTree();
-            }
         }
 
         return true;
@@ -170,23 +152,6 @@ public class KearnsVaziraniDFA<I>
         splitState(srcStateInfo, prefix, sym, lca);
 
         return true;
-    }
-
-    protected DefaultQuery<I, Boolean> analyseTree() {
-        Iterator<AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>>> leafIt =
-            DiscriminationTreeIterators.leafIterator(discriminationTree.getRoot());
-
-        while (leafIt.hasNext()) {
-            AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> currentNode = leafIt.next();
-            if (currentNode.getData() != null) {
-                Word<I> se = currentNode.getData().accessSequence.concat(currentNode.getParent().getDiscriminator());
-                if (!currentNode.getParentOutcome().equals(hypothesis.computeOutput(se))) {
-                    return new DefaultQuery<>(se, currentNode.getParentOutcome());
-                }
-            }
-        }
-
-        return null;
     }
 
     private void splitState(StateInfo<I, Boolean> stateInfo,

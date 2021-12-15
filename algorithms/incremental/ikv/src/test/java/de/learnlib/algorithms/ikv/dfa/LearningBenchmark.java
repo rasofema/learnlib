@@ -119,20 +119,20 @@ public class LearningBenchmark {
         writeDotFile(incLearner.getHypothesisModel(), ALPHABET, "./incremental.dot");
     }
 
-    /*public void repeat() throws IOException {
+    public void repeat() throws IOException {
         for (int i = 0; i < 5000; i++) {
             System.out.println("ITER: " + i);
             RAND_SEED1 = (new Random()).nextLong();
             RAND_SEED2 = (new Random()).nextLong();
-            TARGET_DFA1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(10, ALPHABET);
-            TARGET_DFA2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(10, ALPHABET);
+            TARGET_DFA1 = (new RandomAutomata(new Random(RAND_SEED1))).randomDFA(20, ALPHABET);
+            TARGET_DFA2 = (new RandomAutomata(new Random(RAND_SEED2))).randomDFA(20, ALPHABET);
 
             DFA_ORACLE1 = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA1);
             DFA_ORACLE2_CLASS = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
             DFA_ORACLE2_INC = new SimulatorOracle.DFASimulatorOracle<>(TARGET_DFA2);
             benchmark();
         }
-    }*/
+    }
 
     // policy : convert into method throwing unchecked exception
     private static <S, I, T> void writeDotFile(Automaton<S, I, T> automaton, Collection<? extends I> inputAlphabet, String filepath) throws IOException {
