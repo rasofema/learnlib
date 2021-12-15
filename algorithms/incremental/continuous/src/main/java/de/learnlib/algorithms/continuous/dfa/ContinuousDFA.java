@@ -123,7 +123,7 @@ public class ContinuousDFA<I> {
 
     private Pair<ICHypothesisDFA<I>, Word<I>> nextState(Boolean answer) {
         applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
-        if (activity == Activity.HYP && hypothesise(answer)) {
+        if (hypothesise(answer) && activity == Activity.HYP) {
             testRandom();
         } else {
             switch (activity) {
@@ -274,7 +274,7 @@ public class ContinuousDFA<I> {
             ICNode<I> leftPrime = adjustStructure(answers, adjustLeft, tree.getChild(false));
 
             Set<Word<I>> adjustRight = new HashSet<>(removed);
-            adjustLeft.addAll(removeRight);
+            adjustRight.addAll(removeRight);
             ICNode<I> rightPrime = adjustStructure(answers, adjustRight, tree.getChild(true));
 
             leftPrime.targets.addAll(removeRight);
