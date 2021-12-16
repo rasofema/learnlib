@@ -50,24 +50,51 @@ import net.automatalib.words.Word;
  */
 public class ContinuousDFA<I> {
 
-    public enum Activity {
-        HYP,
-        TEST,
-        INIT,
-        CEX
+    public interface Activity {
+        void process(Boolean answer);
     }
 
-    private class BinarySearchState {
+    public class TestActivity extends HashSet<Word<I>> implements Activity {
+        @Override
+        public void process(Boolean answer) {
+            test(answer);
+        }
+    }
+
+    public static class HypActivity implements Activity {
+        @Override
+        public void process(Boolean answer) {}
+    }
+
+    public class InitActivity implements Activity {
+        public Word<I> cex;
+
+        public InitActivity(Word<I> cex) {
+            this.cex = cex;
+        }
+
+        @Override
+        public void process(Boolean answer) {
+            initialiseCounterexample(answer, cex);
+        }
+    }
+
+    public class CexActivity implements Activity {
         public Word<I> pre;
         public Word<I> u;
         public Word<I> v;
         public Word<I> post;
 
-        public BinarySearchState(Word<I> pre, Word<I> u, Word<I> v, Word<I> post) {
+        public CexActivity(Word<I> pre, Word<I> u, Word<I> v, Word<I> post) {
             this.pre = pre;
             this.u = u;
             this.v = v;
             this.post = post;
+        }
+
+        @Override
+        public void process(Boolean answer) {
+            handleCounterexample(answer, this);
         }
     }
 
@@ -78,10 +105,6 @@ public class ContinuousDFA<I> {
     private Activity activity;
     private ICNode<I> tree;
     private Word<I> query;
-
-    private Word<I> activityINIT;
-    private BinarySearchState activityCEX;
-    private final Set<Word<I>> activityTEST;
 
     /**
      * Constructor.
@@ -96,35 +119,22 @@ public class ContinuousDFA<I> {
         this.alphabet = alphabet;
         this.alpha = alpha;
         this.oracle = oracle;
-        this.activity = Activity.HYP;
+        this.activity = new HypActivity();
         this.query = Word.epsilon();
         this.tree = new ICNode<>(Word.epsilon());
         tree.targets.add(Word.epsilon());
         this.alphabet.forEach(s ->  tree.targets.add(Word.fromSymbols(s)));
         this.RAND = random;
-        this.activityTEST = new HashSet<>();
     }
 
     private Pair<ICHypothesisDFA<I>, Word<I>> nextState(Boolean answer) {
-        applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
-        if (hypothesise(answer) && activity == Activity.HYP) {
-            testRandom();
-        } else {
-            switch (activity) {
-                case TEST:
-                    test(answer);
-                    break;
-                case HYP:
-                    break;
-                case INIT:
-                    initialiseCounterexample(answer, activityINIT);
-                    break;
-                case CEX:
-                    handleCounterexample(answer, activityCEX);
-                    break;
+        if(!applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)))) {
+            if (hypothesise(answer) && activity instanceof HypActivity) {
+                testRandom();
+            } else {
+                activity.process(answer);
             }
         }
-
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
         return Pair.of(hyp, query);
     }
@@ -186,10 +196,14 @@ public class ContinuousDFA<I> {
         }
     }
 
-    private void applyAnswers(Set<DefaultQuery<I, Boolean>> answers) {
+    private boolean applyAnswers(Set<DefaultQuery<I, Boolean>> answers) {
+        Set<Word<I>> oldLeaves = new HashSet<>();
+        DiscriminationTreeIterators.leafIterator(tree).forEachRemaining(l -> oldLeaves.add(((ICNode<I>) l).accessSequence));
+
         Pair<ICNode<I>, Set<Word<I>>>
             stateAdjustment = adjustStates(answers, tree);
         tree = stateAdjustment.getFirst();
+
         if (tree == null) {
             this.tree = new ICNode<>(Word.epsilon());
             tree.targets.add(Word.epsilon());
@@ -200,6 +214,18 @@ public class ContinuousDFA<I> {
             tree = restrictTargets(tree, origins);
         }
         tree = adjustStructure(answers, tree);
+
+        Set<Word<I>> newLeaves = new HashSet<>();
+        DiscriminationTreeIterators.leafIterator(tree).forEachRemaining(l -> newLeaves.add(((ICNode<I>) l).accessSequence));
+
+        if (oldLeaves.equals(newLeaves)) {
+            return false;
+        } else if (activity instanceof ContinuousDFA.TestActivity){
+            testRandom();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private Set<Word<I>> getTargets(ICNode<I> tree) {
@@ -224,7 +250,6 @@ public class ContinuousDFA<I> {
                     }
                 }
             }
-            return tree;
         } else {
             Set<Word<I>> removeLeft = getTargets(tree.getChild(false)).stream()
                 .filter(t -> {
@@ -263,8 +288,8 @@ public class ContinuousDFA<I> {
             rightPrime.targets.addAll(removeLeft);
             tree.targets.removeAll(removed);
             setChildren(tree, leftPrime, rightPrime);
-            return tree;
         }
+        return tree;
     }
 
     private Pair<ICNode<I>, Set<Word<I>>> adjustStates(Set<DefaultQuery<I, Boolean>> answers, ICNode<I> tree) {
@@ -275,6 +300,10 @@ public class ContinuousDFA<I> {
                  ICNode<I> tree) {
         if (tree.isLeaf()) {
             if (removed.contains(tree.accessSequence)) {
+                if (activity instanceof ContinuousDFA.TestActivity) {
+                    ((TestActivity) activity).clear();
+                }
+
                 return Pair.of(null, new HashSet<>(tree.targets));
             }
             return Pair.of(tree, new HashSet<>());
@@ -395,18 +424,16 @@ public class ContinuousDFA<I> {
         if (answer != null) {
             tree = advanceHypothesis(query, answer, tree);
         }
-        if (activity == Activity.TEST && !activityTEST.isEmpty()) {
+        if (activity instanceof ContinuousDFA.TestActivity && !((TestActivity) activity).isEmpty()) {
             return false;
         }
         Word<I> nextQuery = hypothesisQuery(tree);
         if (nextQuery == null) {
             return true;
         }
+
         query = nextQuery;
-        activity = Activity.HYP;
-        activityTEST.clear();
-        activityINIT = null;
-        activityCEX = null;
+        activity = new HypActivity();
         return false;
     }
 
@@ -490,27 +517,21 @@ public class ContinuousDFA<I> {
 
     private void testRandom() {
         query = sampleWord();
-        activity = Activity.TEST;
-        activityTEST.clear();
-        activityCEX = null;
-        activityINIT = null;
+        activity = new TestActivity();
     }
 
     private void test(Boolean answer) {
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
-        if (activityTEST.isEmpty()) {
+        if (((TestActivity) activity).isEmpty()) {
             if (hyp.computeOutput(query) == answer) {
                 testRandom();
             } else {
-                activity = Activity.INIT;
-                activityINIT = query;
-                activityTEST.clear();
-                activityCEX = null;
+                activity = new InitActivity(query);
                 query = hyp.getInitialState().concat(query);
             }
         } else {
-            Word<I> word = activityTEST.iterator().next();
-            activityTEST.remove(word);
+            Word<I> word = ((TestActivity) activity).iterator().next();
+            ((TestActivity) activity).remove(word);
 
             List<I> chars = new LinkedList<>(query.asList());
              Collections.reverse(chars);
@@ -531,11 +552,8 @@ public class ContinuousDFA<I> {
             }
 
             query = word;
-            activity = Activity.TEST;
-            activityCEX = null;
-            activityINIT = null;
             if (!leaves.contains(previousLeaf)) {
-                activityTEST.clear();
+                activity = new TestActivity();
             }
         }
     }
@@ -569,7 +587,7 @@ public class ContinuousDFA<I> {
         }
     }
 
-    private void handleCounterexample(Boolean answer, BinarySearchState bsState) {
+    private void handleCounterexample(Boolean answer, CexActivity bsState) {
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
         if (bsState.u.size() == 1 && bsState.v.equals(Word.epsilon())) {
             finishCounterexample(answer,
@@ -589,10 +607,7 @@ public class ContinuousDFA<I> {
 
         assert u.concat(v).equals(middle) && ((u.length() - v.length()) == 0 || (u.length() - v.length()) == 1);
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
-        activityINIT = null;
-        activityTEST.clear();
-        activity = Activity.CEX;
-        activityCEX = new BinarySearchState(pre, u, v, post);
+        activity = new CexActivity(pre, u, v, post);
         query = Objects.requireNonNull(hyp.getState(pre.concat(u))).concat(v).concat(post);
     }
 
@@ -642,12 +657,9 @@ public class ContinuousDFA<I> {
                 newImp.add(new DefaultQuery<>(lng.concat(entry.getInput()), entry.getOutput()));
             }
         }
-        activity = Activity.TEST;
-        activityCEX = null;
-        activityINIT = null;
-        activityTEST.clear();
-        activityTEST.add(shrt.concat(e));
-        activityTEST.add(lng.concat(e));
+        activity = new TestActivity();
+        ((TestActivity) activity).add(shrt.concat(e));
+        ((TestActivity) activity).add(lng.concat(e));
         applyAnswers(newImp);
     }
 

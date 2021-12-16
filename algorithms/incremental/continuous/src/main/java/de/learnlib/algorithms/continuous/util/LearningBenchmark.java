@@ -395,7 +395,7 @@ public class LearningBenchmark {
     }
 
     public static void main(String[] args) {
-        long seed = 112778190989625L /*System.nanoTime()*/;
+        long seed = System.nanoTime();
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 
