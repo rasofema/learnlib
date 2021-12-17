@@ -335,8 +335,8 @@ public class LearningBenchmark {
         targets.add(base);
         targets.add(target);
 
-//        runClassic(targets, limit);
-//        runIncremental(targets, limit);
+        runClassic(targets, limit);
+        runIncremental(targets, limit);
         runContinuous(targets, limit);
     }
 

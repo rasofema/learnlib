@@ -54,7 +54,7 @@ public class ContinuousDFA<I> {
         void process(Boolean answer);
     }
 
-    public class TestActivity extends HashSet<Word<I>> implements Activity {
+    public class TestActivity extends LinkedList<Word<I>> implements Activity {
         @Override
         public void process(Boolean answer) {
             test(answer);
@@ -220,7 +220,7 @@ public class ContinuousDFA<I> {
 
         if (oldLeaves.equals(newLeaves)) {
             return false;
-        } else if (activity instanceof ContinuousDFA.TestActivity){
+        } else if (activity instanceof ContinuousDFA.TestActivity && ((TestActivity) activity).isEmpty()){
             testRandom();
             return true;
         } else {
@@ -530,20 +530,8 @@ public class ContinuousDFA<I> {
                 query = hyp.getInitialState().concat(query);
             }
         } else {
-            Word<I> word = ((TestActivity) activity).iterator().next();
-            ((TestActivity) activity).remove(word);
-
-            List<I> chars = new LinkedList<>(query.asList());
-             Collections.reverse(chars);
-             Word<I> reversed = Word.fromList(chars);
-
-             chars = new LinkedList<>(word.asList());
-             Collections.reverse(chars);
-             Word<I> reversedWord = Word.fromList(chars);
-
-            chars = new LinkedList<>(reversed.suffix(reversed.size() - reversed.longestCommonPrefix(reversedWord).size()).asList());
-            Collections.reverse(chars);
-            Word<I> previousLeaf = Word.fromList(chars);
+            Word<I> word = ((TestActivity) activity).pop();
+            Word<I> previousLeaf = query.prefix(query.size() - query.longestCommonPrefix(word).size());
 
             Set<Word<I>> leaves = new HashSet<>();
             Iterator<AbstractWordBasedDTNode<I, Boolean, Object>> iter = DiscriminationTreeIterators.leafIterator(tree);
@@ -551,9 +539,11 @@ public class ContinuousDFA<I> {
                 leaves.add(((ICNode<I>) iter.next()).accessSequence);
             }
 
-            query = word;
-            if (!leaves.contains(previousLeaf)) {
-                activity = new TestActivity();
+            if (leaves.contains(previousLeaf)) {
+                query = word;
+
+            } else {
+                testRandom();
             }
         }
     }
