@@ -83,12 +83,12 @@ public class ExtensibleLStarDFA<I>
     }
 
     @Override
-    protected Boolean stateProperty(ObservationTable<I, Boolean> table, Row<I, Boolean> stateRow) {
+    protected Boolean stateProperty(ObservationTable<I, Boolean> table, Row<I> stateRow) {
         return table.cellContents(stateRow, 0);
     }
 
     @Override
-    protected Void transitionProperty(ObservationTable<I, Boolean> table, Row<I, Boolean> stateRow, int inputIdx) {
+    protected Void transitionProperty(ObservationTable<I, Boolean> table, Row<I> stateRow, int inputIdx) {
         return null;
     }
 

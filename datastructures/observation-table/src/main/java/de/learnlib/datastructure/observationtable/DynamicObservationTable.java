@@ -1,5 +1,8 @@
-/* Copyright (C) 2013-2021 TU Dortmund
- * This file is part of LearnLib, http://www.learnlib.de/.
+/* Copyright (C) 2018
+ * This file is part of the PhD research project entitled
+ * 'Inferring models from Evolving Systems and Product Families'
+ * developed by Carlos Diego Nascimento Damasceno at the
+ * University of Sao Paulo (ICMC-USP).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,67 +18,59 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
+import net.automatalib.commons.util.comparison.CmpUtil;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
-import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.io.Serializable;
+import java.util.*;
 
 /**
- * Observation table class.
+ * Dynamic Observation table class.
  * <p>
- * An observation table (OT) is the central data structure used by Angluin's L* algorithm, as described in the paper
- * "Learning Regular Sets from Queries and Counterexamples".
+ * A dynamic observation table (dOT) is an extension of the traditional OT proposed by Dana Angluin
+ * inspired by Chaki et al.'s Dynamic L* algorithm, as described in the paper
+ * "Verification of evolving software via component substitutability analysis".
  * <p>
- * An observation table is a two-dimensional table, with rows indexed by prefixes, and columns indexed by suffixes. For
- * a prefix <code>u</code> and a suffix <code>v</code>, the respective cell contains the result of the membership query
- * <code>(u, v)</code>.
+ * A dOT is a two-dimensional table, with rows indexed by prefixes, and columns indexed by suffixes
+ * which differs to the traditional OT on the way it is initialized.
  * <p>
- * The set of prefixes (row labels) is divided into two disjoint sets: short and long prefixes. Each long prefix is a
- * one-letter extension of a short prefix; conversely, every time a prefix is added to the set of short prefixes, all
- * possible one-letter extensions are added to the set of long prefixes.
- * <p>
- * In order to derive a well-defined hypothesis from an observation table, it must satisfy two properties: closedness
- * and consistency. <ul> <li>An observation table is <b>closed</b> iff for each long prefix <code>u</code> there exists
- * a short prefix <code>u'</code> such that the row contents for both prefixes are equal. <li>An observation table is
- * <b>consistent</b> iff for every two short prefixes <code>u</code> and <code>u'</code> with identical row contents,
- * it holds that for every input symbol <code>a</code> the rows indexed by <code>ua</code> and <code>u'a</code> also
- * have identical contents. </ul>
+ * A dOT can be initialized with initial prefix/suffix sets where, instead of asking MQs for them all,
+ * prefixes are gradually concatenated to the set of initial suffixes and revalidated to the SUL.
+ * Thus, redundant MQs can be avoided by prunning the tree representation of the set of prefixes for
+ * <i>finding an well-formed cover subset</i> from the <code>initialShortPrefixes</code> set.
+ *
+ * Added to redundant prefixes, the <code>initialSuffixes</code> set may also include redundant suffixes.
+ * Thus, to reduce the number of MQs after initialization, redundant suffixes are discarded by
+ * <i>finding an experiment cover subset</i> from the <code>initialSuffixes</code> set so that the next steps
+ * for restoring the properties of closedness and consistency do not pose MQs using unnecessary suffixes.
+ *
  *
  * @param <I>
  *         input symbol type
  * @param <D>
  *         output domain type
  *
- * @author Malte Isberner
+ * @author Carlos Diego Nascimento Damasceno (damascenodiego@usp.br)
  */
-public final class GenericObservationTable<I, D> implements MutableObservationTable<I, D> {
+public final class DynamicObservationTable<I, D> implements MutableObservationTable<I, D>, Serializable {
 
-    private static final int NO_ENTRY = -1;
+    private static final Integer NO_ENTRY = null; // TODO: replace with primitive specialization
     private final List<RowImpl<I>> shortPrefixRows = new ArrayList<>();
     // private static final int NO_ENTRY = -1;
     private final List<RowImpl<I>> longPrefixRows = new ArrayList<>();
     private final List<RowImpl<I>> allRows = new ArrayList<>();
     private final List<List<D>> allRowContents = new ArrayList<>();
-    private final List<@Nullable RowImpl<I>> canonicalRows = new ArrayList<>();
+    private final List<RowImpl<I>> canonicalRows = new ArrayList<>();
     // private final TObjectIntMap<List<D>> rowContentIds = new TObjectIntHashMap<>(10, 0.75f, NO_ENTRY);
     private final Map<List<D>, Integer> rowContentIds = new HashMap<>(); // TODO: replace with primitive specialization
     private final Map<Word<I>, RowImpl<I>> rowMap = new HashMap<>();
     private final List<Word<I>> suffixes = new ArrayList<>();
     private final Set<Word<I>> suffixSet = new HashSet<>();
-    private final Alphabet<I> alphabet;
-    private int alphabetSize;
+    private transient Alphabet<I> alphabet;
     private int numRows;
     private boolean initialConsistencyCheckRequired;
 
@@ -85,9 +80,8 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
      * @param alphabet
      *         the learning alphabet.
      */
-    public GenericObservationTable(Alphabet<I> alphabet) {
+    public DynamicObservationTable(Alphabet<I> alphabet) {
         this.alphabet = alphabet;
-        this.alphabetSize = alphabet.size();
     }
 
     private static <I, D> void buildQueries(List<DefaultQuery<I, D>> queryList,
@@ -98,11 +92,10 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         }
     }
 
-    @Override
     public List<List<Row<I>>> initialize(List<Word<I>> initialShortPrefixes,
                                          List<Word<I>> initialSuffixes,
                                          MembershipOracle<I, D> oracle) {
-        if (!allRows.isEmpty()) {
+        if (allRows.size() > 0) {
             throw new IllegalStateException("Called initialize, but there are already rows present");
         }
 
@@ -114,22 +107,100 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             throw new IllegalArgumentException("First initial short prefix MUST be the empty word!");
         }
 
-        int numSuffixes = initialSuffixes.size();
-        for (Word<I> suffix : initialSuffixes) {
-            if (suffixSet.add(suffix)) {
-                suffixes.add(suffix);
+        // copy S_M and E_M to not change the objects passed as parameter
+        List<Word<I>> t_initialShortPrefixes = new ArrayList<>(initialShortPrefixes);
+        List<Word<I>> t_initialSuffixes = new ArrayList<>(initialSuffixes.size());
+
+        // if has more than empty sequence, then include S_R \cdot I_u
+        Alphabet<I> abc = this.alphabet;
+        if(t_initialShortPrefixes.size()!=1){
+            List<Word<I>> sr_cdot_i = new ArrayList<>(t_initialShortPrefixes.size()*abc.size());
+            for (Word<I> pref : t_initialShortPrefixes){
+                for (I i_u_symb: abc){
+                    sr_cdot_i.add(pref.append(i_u_symb));
+                }
+            }
+            for (Word<I> pref : sr_cdot_i){
+                if(!t_initialShortPrefixes.contains(pref)){
+                    t_initialShortPrefixes.add(pref);
+                }
             }
         }
 
-        int numPrefixes = alphabet.size() * initialShortPrefixes.size() + 1;
+        // sort S_M for having EMPTY string at the first position and help on discarding redundant prefixes
+        Collections.sort(t_initialShortPrefixes, new Comparator<Word<I>>() {
+            @Override
+            public int compare(Word<I> o1, Word<I> o2) { return CmpUtil.lexCompare(o1, o2, abc); }
+        });
+
+        // for loop to remove duplicated suffixes
+        Set<Word<I>> t_suffixSet = new HashSet<>();
+        for (Word<I> suffix : initialSuffixes) {
+            // checks if there are duplicated suffixes
+            if (t_suffixSet.add(suffix))  t_initialSuffixes.add(suffix);
+        }
+
+        // max number of suffixes and prefixes
+        int numSuffixes = t_initialSuffixes.size();
+        int numPrefixes = alphabet.size() * t_initialShortPrefixes.size() + 1;
+
+        // temporary list of queries w/IO pairs
+        List<DefaultQuery<I, D>> t_queries = new ArrayList<>(numPrefixes * numSuffixes);
+        List<DefaultQuery<I, D>> t_all_queries = new ArrayList<>(numPrefixes * numSuffixes);
+
+        // set of observed outputs (helps to identify states reached using other prefixes)
+        Set<List<D>> t_observedOutputs = new HashSet<>(numPrefixes * numSuffixes);
+
+        // list to keep the outputs of each row for each query posed
+        List<D> t_outputs = null;
+
+        // outputs obtained for all short rows included at the well-formed cover subset
+        Map<Word<I>,List<D>> observationMap = new HashMap<>();
+
+        // PASS 1: Gradually add short prefix rows while finding an well-formed cover subset from initialSuffixes
+        for (int i = 0; i < t_initialShortPrefixes.size(); i++) {
+            // queries to be posed
+            t_queries.clear();
+
+            // new t_outputs to be included at the observationMap
+            t_outputs = new ArrayList<>();
+
+            // prefix to be concatenated with E_M and posed as MQ
+            Word<I> sp = t_initialShortPrefixes.get(i);
+            buildQueries(t_queries, sp, t_initialSuffixes);
+            oracle.processQueries(t_queries);
+
+            // concatenate outputs to compare with those previously observed
+            Iterator<DefaultQuery<I, D>> queryIt = t_queries.iterator();
+            while (queryIt.hasNext()) t_outputs.add(queryIt.next().getOutput());
+
+            // if NOT observed previously
+            if(!t_observedOutputs.contains(t_outputs)){
+                // Finally add sp to the set of short prefixes S_M
+                createSpRow(sp);
+                t_observedOutputs.add(t_outputs);
+                observationMap.put(sp,t_outputs);
+
+            }else if(i < t_initialShortPrefixes.size()){
+                while (sp.isPrefixOf(t_initialShortPrefixes.get(i))){
+                    i++;
+                    if(i == t_initialShortPrefixes.size())  break;
+                }
+                i--;
+            }
+            t_all_queries.addAll(t_queries);
+        }
+
+        // Find an experiment cover subset from the initialSuffixes set
+        List<Integer> experimentCoverSubset_id = findExperimentCover(observationMap,t_initialSuffixes);
+
+        for (int i = 0; i < experimentCoverSubset_id .size(); i++) {
+            if (suffixSet.add(t_initialSuffixes.get(experimentCoverSubset_id.get(i)))) {
+                suffixes.add(t_initialSuffixes.get(experimentCoverSubset_id.get(i)));
+            }
+        }
 
         List<DefaultQuery<I, D>> queries = new ArrayList<>(numPrefixes * numSuffixes);
-
-        // PASS 1: Add short prefix rows
-        for (Word<I> sp : initialShortPrefixes) {
-            createSpRow(sp);
-            buildQueries(queries, sp, suffixes);
-        }
 
         // PASS 2: Add missing long prefix rows
         for (RowImpl<I> spRow : shortPrefixRows) {
@@ -147,6 +218,20 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         }
 
         oracle.processQueries(queries);
+
+        int pos = 0;
+        for (DefaultQuery<I, D> t_query:t_all_queries) {
+            if(observationMap.containsKey(t_query.getPrefix()) && getSuffixes().contains(t_query.getSuffix())){
+                queries.add(pos,t_query);
+                pos++;
+            }
+        }
+
+        // update number of prefixes to the size of the well-formed cover subset
+        numPrefixes = alphabet.size() * getShortPrefixRows().size() + 1;
+
+        // update number of suffixes to the size of the experiment cover subsets
+        numSuffixes = getSuffixes().size();
 
         Iterator<DefaultQuery<I, D>> queryIt = queries.iterator();
 
@@ -185,12 +270,123 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         return unclosed;
     }
 
+    // find the experiment cover set using an approach similar to that for synchronizing trees
+    List<Integer> findExperimentCover(Map<Word<I>, List<D>> observationMap, List<Word<I>> suffixes){
+
+        List<Integer> out = new ArrayList<>();
+
+        if(shortPrefixRows.size()==1){
+            for (int i = 0; i < suffixes.size(); i++) {
+                out.add(i);
+            }
+            return out;
+        }
+
+        // keeps the set of distinguished states and the suffixes used to do it
+        List<DynamicDistinguishableStates<I,D>> toAnalyze = new ArrayList<>();
+
+        // set of nodes found (used to find previously visited states)
+        Set<Set<Set<Word<I>>>> nodesFound = new HashSet<>();
+
+        // creates the first DynamicDistinguishableStates w/all states undistinguished
+        Set<Set<Word<I>>> diff_states = new HashSet<>();
+        diff_states.add(observationMap.keySet());
+
+        // no suffixes applied
+        Set<Integer> eSubset = new HashSet<>();
+
+        toAnalyze.add(new DynamicDistinguishableStates<I,D>(observationMap, diff_states, eSubset));
+
+        // current DynamicDistinguishableStates analyzed ( singleton is kept here )
+        DynamicDistinguishableStates<I,D> item = toAnalyze.get(0);
+
+        // the DynamicDistinguishableStates with the 'best' subset of E
+        DynamicDistinguishableStates<I,D> best = toAnalyze.get(0);
+
+        // ExperimentCover.find: Analysis begin"
+        while (!toAnalyze.isEmpty()) {
+            item = toAnalyze.remove(0);
+
+            // Does item distinguish the largest number of states ?
+            if(item.getDistinguishedStates().size()>best.getDistinguishedStates().size()) {
+                // then keep it as the best option
+                best = item;
+            }
+
+            // ExperimentCover.find: Singleton found!
+            if(item.isSingleton()) {
+                break; // Thus, stop here!!! :)
+            }
+
+            // get number of suffixes
+            for (int sufIdx = 0; sufIdx < suffixes.size(); sufIdx++){
+                if(item.getESubset().contains(sufIdx)) {
+                    continue; // suffix already applied to this item
+                }
+
+                // new subset of states that may be distinguished by 'sufIdx'
+                diff_states = new HashSet<>();
+
+                // subset of suffixes (potential experiment cover)
+                eSubset = new HashSet<>();
+
+                Set<Set<Word<I>>> setOfPrefixes = item.getDistinguishedStates();
+                for (Set<Word<I>> prefixes : setOfPrefixes) {
+                    // maps the outputs to rows (used for keeping states equivalent given 'sufIdx')
+                    Map<Integer,Set<Integer>> out2Rows = new TreeMap<>();
+                    // look 'sufIdx' for each prefix
+                    for (Word<I> pref : prefixes) {
+                        D outStr = observationMap.get(pref).get(sufIdx);
+                        // if outStr is new, then add sufIdx as an useful suffix
+                        if(out2Rows.putIfAbsent(outStr.hashCode(), new HashSet<Integer>()) == null){
+                            eSubset.add(sufIdx);
+                        }
+                        out2Rows.get(outStr.hashCode()).add(getRow(pref).getRowId());
+                    }
+                    // the subsets of states that are distinguished by 'sufIdx'
+                    for (Set<Integer> sset: out2Rows.values()) {
+                        Set<Word<I>> sset_word = new HashSet<>();
+                        for (Integer sset_item: sset) {
+                            sset_word.add(getShortPrefixRows().get(sset_item).getLabel());
+                        }
+                        diff_states.add(sset_word);
+                    }
+
+                }
+                // if diff_states was previously visited, then discard! :(
+                if(nodesFound.contains(diff_states)) continue;
+                nodesFound.add(diff_states); // otherwise keep it!
+                // create a new de.learnlib.datastructure.observationtable.DynamicDistinguishableStates
+                DynamicDistinguishableStates new_diststates = new DynamicDistinguishableStates(observationMap);
+                new_diststates.setDistinguishedStates(diff_states);
+                // add previously applied suffixes to eSubset (i.e., { eSubset \cup 'sufIdx'}
+                eSubset.addAll(item.getESubset());
+                new_diststates.setESubset(eSubset);
+                // add it to be analyzed later
+                toAnalyze.add(new_diststates);
+            }
+        }
+        // ExperimentCover.find: Analysis end!
+
+
+        if(item.isSingleton()){
+            // if item is singleton then return its suffixes
+            out.addAll(item.getESubset());
+        }else{
+            // otherwise add the 'best' subset of E
+            out.addAll(best.getESubset());
+        }
+        return out;
+    }
+
     private static <I> boolean checkPrefixClosed(Collection<? extends Word<I>> initialShortPrefixes) {
         Set<Word<I>> prefixes = new HashSet<>(initialShortPrefixes);
 
         for (Word<I> pref : initialShortPrefixes) {
-            if (!pref.isEmpty() && !prefixes.contains(pref.prefix(-1))) {
-                return false;
+            if (!pref.isEmpty()) {
+                if (!prefixes.contains(pref.prefix(-1))) {
+                    return false;
+                }
             }
         }
 
@@ -234,9 +430,10 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     }
 
     private boolean processContents(RowImpl<I> row, List<D> rowContents, boolean makeCanonical) {
-        int contentId;
+        Integer contentId; // TODO: replace with primitive specialization
+        // int contentId;
         boolean added = false;
-        contentId = rowContentIds.getOrDefault(rowContents, NO_ENTRY);
+        contentId = rowContentIds.get(rowContents);
         if (contentId == NO_ENTRY) {
             contentId = numberOfDistinctRows();
             rowContentIds.put(rowContents, contentId);
@@ -252,18 +449,16 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         return added;
     }
 
-    @Override
     public int numberOfDistinctRows() {
         return allRowContents.size();
     }
 
-    @Override
     public List<List<Row<I>>> addSuffix(Word<I> suffix, MembershipOracle<I, D> oracle) {
         return addSuffixes(Collections.singletonList(suffix), oracle);
     }
 
-    @Override
     public List<List<Row<I>>> addSuffixes(Collection<? extends Word<I>> newSuffixes, MembershipOracle<I, D> oracle) {
+        int oldSuffixCount = suffixes.size();
         // we need a stable iteration order, and only List guarantees this
         List<Word<I>> newSuffixList = new ArrayList<>();
         for (Word<I> suffix : newSuffixes) {
@@ -294,7 +489,6 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         oracle.processQueries(queries);
 
         Iterator<DefaultQuery<I, D>> queryIt = queries.iterator();
-        int oldSuffixCount = suffixes.size();
 
         for (RowImpl<I> row : shortPrefixRows) {
             List<D> rowContents = allRowContents.get(row.getRowContentId());
@@ -339,12 +533,10 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         return unclosed;
     }
 
-    @Override
     public boolean isInitialConsistencyCheckRequired() {
         return initialConsistencyCheckRequired;
     }
 
-    @Override
     public List<List<Row<I>>> addShortPrefixes(List<? extends Word<I>> shortPrefixes, MembershipOracle<I, D> oracle) {
         List<Row<I>> toSpRows = new ArrayList<>();
 
@@ -363,7 +555,6 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         return toShortPrefixes(toSpRows, oracle);
     }
 
-    @Override
     public List<List<Row<I>>> toShortPrefixes(List<Row<I>> lpRows, MembershipOracle<I, D> oracle) {
         List<RowImpl<I>> freshSpRows = new ArrayList<>();
         List<RowImpl<I>> freshLpRows = new ArrayList<>();
@@ -431,9 +622,9 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         return unclosed;
     }
 
-    private void makeShort(RowImpl<I> row) {
+    private boolean makeShort(RowImpl<I> row) {
         if (row.isShortPrefixRow()) {
-            return;
+            return false;
         }
 
         int lastIdx = longPrefixRows.size() - 1;
@@ -454,6 +645,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
                 canonicalRows.set(cid, row);
             }
         }
+        return true;
     }
 
     private static <I, D> void buildRowQueries(List<DefaultQuery<I, D>> queryList,
@@ -464,45 +656,52 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
         }
     }
 
-    @Override
+    public D cellContents(Row<I> row, int columnId) {
+        List<D> contents = rowContents(row);
+        return contents.get(columnId);
+    }
+
     public List<D> rowContents(Row<I> row) {
         return allRowContents.get(row.getRowContentId());
     }
 
-    @Override
     public RowImpl<I> getRow(int rowId) {
         return allRows.get(rowId);
     }
 
-    @Override
     public int numberOfRows() {
         return shortPrefixRows.size() + longPrefixRows.size();
     }
 
-    @Override
     public List<Word<I>> getSuffixes() {
         return suffixes;
     }
 
-    @Override
     public boolean isInitialized() {
-        return !allRows.isEmpty();
+        return (allRows.size() > 0);
     }
 
-    @Override
     public Alphabet<I> getInputAlphabet() {
         return alphabet;
+    }
+
+    /**
+     * This is an internal method used for de-serializing. Do not deliberately set input alphabets.
+     *
+     * @param alphabet
+     *         the input alphabet corresponding to the previously serialized one.
+     */
+    public void setInputAlphabet(Alphabet<I> alphabet) {
+        this.alphabet = alphabet;
     }
 
     @Override
     public Word<I> transformAccessSequence(Word<I> word) {
         Row<I> current = shortPrefixRows.get(0);
-        assert current != null;
 
         for (I sym : word) {
             current = getRowSuccessor(current, sym);
             current = canonicalRows.get(current.getRowContentId());
-            assert current != null;
         }
 
         return current.getLabel();
@@ -527,58 +726,56 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
             return false;
         }
         int contentId = row.getRowContentId();
-        return canonicalRows.get(contentId) == row;
+        return (canonicalRows.get(contentId) == row);
     }
 
     @Override
     public List<List<Row<I>>> addAlphabetSymbol(I symbol, final MembershipOracle<I, D> oracle) {
 
+        if (this.alphabet.containsSymbol(symbol)) {
+            return Collections.emptyList();
+        }
+
         if (!alphabet.containsSymbol(symbol)) {
             Alphabets.toGrowingAlphabetOrThrowException(alphabet).addSymbol(symbol);
         }
+        final int newAlphabetSize = this.alphabet.size();
+        final int newSymbolIdx = this.alphabet.getSymbolIndex(symbol);
 
-        final int newAlphabetSize = alphabet.size();
+        final List<RowImpl<I>> shortPrefixes = shortPrefixRows;
+        final List<RowImpl<I>> newLongPrefixes = new ArrayList<>(shortPrefixes.size());
 
-        if (this.isInitialized() && this.alphabetSize < newAlphabetSize) {
-            this.alphabetSize = newAlphabetSize;
-            final int newSymbolIdx = alphabet.getSymbolIndex(symbol);
+        for (RowImpl<I> prefix : shortPrefixes) {
+            prefix.ensureInputCapacity(newAlphabetSize);
 
-            final List<RowImpl<I>> shortPrefixes = shortPrefixRows;
-            final List<RowImpl<I>> newLongPrefixes = new ArrayList<>(shortPrefixes.size());
+            final Word<I> newLongPrefix = prefix.getLabel().append(symbol);
+            final RowImpl<I> longPrefixRow = createLpRow(newLongPrefix);
 
-            for (RowImpl<I> prefix : shortPrefixes) {
-                prefix.ensureInputCapacity(newAlphabetSize);
-
-                final Word<I> newLongPrefix = prefix.getLabel().append(symbol);
-                final RowImpl<I> longPrefixRow = createLpRow(newLongPrefix);
-
-                newLongPrefixes.add(longPrefixRow);
-                prefix.setSuccessor(newSymbolIdx, longPrefixRow);
-            }
-
-            final int numLongPrefixes = newLongPrefixes.size();
-            final int numSuffixes = this.numberOfSuffixes();
-            final List<DefaultQuery<I, D>> queries = new ArrayList<>(numLongPrefixes * numSuffixes);
-
-            buildRowQueries(queries, newLongPrefixes, getSuffixes());
-            oracle.processQueries(queries);
-
-            final Iterator<DefaultQuery<I, D>> queryIterator = queries.iterator();
-            final List<List<Row<I>>> result = new ArrayList<>(numLongPrefixes);
-
-            for (RowImpl<I> row : newLongPrefixes) {
-                final List<D> contents = new ArrayList<>(numSuffixes);
-
-                fetchResults(queryIterator, contents, numSuffixes);
-
-                if (processContents(row, contents, false)) {
-                    result.add(Collections.singletonList(row));
-                }
-            }
-            return result;
-        } else {
-            return Collections.emptyList();
+            newLongPrefixes.add(longPrefixRow);
+            prefix.setSuccessor(newSymbolIdx, longPrefixRow);
         }
+
+        final int numLongPrefixes = newLongPrefixes.size();
+        final int numSuffixes = this.numberOfSuffixes();
+        final List<DefaultQuery<I, D>> queries = new ArrayList<>(numLongPrefixes * numSuffixes);
+
+        buildRowQueries(queries, newLongPrefixes, suffixes);
+        oracle.processQueries(queries);
+
+        final Iterator<DefaultQuery<I, D>> queryIterator = queries.iterator();
+        final List<List<Row<I>>> result = new ArrayList<>(numLongPrefixes);
+
+        for (RowImpl<I> row : newLongPrefixes) {
+            final List<D> contents = new ArrayList<>(numSuffixes);
+
+            fetchResults(queryIterator, contents, numSuffixes);
+
+            if (processContents(row, contents, false)) {
+                result.add(Collections.singletonList(row));
+            }
+        }
+
+        return result;
     }
 
     @Override

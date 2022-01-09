@@ -85,6 +85,10 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
     private void initialize() {
         // Minimising the tree at the start allows us the make the tree smaller, limiting sift depth.
         minimiseTree();
+        DiscriminationTreeIterators.leafIterator(discriminationTree.getRoot()).forEachRemaining(l -> {
+            assert l.getData().dtNode.equals(l);
+            assert stateInfos.containsValue(l.getData());
+        });
     }
 
     @Override
@@ -149,7 +153,7 @@ public class IKearnsVaziraniDFA<I> extends KearnsVaziraniDFA<I> {
                 if (currentNode.getData() != null) {
                     AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> siftedNode =
                         discriminationTree.sift(currentNode.getData().accessSequence);
-                    if (!currentNode.equals(siftedNode)) {
+                    if (!currentNode.getData().dtNode.equals(siftedNode)) {
                         hasRemovedLeaf = true;
                         if (siftedNode.getData() == null) {
                             siftedNode.setData(currentNode.getData());

@@ -16,7 +16,6 @@
 package de.learnlib.datastructure.observationtable;
 
 import net.automatalib.words.Word;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A row in an observation table. Minimally, a row consists of a prefix (the row label) and a unique identifier in its
@@ -29,20 +28,28 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @param <I>
  *         input symbol type
  *
- * @param <D>
- *         domain symbol type
- *
  * @author Malte Isberner
  */
-public interface Row<I, D> {
+public interface Row<I> {
 
     /**
-     * Retrieves the RowContent associated with this row (may be {@code null} if this row has not
+     * Retrieves the unique row identifier associated with this row.
+     *
+     * @return the row identifier
+     *
+     * @see ObservationTable#numberOfRows()
+     */
+    int getRowId();
+
+    /**
+     * Retrieves the unique identifier associated with the content of this row (may be {@code -1} if this row has not
      * yet been initialized).
      *
      * @return the row content identifier
+     *
+     * @see ObservationTable#numberOfDistinctRows()
      */
-    @Nullable RowContent<I, D> getRowContent();
+    int getRowContentId();
 
     /**
      * Retrieves the label of this row.
@@ -67,5 +74,5 @@ public interface Row<I, D> {
      *
      * @return the successor row (may be <code>null</code>)
      */
-    Row<I, D> getSuccessor(int pos);
+    Row<I> getSuccessor(int pos);
 }

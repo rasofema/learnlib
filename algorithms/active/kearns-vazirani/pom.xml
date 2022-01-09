@@ -91,12 +91,6 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-ilstar</artifactId>
-            <version>0.17.0-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.learnlib</groupId>
             <artifactId>learnlib-membership-oracles</artifactId>
             <version>0.17.0-SNAPSHOT</version>
             <scope>test</scope>

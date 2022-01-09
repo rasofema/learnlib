@@ -25,7 +25,7 @@ import net.automatalib.automata.concepts.SuffixOutput;
 
 public interface ObservationTableCEXHandler<I, D> {
 
-    <RI extends I, RD extends D> List<List<Row<RI, RD>>> handleCounterexample(DefaultQuery<RI, RD> ceQuery,
+    <RI extends I, RD extends D> List<List<Row<RI>>> handleCounterexample(DefaultQuery<RI, RD> ceQuery,
                                                                           MutableObservationTable<RI, RD> table,
                                                                           SuffixOutput<RI, RD> hypOutput,
                                                                           MembershipOracle<RI, RD> oracle);

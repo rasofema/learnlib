@@ -18,11 +18,9 @@ package de.learnlib.datastructure.observationtable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import de.learnlib.datastructure.observationtable.reader.SimpleObservationTable;
@@ -39,15 +37,18 @@ import net.automatalib.words.Word;
  * @author frohme
  */
 public class MockedObservationTable<I, D> extends SimpleObservationTable<I, D> {
-    private final Map<List<D>, RowContent<I, D>> contentsToRowContent;
 
-    private final List<RowImpl<I, D>> rows;
-    private final List<RowImpl<I, D>> shortPrefixes;
-    private final List<RowImpl<I, D>> longPrefixes;
+    private final Map<List<D>, Integer> contentsToIdMap;
+    private final List<List<D>> rowContents;
+
+    private final List<RowImpl<I>> rows;
+    private final List<RowImpl<I>> shortPrefixes;
+    private final List<RowImpl<I>> longPrefixes;
 
     MockedObservationTable(List<? extends Word<I>> suffixes) {
         super(suffixes);
-        this.contentsToRowContent = new HashMap<>();
+        this.rowContents = new LinkedList<>();
+        this.contentsToIdMap = new HashMap<>();
 
         this.rows = new LinkedList<>();
         this.shortPrefixes = new LinkedList<>();
@@ -62,40 +63,45 @@ public class MockedObservationTable<I, D> extends SimpleObservationTable<I, D> {
         longPrefixes.add(addPrefix(prefix, contents));
     }
 
-    private RowImpl<I, D> addPrefix(final Word<I> prefix, List<D> contents) {
+    private RowImpl<I> addPrefix(final Word<I> prefix, List<D> contents) {
         Preconditions.checkArgument(getSuffixes().size() == contents.size());
 
-        final RowImpl<I, D> row = new RowImpl<>(prefix, rows.size());
-        final RowContent<I, D> rowContent = contentsToRowContent.computeIfAbsent(contents, k -> {
-            Set<Row<I, D>> associatedRows = new HashSet<>();
-            associatedRows.add(row);
-            return new RowContent<>(contents, associatedRows);
+        final RowImpl<I> row = new RowImpl<>(prefix, rows.size());
+
+        final int contentId = contentsToIdMap.computeIfAbsent(contents, k -> {
+            rowContents.add(k);
+            return contentsToIdMap.size();
         });
 
-        contentsToRowContent.put(contents, rowContent);
-        row.setRowContent(rowContent);
+        row.setRowContentId(contentId);
         rows.add(row);
 
         return row;
     }
 
     @Override
-    public Collection<Row<I, D>> getShortPrefixRows() {
+    public Collection<Row<I>> getShortPrefixRows() {
         return Collections.unmodifiableList(shortPrefixes);
     }
 
     @Override
-    public Collection<Row<I, D>> getLongPrefixRows() {
+    public Collection<Row<I>> getLongPrefixRows() {
         return Collections.unmodifiableList(longPrefixes);
     }
 
     @Override
-    public RowImpl<I, D> getRow(int idx) {
+    public RowImpl<I> getRow(int idx) {
         return rows.get(idx);
     }
 
     @Override
     public int numberOfDistinctRows() {
-        return contentsToRowContent.size();
+        return contentsToIdMap.size();
     }
+
+    @Override
+    public List<D> rowContents(Row<I> row) {
+        return this.rowContents.get(this.getRow(row.getRowId()).getRowContentId());
+    }
+
 }

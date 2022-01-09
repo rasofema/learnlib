@@ -110,12 +110,6 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-ilstar</artifactId>
-            <version>0.17.0-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.learnlib</groupId>
             <artifactId>learnlib-kearns-vazirani</artifactId>
         </dependency>
         <dependency>
@@ -127,6 +121,11 @@ limitations under the License.
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-ikv</artifactId>
             <version>0.17.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.nist.math</groupId>
+            <artifactId>jama</artifactId>
+            <version>1.0.3</version>
         </dependency>
     </dependencies>
 </project>

@@ -1,5 +1,6 @@
-/* Copyright (C) 2013-2021 TU Dortmund
- * This file is part of LearnLib, http://www.learnlib.de/.
+/* Copyright (C) 2018
+ * This file is part of the PhD research project entitled
+ * Inferring models from Evolving Systems and Product Families.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.lstar;
+package de.learnlib.algorithms.dlstar;
+
+import de.learnlib.algorithms.dlstar.AbstractAutomatonDLStar;
+import de.learnlib.algorithms.dlstar.AbstractAutomatonDLStar.StateInfo;
+import de.learnlib.algorithms.dlstar.AbstractDLStarState;
+import de.learnlib.datastructure.observationtable.DynamicObservationTable;
 
 import java.util.List;
 
-import de.learnlib.algorithms.lstar.AbstractAutomatonLStar.StateInfo;
-import de.learnlib.datastructure.observationtable.GenericObservationTable;
-
 /**
- * Class that contains all data that represent the internal state of the {@link AbstractAutomatonLStar} learner and its
+ * Class that contains all data that represent the internal state of the {@link AbstractAutomatonDLStar} learner and its
  * DFA and Mealy implementations.
  *
  * @param <I>
@@ -33,31 +36,26 @@ import de.learnlib.datastructure.observationtable.GenericObservationTable;
  * @param <S>
  *         The hypothesis state type.
  *
- * @author bainczyk
+ *  @author Carlos Diego Nascimento Damasceno (damascenodiego@usp.br)
  */
-public class AutomatonLStarState<I, D, AI, S> {
+public class AutomatonDLStarState<I, D, AI, S> extends AbstractDLStarState<I, D> {
 
-    private final GenericObservationTable<I, D> observationTable;
     private final AI hypothesis;
     private final List<StateInfo<S, I>> stateInfos;
 
-    AutomatonLStarState(final GenericObservationTable<I, D> observationTable,
-                        final AI hypothesis,
-                        final List<StateInfo<S, I>> stateInfos) {
-        this.observationTable = observationTable;
+    AutomatonDLStarState(final DynamicObservationTable<I, D> observationTable,
+                         final AI hypothesis,
+                         final List<StateInfo<S, I>> stateInfos) {
+        super(observationTable);
         this.hypothesis = hypothesis;
         this.stateInfos = stateInfos;
-    }
-
-    GenericObservationTable<I, D> getObservationTable() {
-        return observationTable;
     }
 
     AI getHypothesis() {
         return hypothesis;
     }
 
-    List<AbstractAutomatonLStar.StateInfo<S, I>> getStateInfos() {
+    List<AbstractAutomatonDLStar.StateInfo<S, I>> getStateInfos() {
         return stateInfos;
     }
 }

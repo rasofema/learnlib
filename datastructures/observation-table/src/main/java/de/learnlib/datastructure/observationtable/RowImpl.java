@@ -18,23 +18,28 @@ package de.learnlib.datastructure.observationtable;
 import net.automatalib.commons.smartcollections.ResizingArrayStorage;
 import net.automatalib.words.Word;
 
-final class RowImpl<I, D> implements Row<I, D> {
+final class RowImpl<I> implements Row<I> {
 
     private final Word<I> label;
-    private RowContent<I, D> rowContent;
-    private boolean isShortRow;
-    private ResizingArrayStorage<RowImpl<I, D>> successors;
+    private final int rowId;
+
+    private int rowContentId = -1;
+    private int lpIndex;
+    private ResizingArrayStorage<RowImpl<I>> successors;
 
     /**
      * Constructor for short label rows.
      *
      * @param label
      *         the label (label) of this row
+     * @param rowId
+     *         the unique row identifier
      * @param alphabetSize
      *         the size of the alphabet, used for initializing the successor array
      */
-    RowImpl(Word<I> label, int alphabetSize) {
-        this(label);
+    RowImpl(Word<I> label, int rowId, int alphabetSize) {
+        this(label, rowId);
+
         makeShort(alphabetSize);
     }
 
@@ -46,8 +51,9 @@ final class RowImpl<I, D> implements Row<I, D> {
      * @param rowId
      *         the unique row identifier
      */
-    RowImpl(Word<I> label) {
+    RowImpl(Word<I> label, int rowId) {
         this.label = label;
+        this.rowId = rowId;
     }
 
     /**
@@ -58,20 +64,15 @@ final class RowImpl<I, D> implements Row<I, D> {
      *         the size of the input alphabet.
      */
     void makeShort(int initialAlphabetSize) {
-        if (isShortRow) {
+        if (lpIndex == -1) {
             return;
         }
-        isShortRow = true;
+        lpIndex = -1;
         this.successors = new ResizingArrayStorage<>(RowImpl.class, initialAlphabetSize);
     }
 
-    void makeLong() {
-        this.isShortRow = false;
-        this.successors = null;
-    }
-
     @Override
-    public RowImpl<I, D> getSuccessor(int inputIdx) {
+    public RowImpl<I> getSuccessor(int inputIdx) {
         return successors.array[inputIdx];
     }
 
@@ -84,7 +85,7 @@ final class RowImpl<I, D> implements Row<I, D> {
      * @param succ
      *         the successor row
      */
-    void setSuccessor(int inputIdx, RowImpl<I, D> succ) {
+    void setSuccessor(int inputIdx, RowImpl<I> succ) {
         successors.array[inputIdx] = succ;
     }
 
@@ -94,28 +95,40 @@ final class RowImpl<I, D> implements Row<I, D> {
     }
 
     @Override
-    public RowContent<I, D> getRowContent() {
-        return rowContent;
+    public int getRowId() {
+        return rowId;
+    }
+
+    @Override
+    public int getRowContentId() {
+        return rowContentId;
     }
 
     /**
      * Sets the ID of the row contents.
      *
-     * @param rowContent
-     *         the RowContent object
+     * @param id
+     *         the contents id
      */
-    void setRowContent(RowContent<I, D> rowContent) {
-        this.rowContent = rowContent;
-        this.rowContent.addAssociatedRow(this);
+    void setRowContentId(int id) {
+        this.rowContentId = id;
     }
 
     @Override
     public boolean isShortPrefixRow() {
-        return isShortRow;
+        return lpIndex == -1;
     }
 
     boolean hasContents() {
-        return rowContent != null;
+        return rowContentId != -1;
+    }
+
+    int getLpIndex() {
+        return lpIndex;
+    }
+
+    void setLpIndex(int lpIndex) {
+        this.lpIndex = lpIndex;
     }
 
     /**

@@ -78,7 +78,7 @@ public abstract class AbstractLStar<A, I, D>
     public void startLearning() {
         List<Word<I>> prefixes = initialPrefixes();
         List<Word<I>> suffixes = initialSuffixes();
-        List<List<Row<I, D>>> initialUnclosed = table.initialize(prefixes, suffixes, oracle);
+        List<List<Row<I>>> initialUnclosed = table.initialize(prefixes, suffixes, oracle);
 
         completeConsistentTable(initialUnclosed, table.isInitialConsistencyCheckRequired());
     }
@@ -97,7 +97,7 @@ public abstract class AbstractLStar<A, I, D>
     protected abstract SuffixOutput<I, D> hypothesisOutput();
 
     protected void doRefineHypothesis(DefaultQuery<I, D> ceQuery) {
-        List<List<Row<I, D>>> unclosed = incorporateCounterExample(ceQuery);
+        List<List<Row<I>>> unclosed = incorporateCounterExample(ceQuery);
         completeConsistentTable(unclosed, true);
     }
 
@@ -109,7 +109,7 @@ public abstract class AbstractLStar<A, I, D>
      *
      * @return the rows (equivalence classes) which became unclosed by adding the information.
      */
-    protected List<List<Row<I, D>>> incorporateCounterExample(DefaultQuery<I, D> ce) {
+    protected List<List<Row<I>>> incorporateCounterExample(DefaultQuery<I, D> ce) {
         return ObservationTableCEXHandlers.handleClassicLStar(ce, table, oracle);
     }
 
@@ -131,18 +131,18 @@ public abstract class AbstractLStar<A, I, D>
      * @param unclosed
      *         the unclosed rows (equivalence classes) to start with.
      */
-    protected boolean completeConsistentTable(List<List<Row<I, D>>> unclosed, boolean checkConsistency) {
+    protected boolean completeConsistentTable(List<List<Row<I>>> unclosed, boolean checkConsistency) {
         boolean refined = false;
-        List<List<Row<I, D>>> unclosedIter = unclosed;
+        List<List<Row<I>>> unclosedIter = unclosed;
         do {
             while (!unclosedIter.isEmpty()) {
-                List<Row<I, D>> closingRows = selectClosingRows(unclosedIter);
+                List<Row<I>> closingRows = selectClosingRows(unclosedIter);
                 unclosedIter = table.toShortPrefixes(closingRows, oracle);
                 refined = true;
             }
 
             if (checkConsistency) {
-                Inconsistency<I, D> incons;
+                Inconsistency<I> incons;
 
                 do {
                     incons = table.findInconsistency();
@@ -167,10 +167,10 @@ public abstract class AbstractLStar<A, I, D>
      *
      * @return a list containing a representative row from each class to move to the short prefix part.
      */
-    protected List<Row<I, D>> selectClosingRows(List<List<Row<I, D>>> unclosed) {
-        List<Row<I, D>> closingRows = new ArrayList<>(unclosed.size());
+    protected List<Row<I>> selectClosingRows(List<List<Row<I>>> unclosed) {
+        List<Row<I>> closingRows = new ArrayList<>(unclosed.size());
 
-        for (List<Row<I, D>> rowList : unclosed) {
+        for (List<Row<I>> rowList : unclosed) {
             closingRows.add(rowList.get(0));
         }
 
@@ -186,11 +186,11 @@ public abstract class AbstractLStar<A, I, D>
      *
      * @return the suffix to add in order to fix the inconsistency
      */
-    protected Word<I> analyzeInconsistency(Inconsistency<I, D> incons) {
+    protected Word<I> analyzeInconsistency(Inconsistency<I> incons) {
         int inputIdx = alphabet.getSymbolIndex(incons.getSymbol());
 
-        Row<I, D> succRow1 = incons.getFirstRow().getSuccessor(inputIdx);
-        Row<I, D> succRow2 = incons.getSecondRow().getSuccessor(inputIdx);
+        Row<I> succRow1 = incons.getFirstRow().getSuccessor(inputIdx);
+        Row<I> succRow2 = incons.getSecondRow().getSuccessor(inputIdx);
 
         int numSuffixes = table.getSuffixes().size();
 
@@ -213,7 +213,7 @@ public abstract class AbstractLStar<A, I, D>
 
     @Override
     public boolean addGlobalSuffixes(Collection<? extends Word<I>> newGlobalSuffixes) {
-        List<List<Row<I, D>>> unclosed = table.addSuffixes(newGlobalSuffixes, oracle);
+        List<List<Row<I>>> unclosed = table.addSuffixes(newGlobalSuffixes, oracle);
         if (unclosed.isEmpty()) {
             return false;
         }
@@ -232,7 +232,7 @@ public abstract class AbstractLStar<A, I, D>
             Alphabets.toGrowingAlphabetOrThrowException(this.alphabet).addSymbol(symbol);
         }
 
-        final List<List<Row<I, D>>> unclosed = this.table.addAlphabetSymbol(symbol, oracle);
+        final List<List<Row<I>>> unclosed = this.table.addAlphabetSymbol(symbol, oracle);
         completeConsistentTable(unclosed, true);
     }
 }

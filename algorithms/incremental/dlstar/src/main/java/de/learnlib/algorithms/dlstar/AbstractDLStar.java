@@ -1,5 +1,8 @@
-/* Copyright (C) 2013-2021 TU Dortmund
- * This file is part of LearnLib, http://www.learnlib.de/.
+/* Copyright (C) 2018
+ * This file is part of the PhD research project entitled
+ * 'Inferring models from Evolving Systems and Product Families'
+ * developed by Carlos Diego Nascimento Damasceno at the
+ * University of Sao Paulo (ICMC-USP).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,40 +16,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.ilstar;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+package de.learnlib.algorithms.dlstar;
 
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.api.algorithm.feature.GlobalSuffixLearner;
+import de.learnlib.api.logging.LearnLogger;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.datastructure.observationtable.GenericObservationTable;
-import de.learnlib.datastructure.observationtable.Inconsistency;
-import de.learnlib.datastructure.observationtable.OTLearner;
-import de.learnlib.datastructure.observationtable.ObservationTable;
-import de.learnlib.datastructure.observationtable.Row;
+import de.learnlib.datastructure.observationtable.*;
+import de.learnlib.datastructure.observationtable.writer.ObservationTableASCIIWriter;
+import de.learnlib.util.Experiment;
 import de.learnlib.util.MQUtil;
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
+import java.io.IOException;
+import java.util.*;
+
 /**
- * An abstract base class for L*-style algorithms.
+ * An abstract base class for the extended version of the L*-style algorithms named Dynamic L*.
  * <p>
  * This class implements basic management features (table, alphabet, oracle) and the main loop of alternating
  * completeness and consistency checks. It does not take care of choosing how to initialize the table and hypothesis
  * construction.
+ * The main difference of it stands on the way that the Observation Table is handled at the initialization.
  *
  * @param <A>
  *         automaton type
@@ -55,14 +51,16 @@ import net.automatalib.words.impl.Alphabets;
  * @param <D>
  *         output domain type
  *
- * @author Malte Isberner
+ * @author Carlos Diego Nascimento Damasceno (damascenodiego@usp.br)
  */
-public abstract class AbstractILStar<A, I, D>
+public abstract class AbstractDLStar<A, I, D>
         implements OTLearner<A, I, D>, GlobalSuffixLearner<A, I, D>, SupportsGrowingAlphabet<I> {
 
     protected final Alphabet<I> alphabet;
     protected final MembershipOracle<I, D> oracle;
-    protected GenericObservationTable<I, D> table;
+    protected DynamicObservationTable<I, D> table;
+    private static final LearnLogger LOGGER = LearnLogger.getLogger(AbstractDLStar.class);
+    private boolean logObservationTable;
 
     /**
      * Constructor.
@@ -72,40 +70,40 @@ public abstract class AbstractILStar<A, I, D>
      * @param oracle
      *         the membership oracle.
      */
-    protected AbstractILStar(Alphabet<I> alphabet, MembershipOracle<I, D> oracle) {
+    protected AbstractDLStar(Alphabet<I> alphabet, MembershipOracle<I, D> oracle) {
         this.alphabet = alphabet;
         this.oracle = oracle;
-        this.table = new GenericObservationTable<>(alphabet);
+        this.table = new DynamicObservationTable<>(alphabet);
+        this.logObservationTable = false;
     }
 
     @Override
     public void startLearning() {
         List<Word<I>> prefixes = initialPrefixes();
         List<Word<I>> suffixes = initialSuffixes();
-        table.initialize(prefixes, suffixes, oracle);
+        List<List<Row<I>>> initialUnclosed = table.initialize(prefixes, suffixes, oracle);
 
-        completeConsistentTable(table.isInitialConsistencyCheckRequired());
+        completeConsistentTable(initialUnclosed, table.isInitialConsistencyCheckRequired());
+        logObservationTable("startLearning");
     }
 
     @Override
-    public boolean refineHypothesis(DefaultQuery<I, D> ceQuery) {
+    public final boolean refineHypothesis(DefaultQuery<I, D> ceQuery) {
         if (!MQUtil.isCounterexample(ceQuery, hypothesisOutput())) {
             return false;
         }
+        int oldDistinctRows = table.numberOfDistinctRows();
         doRefineHypothesis(ceQuery);
-        // TODO: We are no longer guaranteed to always increase in number of rows.
-        //  I'm sure this breaks a tonne of theorems.
+        assert (table.numberOfDistinctRows() > oldDistinctRows);
+        logObservationTable("refineHypothesis");
         return true;
     }
 
     protected abstract SuffixOutput<I, D> hypothesisOutput();
 
     protected void doRefineHypothesis(DefaultQuery<I, D> ceQuery) {
-        incorporateCounterExample(ceQuery);
-        completeConsistentTable(true);
-        while (table.minimiseTable(oracle)) {
-            completeConsistentTable(true);
-        }
+        List<List<Row<I>>> unclosed = incorporateCounterExample(ceQuery);
+        completeConsistentTable(unclosed, true);
     }
 
     /**
@@ -116,8 +114,8 @@ public abstract class AbstractILStar<A, I, D>
      *
      * @return the rows (equivalence classes) which became unclosed by adding the information.
      */
-    protected List<List<Row<I, D>>> incorporateCounterExample(DefaultQuery<I, D> ce) {
-        return ObservationTableCEXHandlers.handleIncrementalLStar(ce, table, hypothesisOutput(), oracle);
+    protected List<List<Row<I>>> incorporateCounterExample(DefaultQuery<I, D> ce) {
+        return ObservationTableCEXHandlers.handleClassicLStar(ce, table, oracle);
     }
 
     protected List<Word<I>> initialPrefixes() {
@@ -135,46 +133,32 @@ public abstract class AbstractILStar<A, I, D>
      * Iteratedly checks for unclosedness and inconsistencies in the table, and fixes any occurrences thereof. This
      * process is repeated until the observation table is both closed and consistent.
      *
+     * @param unclosed
+     *         the unclosed rows (equivalence classes) to start with.
      */
-    protected boolean completeConsistentTable(boolean checkConsistency) {
-        boolean refined = closedTable();
-        if (checkConsistency) {
-            boolean consistentRefined = consistentTable();
-            refined = refined || consistentRefined;
-        }
-
-        return refined;
-    }
-
-    protected boolean closedTable() {
-        List<List<Row<I, D>>> unclosed = table.findUnclosedRows();
+    protected boolean completeConsistentTable(List<List<Row<I>>> unclosed, boolean checkConsistency) {
         boolean refined = false;
-
-        while (!unclosed.isEmpty()) {
-            List<Row<I, D>> closingRows = selectClosingRows(unclosed);
-            unclosed = table.toShortPrefixes(closingRows, oracle);
-            refined = true;
-        }
-
-        return refined;
-    }
-
-    protected boolean consistentTable() {
-        boolean refined = false;
-        Inconsistency<I, D> incons = table.findInconsistency();
-        while (incons != null) {
-            System.out.println("BEGIN ==========");
-            incons = table.verifyInconsistency(incons, oracle).getFirst();
-            System.out.println("END ==========");
-            if (incons != null) {
-                Word<I> newSuffix = analyzeInconsistency(incons);
-                table.addSuffix(newSuffix, oracle);
+        List<List<Row<I>>> unclosedIter = unclosed;
+        do {
+            while (!unclosedIter.isEmpty()) {
+                List<Row<I>> closingRows = selectClosingRows(unclosedIter);
+                unclosedIter = table.toShortPrefixes(closingRows, oracle);
                 refined = true;
             }
-            boolean closedRefined = closedTable();
-            refined = refined || closedRefined;
-            incons = table.findInconsistency();
-        }
+
+            if (checkConsistency) {
+                Inconsistency<I> incons;
+
+                do {
+                    incons = table.findInconsistency();
+                    if (incons != null) {
+                        Word<I> newSuffix = analyzeInconsistency(incons);
+                        unclosedIter = table.addSuffix(newSuffix, oracle);
+                    }
+                } while (unclosedIter.isEmpty() && (incons != null));
+            }
+        } while (!unclosedIter.isEmpty());
+
         return refined;
     }
 
@@ -188,10 +172,10 @@ public abstract class AbstractILStar<A, I, D>
      *
      * @return a list containing a representative row from each class to move to the short prefix part.
      */
-    protected List<Row<I, D>> selectClosingRows(List<List<Row<I, D>>> unclosed) {
-        List<Row<I, D>> closingRows = new ArrayList<>(unclosed.size());
+    protected List<Row<I>> selectClosingRows(List<List<Row<I>>> unclosed) {
+        List<Row<I>> closingRows = new ArrayList<>(unclosed.size());
 
-        for (List<Row<I, D>> rowList : unclosed) {
+        for (List<Row<I>> rowList : unclosed) {
             closingRows.add(rowList.get(0));
         }
 
@@ -207,11 +191,11 @@ public abstract class AbstractILStar<A, I, D>
      *
      * @return the suffix to add in order to fix the inconsistency
      */
-    protected Word<I> analyzeInconsistency(Inconsistency<I, D> incons) {
+    protected Word<I> analyzeInconsistency(Inconsistency<I> incons) {
         int inputIdx = alphabet.getSymbolIndex(incons.getSymbol());
 
-        Row<I, D> succRow1 = incons.getFirstRow().getSuccessor(inputIdx);
-        Row<I, D> succRow2 = incons.getSecondRow().getSuccessor(inputIdx);
+        Row<I> succRow1 = incons.getFirstRow().getSuccessor(inputIdx);
+        Row<I> succRow2 = incons.getSecondRow().getSuccessor(inputIdx);
 
         int numSuffixes = table.getSuffixes().size();
 
@@ -234,11 +218,11 @@ public abstract class AbstractILStar<A, I, D>
 
     @Override
     public boolean addGlobalSuffixes(Collection<? extends Word<I>> newGlobalSuffixes) {
-        List<List<Row<I, D>>> unclosed = table.addSuffixes(newGlobalSuffixes, oracle);
+        List<List<Row<I>>> unclosed = table.addSuffixes(newGlobalSuffixes, oracle);
         if (unclosed.isEmpty()) {
             return false;
         }
-        return completeConsistentTable(false);
+        return completeConsistentTable(unclosed, false);
     }
 
     @Override
@@ -253,7 +237,29 @@ public abstract class AbstractILStar<A, I, D>
             Alphabets.toGrowingAlphabetOrThrowException(this.alphabet).addSymbol(symbol);
         }
 
-        final List<List<Row<I, D>>> unclosed = this.table.addAlphabetSymbol(symbol, oracle);
-        completeConsistentTable(true);
+        final List<List<Row<I>>> unclosed = this.table.addAlphabetSymbol(symbol, oracle);
+        completeConsistentTable(unclosed, true);
+    }
+    
+    protected void logObservationTable(String method_name) {
+    	if(this.logObservationTable) {
+    		StringBuffer sb = new StringBuffer();
+    		sb.append("\n");
+    		try {
+				new ObservationTableASCIIWriter<>().write(getObservationTable(), sb);
+	    		LOGGER.logEvent("Called from method '"+method_name+"'");
+	    		LOGGER.logEvent(sb.toString());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
+	}
+    
+    /**
+     * @param logModels
+     *         flag whether models should be logged
+     */
+    public void setLogObservationTable(boolean logOT) {
+        this.logObservationTable = logOT;
     }
 }

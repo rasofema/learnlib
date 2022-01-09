@@ -54,7 +54,7 @@ public abstract class AbstractExtensibleAutomatonLStar<A, I, D, S, T, SP, TP, AI
 
     @Override
     protected void refineHypothesisInternal(DefaultQuery<I, D> ceQuery) {
-        List<List<Row<I, D>>> unclosed = cexHandler.handleCounterexample(ceQuery, table, hypothesisOutput(), oracle);
+        List<List<Row<I>>> unclosed = cexHandler.handleCounterexample(ceQuery, table, hypothesisOutput(), oracle);
         completeConsistentTable(unclosed, cexHandler.needsConsistencyCheck());
     }
 
@@ -69,7 +69,7 @@ public abstract class AbstractExtensibleAutomatonLStar<A, I, D, S, T, SP, TP, AI
     }
 
     @Override
-    protected List<Row<I, D>> selectClosingRows(List<List<Row<I, D>>> unclosed) {
+    protected List<Row<I>> selectClosingRows(List<List<Row<I>>> unclosed) {
         return closingStrategy.selectClosingRows(unclosed, table, oracle);
     }
 

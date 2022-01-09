@@ -33,7 +33,7 @@ limitations under the License.
 
     <modules>
         <module>ikv</module>
-        <module>ilstar</module>
         <module>continuous</module>
+        <module>dlstar</module>
     </modules>
 </project>

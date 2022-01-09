@@ -1,5 +1,8 @@
-/* Copyright (C) 2013-2021 TU Dortmund
- * This file is part of LearnLib, http://www.learnlib.de/.
+/* Copyright (C) 2018
+ * This file is part of the PhD research project entitled
+ * 'Inferring models from Evolving Systems and Product Families'
+ * developed by Carlos Diego Nascimento Damasceno at the
+ * University of Sao Paulo (ICMC-USP).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +16,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.ilstar;
+package de.learnlib.algorithms.dlstar;
 
-import java.util.Collections;
-import java.util.List;
-
+import de.learnlib.algorithms.lstar.AbstractAutomatonLStar;
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandler;
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategy;
 import de.learnlib.api.oracle.MembershipOracle;
+import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.observationtable.Row;
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.MutableDeterministic;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public abstract class AbstractExtensibleAutomatonILStar<A, I, D, S, T, SP, TP, AI extends MutableDeterministic<S, I, T, SP, TP> & SupportsGrowingAlphabet<I>>
-        extends AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI> {
+import java.util.Collections;
+import java.util.List;
+
+public abstract class AbstractExtensibleAutomatonDLStar<A, I, D, S, T, SP, TP, AI extends MutableDeterministic<S, I, T, SP, TP> & SupportsGrowingAlphabet<I>>
+        extends AbstractAutomatonDLStar<A, I, D, S, T, SP, TP, AI> {
 
     protected final ObservationTableCEXHandler<? super I, ? super D> cexHandler;
     protected final ClosingStrategy<? super I, ? super D> closingStrategy;
     protected final List<Word<I>> initialPrefixes;
     protected final List<Word<I>> initialSuffixes;
 
-    protected AbstractExtensibleAutomatonILStar(Alphabet<I> alphabet,
+    protected AbstractExtensibleAutomatonDLStar(Alphabet<I> alphabet,
                                                 MembershipOracle<I, D> oracle,
                                                 AI internalHyp,
                                                 List<Word<I>> initialPrefixes,
@@ -52,6 +57,12 @@ public abstract class AbstractExtensibleAutomatonILStar<A, I, D, S, T, SP, TP, A
     }
 
     @Override
+    protected void refineHypothesisInternal(DefaultQuery<I, D> ceQuery) {
+        List<List<Row<I>>> unclosed = cexHandler.handleCounterexample(ceQuery, table, hypothesisOutput(), oracle);
+        completeConsistentTable(unclosed, cexHandler.needsConsistencyCheck());
+    }
+
+    @Override
     protected final List<Word<I>> initialPrefixes() {
         return initialPrefixes;
     }
@@ -62,7 +73,7 @@ public abstract class AbstractExtensibleAutomatonILStar<A, I, D, S, T, SP, TP, A
     }
 
     @Override
-    protected List<Row<I, D>> selectClosingRows(List<List<Row<I, D>>> unclosed) {
+    protected List<Row<I>> selectClosingRows(List<List<Row<I>>> unclosed) {
         return closingStrategy.selectClosingRows(unclosed, table, oracle);
     }
 

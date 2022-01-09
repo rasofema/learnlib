@@ -27,7 +27,7 @@ limitations under the License.
 
     <artifactId>learnlib-datastructure-ot</artifactId>
 
-    <name>LearnLib :: Datastructures :: Observationtable</name>
+    <name>LearnLib :: Datastructures :: Observation Table</name>
     <description>Data- and utility classes for Observation Tables</description>
 
     <dependencies>
@@ -69,6 +69,24 @@ limitations under the License.
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-drivers-simulator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-statistics</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-membership-oracles</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

@@ -1,5 +1,9 @@
-/* Copyright (C) 2013-2021 TU Dortmund
- * This file is part of LearnLib, http://www.learnlib.de/.
+
+/* Copyright (C) 2018
+ * This file is part of the PhD research project entitled
+ * 'Inferring models from Evolving Systems and Product Families'
+ * developed by Carlos Diego Nascimento Damasceno at the
+ * University of Sao Paulo (ICMC-USP).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +17,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.ilstar;
+package de.learnlib.algorithms.dlstar;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
+import de.learnlib.algorithms.dlstar.AbstractDLStar;
+import de.learnlib.algorithms.dlstar.AutomatonDLStarState;
 import de.learnlib.api.Resumable;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
-import de.learnlib.datastructure.observationtable.RowContent;
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.MutableDeterministic;
+import net.automatalib.commons.util.collections.CollectionsUtil;
 import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Abstract base class for algorithms that produce (subclasses of) {@link MutableDeterministic} automata.
  * <p>
- * This class provides the L*-style hypothesis construction. Implementing classes solely have to specify how state and
- * transition properties should be derived.
+ * This class provides an extended version of the L*-style hypothesis construction named Dynamic L*.
+ * Implementing classes solely have to specify how state and transition properties should be derived.
+ * The main difference of it stands on the way that the Observation Table is handled at the initialization.
  *
  * @param <A>
  *         automaton type, must be a subclass of {@link MutableDeterministic}
@@ -48,15 +54,13 @@ import org.slf4j.LoggerFactory;
  * @param <TP>
  *         transition property type
  *
- * @author Malte Isberner
+ * @author Carlos Diego Nascimento Damasceno (damascenodiego@usp.br)
  */
-public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends MutableDeterministic<S, I, T, SP, TP> & SupportsGrowingAlphabet<I>>
-        extends AbstractILStar<A, I, D> implements Resumable<AutomatonILStarState<I, D, AI, S>> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAutomatonILStar.class);
+public abstract class AbstractAutomatonDLStar<A, I, D, S, T, SP, TP, AI extends MutableDeterministic<S, I, T, SP, TP> & SupportsGrowingAlphabet<I>>
+        extends AbstractDLStar<A, I, D> implements Resumable<AutomatonDLStarState<I, D, AI, S>> {
 
     protected AI internalHyp;
-    protected Map<RowContent<I, D>, StateInfo<S, I, D>> stateInfos = new LinkedHashMap<>();
+    protected List<StateInfo<S, I>> stateInfos = new ArrayList<>();
 
     /**
      * Constructor.
@@ -66,7 +70,7 @@ public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends 
      * @param oracle
      *         the learning oracle
      */
-    protected AbstractAutomatonILStar(Alphabet<I> alphabet, MembershipOracle<I, D> oracle, AI internalHyp) {
+    protected AbstractAutomatonDLStar(Alphabet<I> alphabet, MembershipOracle<I, D> oracle, AI internalHyp) {
         super(alphabet, oracle);
         this.internalHyp = internalHyp;
         internalHyp.clear();
@@ -80,7 +84,7 @@ public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends 
     protected abstract A exposeInternalHypothesis();
 
     @Override
-    public void startLearning() {
+    public final void startLearning() {
         super.startLearning();
         updateInternalHypothesis();
     }
@@ -90,37 +94,49 @@ public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends 
      * #stateProperty(ObservationTable, Row)} and {@link #transitionProperty(ObservationTable, Row, int)} methods are
      * used to derive the respective properties.
      */
-    @SuppressWarnings("argument.type.incompatible")
-    // all added nulls to stateInfos will be correctly set to non-null values
+    @SuppressWarnings("argument.type.incompatible") // all added nulls to stateInfos will be correctly set to non-null values
     protected void updateInternalHypothesis() {
         if (!table.isInitialized()) {
             throw new IllegalStateException("Cannot update internal hypothesis: not initialized");
         }
 
-        internalHyp.clear();
-        stateInfos.clear();
+        int oldStates = internalHyp.size();
+        int numDistinct = table.numberOfDistinctRows();
+
+        int newStates = numDistinct - oldStates;
+
+        stateInfos.addAll(Collections.nCopies(newStates, null));
 
         // TODO: Is there a quicker way than iterating over *all* rows?
         // FIRST PASS: Create new hypothesis states
-        for (Row<I, D> sp : table.getShortPrefixRows()) {
-            if (!stateInfos.containsKey(sp.getRowContent())) {
-                S state = createState(sp.getLabel().getClass() == Word.epsilon().getClass(), sp);
-                stateInfos.put(sp.getRowContent(), new StateInfo<>(sp, state));
+        for (Row<I> sp : table.getShortPrefixRows()) {
+            int id = sp.getRowContentId();
+            StateInfo<S, I> info = stateInfos.get(id);
+            if (info != null) {
+                // State from previous hypothesis, property might have changed
+                if (info.getRow() == sp) {
+                    internalHyp.setStateProperty(info.getState(), stateProperty(table, sp));
+                }
+                continue;
             }
+
+            S state = createState((id == 0), sp);
+
+            stateInfos.set(id, new StateInfo<>(sp, state));
         }
 
         // SECOND PASS: Create hypothesis transitions
-        for (StateInfo<S, I, D> info : stateInfos.values()) {
-            Row<I, D> sp = info.getRow();
+        for (StateInfo<S, I> info : stateInfos) {
+            Row<I> sp = info.getRow();
             S state = info.getState();
 
             for (int i = 0; i < alphabet.size(); i++) {
                 I input = alphabet.getSymbol(i);
 
-                Row<I, D> succ = sp.getSuccessor(i);
-                RowContent<I, D> succRowContent = succ.getRowContent();
+                Row<I> succ = sp.getSuccessor(i);
+                int succId = succ.getRowContentId();
 
-                S succState = stateInfos.get(succRowContent).getState();
+                S succState = stateInfos.get(succId).getState();
 
                 setTransition(state, input, succState, sp, i);
             }
@@ -137,9 +153,9 @@ public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends 
      *
      * @return the state property of the corresponding state
      */
-    protected abstract SP stateProperty(ObservationTable<I, D> table, Row<I, D> stateRow);
+    protected abstract SP stateProperty(ObservationTable<I, D> table, Row<I> stateRow);
 
-    protected S createState(boolean initial, Row<I, D> row) {
+    protected S createState(boolean initial, Row<I> row) {
         SP prop = stateProperty(table, row);
         if (initial) {
             return internalHyp.addInitialState(prop);
@@ -147,7 +163,7 @@ public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends 
         return internalHyp.addState(prop);
     }
 
-    protected void setTransition(S from, I input, S to, Row<I, D> fromRow, int inputIdx) {
+    protected void setTransition(S from, I input, S to, Row<I> fromRow, int inputIdx) {
         TP prop = transitionProperty(table, fromRow, inputIdx);
         internalHyp.setTransition(from, input, to, prop);
     }
@@ -165,7 +181,7 @@ public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends 
      *
      * @return the transition property of the corresponding transition
      */
-    protected abstract TP transitionProperty(ObservationTable<I, D> table, Row<I, D> stateRow, int inputIdx);
+    protected abstract TP transitionProperty(ObservationTable<I, D> table, Row<I> stateRow, int inputIdx);
 
     @Override
     protected final void doRefineHypothesis(DefaultQuery<I, D> ceQuery) {
@@ -189,36 +205,29 @@ public abstract class AbstractAutomatonILStar<A, I, D, S, T, SP, TP, AI extends 
     }
 
     @Override
-    public AutomatonILStarState<I, D, AI, S> suspend() {
-        return new AutomatonILStarState<>(table, internalHyp, stateInfos);
+    public AutomatonDLStarState<I, D, AI, S> suspend() {
+        return new AutomatonDLStarState<>(table, internalHyp, stateInfos);
     }
 
     @Override
-    public void resume(final AutomatonILStarState<I, D, AI, S> state) {
+    public void resume(final AutomatonDLStarState<I, D, AI, S> state) {
         this.table = state.getObservationTable();
+        this.table.setInputAlphabet(alphabet);
         this.internalHyp = state.getHypothesis();
         this.stateInfos = state.getStateInfos();
-
-        final Alphabet<I> oldAlphabet = this.table.getInputAlphabet();
-        if (!oldAlphabet.equals(this.alphabet)) {
-            LOGGER.warn(
-                    "The current alphabet '{}' differs from the resumed alphabet '{}'. Future behavior may be inconsistent",
-                    this.alphabet,
-                    oldAlphabet);
-        }
     }
 
-    static final class StateInfo<S, I, D> {
+    static final class StateInfo<S, I> implements Serializable {
 
-        private final Row<I, D> row;
+        private final Row<I> row;
         private final S state;
 
-        StateInfo(Row<I, D> row, S state) {
+        StateInfo(Row<I> row, S state) {
             this.row = row;
             this.state = state;
         }
 
-        public Row<I, D> getRow() {
+        public Row<I> getRow() {
             return row;
         }
 

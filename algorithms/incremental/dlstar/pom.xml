@@ -25,13 +25,17 @@ limitations under the License.
         <relativePath>../../incremental/pom.xml</relativePath>
     </parent>
 
-    <artifactId>learnlib-ilstar</artifactId>
+    <artifactId>learnlib-dlstar</artifactId>
 
-    <name>LearnLib :: Algorithms :: IL*</name>
+    <name>LearnLib :: Algorithms :: DLStar</name>
     <description>A variant of the L* algorithm for incremental model learning.</description>
 
     <dependencies>
         <!-- internal -->
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-acex</artifactId>
+        </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-api</artifactId>
@@ -52,22 +56,12 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>net.automatalib</groupId>
-            <artifactId>automata-core</artifactId>
+            <artifactId>automata-commons-smartcollections</artifactId>
         </dependency>
         <dependency>
             <groupId>net.automatalib</groupId>
-            <artifactId>automata-util</artifactId>
+            <artifactId>automata-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>org.checkerframework</groupId>-->
-<!--            <artifactId>checker-qual</artifactId>-->
-<!--        </dependency>-->
-
         <!-- build -->
         <dependency>
             <groupId>com.github.misberner.buildergen</groupId>
@@ -81,33 +75,44 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-equivalence-oracles</artifactId>
+            <artifactId>learnlib-membership-oracles</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-membership-oracles</artifactId>
+            <artifactId>learnlib-equivalence-oracles</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>de.learnlib.testsupport</groupId>
+            <artifactId>learnlib-learning-examples</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-statistics</artifactId>
+            <version>0.17.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-commons-util</artifactId>
+            <version>0.11.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-util</artifactId>
+            <version>0.11.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
         </dependency>
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-lstar</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-reuse</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-statistics</artifactId>
-            <version>0.15.0</version>
-            <scope>test</scope>
+            <artifactId>learnlib-kearns-vazirani</artifactId>
         </dependency>
         <dependency>
             <groupId>net.automatalib</groupId>
@@ -115,8 +120,8 @@ limitations under the License.
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>de.learnlib.testsupport</groupId>
-            <artifactId>learnlib-learning-examples</artifactId>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-lstar</artifactId>
         </dependency>
     </dependencies>
 </project>

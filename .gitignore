@@ -13,3 +13,4 @@ bin/
 #Intellij settings
 *.iml
 .idea/
+.DS_Store

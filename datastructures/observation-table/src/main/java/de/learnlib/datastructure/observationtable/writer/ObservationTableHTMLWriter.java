@@ -21,7 +21,6 @@ import java.util.function.Function;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
-import de.learnlib.datastructure.observationtable.RowContent;
 import net.automatalib.words.Word;
 
 /**
@@ -71,28 +70,22 @@ public class ObservationTableHTMLWriter<I, D> extends AbstractObservationTableWr
         out.append("\t</thead>").append(System.lineSeparator());
         out.append("\t<tbody>").append(System.lineSeparator());
 
-        for (Row<I, D> row : table.getShortPrefixRows()) {
+        for (Row<I> row : table.getShortPrefixRows()) {
             out.append("\t\t<tr class=\"short-prefix\"><td class=\"prefix\">")
                .append(wordToString.apply(row.getLabel()))
                .append("</td>");
-            RowContent<I, D> rowContent = row.getRowContent();
-            if (rowContent != null) {
-                for (D value : rowContent.getContents()) {
-                    out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
-                }
+            for (D value : table.rowContents(row)) {
+                out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
             }
             out.append("</tr>").append(System.lineSeparator());
         }
 
         out.append("\t\t<tr><td colspan=\"").append(Integer.toString(suffixes.size() + 1)).append("\"></td></tr>").append(System.lineSeparator());
 
-        for (Row<I, D> row : table.getLongPrefixRows()) {
+        for (Row<I> row : table.getLongPrefixRows()) {
             out.append("\t\t<tr class=\"long-prefix\"><td>").append(wordToString.apply(row.getLabel())).append("</td>");
-            RowContent<I, D> rowContent = row.getRowContent();
-            if (rowContent != null) {
-                for (D value : rowContent.getContents()) {
-                    out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
-                }
+            for (D value : table.rowContents(row)) {
+                out.append("<td class=\"suffix-column\">").append(outputToString.apply(value)).append("</td>");
             }
             out.append("</tr>").append(System.lineSeparator());
         }

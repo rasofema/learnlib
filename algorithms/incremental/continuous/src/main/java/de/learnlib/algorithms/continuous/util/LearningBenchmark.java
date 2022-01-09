@@ -45,6 +45,7 @@ import de.learnlib.oracle.membership.SimulatorOracle;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.commons.util.Triple;
+import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
@@ -53,7 +54,7 @@ import net.automatalib.words.impl.Symbol;
 
 public class LearningBenchmark {
     private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
-    private static final PhiMetric<Symbol> PD = new PhiMetric<>(ALPHABET, 0.999);
+    private static final PhiMetric<Symbol> PD = new PhiMetric<>(ALPHABET, 0.999, false);
     private static final Random RAND = new Random();
 
     private static Word<Symbol> sampleWord() {
@@ -223,9 +224,9 @@ public class LearningBenchmark {
     }
 
     public static CompactDFA<Symbol> randomAutomatonGen(int size) {
-        CompactDFA<Symbol> aut = new RandomAutomata(RAND).randomDFA(size, ALPHABET, true);
+        CompactDFA<Symbol> aut = RandomAutomata.randomDFA(RAND, size, ALPHABET, true);
         while (aut.size() != size) {
-            aut = new RandomAutomata(RAND).randomDFA(size, ALPHABET, true);
+            aut = RandomAutomata.randomDFA(RAND, size, ALPHABET, true);
         }
         return aut;
     }
@@ -303,7 +304,7 @@ public class LearningBenchmark {
         CompactDFA<Symbol> feature = randomAutomatonGen(featureSize);
 
         Set<Triple<Integer, Symbol, Integer>> sourceTransitions = new HashSet<>();
-        for (int i = 0; i < aut.size() / 10; i++) {
+        for (int i = 0; i < featureSize; i++) {
             for (Symbol a : aut.getInputAlphabet()) {
                 Integer sourceState = RAND.nextInt(aut.size() - 1);
                 sourceTransitions.add(Triple.of(sourceState, a, aut.getTransition(sourceState, a)));
@@ -335,9 +336,9 @@ public class LearningBenchmark {
         targets.add(base);
         targets.add(target);
 
-        runClassic(targets, limit);
+//        runClassic(targets, limit);
         runIncremental(targets, limit);
-        runContinuous(targets, limit);
+//        runContinuous(targets, limit);
     }
 
     public static void benchmarkMutation(int size, int limit) {
@@ -354,64 +355,34 @@ public class LearningBenchmark {
     public static void benchmarkFeature(int size, int limit) {
         CompactDFA<Symbol> base = randomAutomatonGen(size);
         CompactDFA<Symbol> baseWithFeature = randomAddFeature(base, 3);
+        System.out.println(DFAs.minimize(base).size() + ", " + DFAs.minimize(baseWithFeature).size());
 
         benchmark(base, baseWithFeature, limit);
-    }
 
-    private static double calculateSD(double[] runs) {
-        double sum = 0.0, standardDeviation = 0.0;
-        int length = runs.length;
-        for(double num : runs) {
-            sum += num;
-        }
-        double mean = sum/length;
-        for(double num: runs) {
-            standardDeviation += Math.pow(num - mean, 2);
-        }
-        return Math.sqrt(standardDeviation/length);
-    }
-
-    private static double computeSim(int size) {
-        CompactDFA<Symbol> t0 = randomAutomatonGen(size);
-        CompactDFA<Symbol> t1 = randomAutomatonGen(size);
-        return PD.sim(t0, t1);
-    }
-
-    private static double[] averageSim(int n, int size) {
-        ConcurrentHashMap<Integer, Double> metric = new ConcurrentHashMap<>();
-        IntStream.range(0, n).parallel()
-            .forEach(i -> metric.put(i, computeSim(size)));
-        double[] runs = new double[n];
-        for (int i  = 0; i < n; i++) {
-            runs[i] = metric.get(i);
-        }
-        return runs;
-    }
-
-    public static void benchmarkAverage(int n, int size) {
-        double[] results = averageSim(n, size);
-        System.out.println("AVER: " + Arrays.stream(results).average().orElse(0.0));
-        System.out.println("DEV: " + calculateSD(results));
     }
 
     public static void main(String[] args) {
-        long seed = System.nanoTime();
-        RAND.setSeed(seed);
-        System.out.println("# SEED: " + seed);
+        for (int i = 0; i < 1000; i++) {
+            long seed = 387461782891666L /*System.nanoTime()*/;
+            RAND.setSeed(seed);
+            System.out.println("# SEED: " + seed);
 
-        int baseSize = Integer.parseInt(args[0]);
-        int limit = Integer.parseInt(args[2]);
+            int baseSize = Integer.parseInt(args[0]);
+            int limit = Integer.parseInt(args[2]);
+            if (args.length >= 4) {
+                PD.isBinary = Boolean.parseBoolean(args[3]);
+            }
 
-        switch (args[1]) {
-            case "MUT":
-                benchmarkMutation(baseSize, limit);
-                break;
-            case "FEAT":
-                benchmarkFeature(baseSize, limit);
-                break;
-            default:
-                benchmarkAverage(limit, baseSize);
-                break;
+            switch (args[1]) {
+                case "MUT":
+                    benchmarkMutation(baseSize, limit);
+                    break;
+                case "FEAT":
+                    benchmarkFeature(baseSize, limit);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

@@ -1,5 +1,8 @@
-/* Copyright (C) 2013-2021 TU Dortmund
- * This file is part of LearnLib, http://www.learnlib.de/.
+/* Copyright (C) 2018
+ * This file is part of the PhD research project entitled
+ * 'Inferring models from Evolving Systems and Product Families'
+ * developed by Carlos Diego Nascimento Damasceno at the
+ * University of Sao Paulo (ICMC-USP).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.lstar.mealy;
+package de.learnlib.algorithms.dlstar.mealy;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.github.misberner.buildergen.annotations.GenerateBuilder;
-import de.learnlib.algorithms.lstar.AbstractExtensibleAutomatonLStar;
+import de.learnlib.algorithms.dlstar.AbstractExtensibleAutomatonDLStar;
 import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandler;
 import de.learnlib.algorithms.lstar.closing.ClosingStrategy;
+import de.learnlib.algorithms.lstar.mealy.LStarMealyUtil;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.observationtable.OTLearner.OTLearnerMealy;
@@ -35,27 +38,26 @@ import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class ExtensibleLStarMealy<I, O>
-        extends AbstractExtensibleAutomatonLStar<MealyMachine<?, I, ?, O>, I, Word<O>, Integer, CompactTransition<O>, Void, O, CompactMealy<I, O>>
+public class ExtensibleDLStarMealy<I, O>
+        extends AbstractExtensibleAutomatonDLStar<MealyMachine<?, I, ?, O>, I, Word<O>, Integer, CompactTransition<O>, Void, O, CompactMealy<I, O>>
         implements OTLearnerMealy<I, O> {
 
     private final List<O> outputTable = new ArrayList<>();
 
-    public ExtensibleLStarMealy(Alphabet<I> alphabet,
-                                MembershipOracle<I, Word<O>> oracle,
-                                List<Word<I>> initialSuffixes,
-                                ObservationTableCEXHandler<? super I, ? super Word<O>> cexHandler,
-                                ClosingStrategy<? super I, ? super Word<O>> closingStrategy) {
+    public ExtensibleDLStarMealy(Alphabet<I> alphabet,
+                                 MembershipOracle<I, Word<O>> oracle,
+                                 List<Word<I>> initialSuffixes,
+                                 ObservationTableCEXHandler<? super I, ? super Word<O>> cexHandler,
+                                 ClosingStrategy<? super I, ? super Word<O>> closingStrategy) {
         this(alphabet, oracle, Collections.singletonList(Word.epsilon()), initialSuffixes, cexHandler, closingStrategy);
     }
 
-    @GenerateBuilder(defaults = AbstractExtensibleAutomatonLStar.BuilderDefaults.class)
-    public ExtensibleLStarMealy(Alphabet<I> alphabet,
-                                MembershipOracle<I, Word<O>> oracle,
-                                List<Word<I>> initialPrefixes,
-                                List<Word<I>> initialSuffixes,
-                                ObservationTableCEXHandler<? super I, ? super Word<O>> cexHandler,
-                                ClosingStrategy<? super I, ? super Word<O>> closingStrategy) {
+    public ExtensibleDLStarMealy(Alphabet<I> alphabet,
+                                 MembershipOracle<I, Word<O>> oracle,
+                                 List<Word<I>> initialPrefixes,
+                                 List<Word<I>> initialSuffixes,
+                                 ObservationTableCEXHandler<? super I, ? super Word<O>> cexHandler,
+                                 ClosingStrategy<? super I, ? super Word<O>> closingStrategy) {
         super(alphabet,
               oracle,
               new CompactMealy<>(alphabet),
