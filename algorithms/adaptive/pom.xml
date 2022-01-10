@@ -20,20 +20,20 @@ limitations under the License.
 
     <parent>
         <groupId>de.learnlib</groupId>
-        <artifactId>learnlib-build-parent</artifactId>
+        <artifactId>learnlib-algorithms-parent</artifactId>
         <version>0.17.0-SNAPSHOT</version>
-        <relativePath>../build-parent/pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>learnlib-algorithms-parent</artifactId>
+    <artifactId>learnlib-algorithms-adaptive-parent</artifactId>
     <packaging>pom</packaging>
 
-    <name>LearnLib :: Algorithms</name>
-    <description>Parent module for automata learning algorithms shipped with LearnLib</description>
+    <name>LearnLib :: Algorithms :: Incremental</name>
+    <description>Parent module for incremental automata learning algorithms shipped with LearnLib</description>
 
     <modules>
-        <module>active</module>
-        <module>passive</module>
-        <module>adaptive</module>
+        <module>incremental</module>
+        <module>continuous</module>
+        <module>dlstar</module>
     </modules>
 </project>
