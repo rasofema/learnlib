@@ -17,6 +17,7 @@ package de.learnlib.filter.cache.mealy;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -103,10 +104,10 @@ public class MealyCacheOracle<I, O>
         qrys.sort(queryCmp);
 
         List<MasterQuery<I, O>> masterQueries = queryCache(qrys);
-
-        delegate.processQueries(masterQueries);
-
-        updateCache(masterQueries);
+        for (MasterQuery<I, O> query : masterQueries) {
+            delegate.processQuery(query);
+            updateCache(Collections.singleton(query));
+        }
     }
 
     @Override
