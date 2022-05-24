@@ -35,16 +35,15 @@ import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
 /**
- * Hypothesis DFA for the {@link de.learnlib.algorithms.continuous.dfa.ContinuousDFA algorithm}.
+ * Hypothesis DFA for the
+ * {@link de.learnlib.algorithms.continuous.dfa.ContinuousDFA algorithm}.
  *
- * @param <I>
- *         input symbol type
+ * @param <I> input symbol type
  *
- * @author Malte Isberner
+ * @author Tiago Ferreira
  */
 public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomaton<Word<I>, I, T>,
-                                                                FiniteAlphabetAutomaton<Word<I>, I, T>,
-                                                                SupportsGrowingAlphabet<I> {
+        FiniteAlphabetAutomaton<Word<I>, I, T>, SupportsGrowingAlphabet<I> {
 
     private final Alphabet<I> alphabet;
     public Word<I> initialState;
@@ -54,8 +53,7 @@ public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomat
     /**
      * Constructor.
      *
-     * @param alphabet
-     *         the input alphabet
+     * @param alphabet the input alphabet
      */
     public AbstractICHypothesis(Alphabet<I> alphabet) {
         this.alphabet = alphabet;
@@ -114,7 +112,6 @@ public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomat
         return acceptance.getOrDefault(state, false);
     }
 
-
     public void addTransition(Word<I> start, I input, Word<I> dest) {
         transitions.put(Pair.of(start, input), dest);
     }
@@ -140,9 +137,8 @@ public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomat
         @Override
         public Collection<ICEdge<I>> getOutgoingEdges(Word<I> node) {
             List<ICEdge<I>> result = new ArrayList<>();
-            transitions.entrySet().stream()
-                .filter(e -> e.getKey().getFirst().equals(node))
-                .forEach(e -> result.add(new ICEdge<>(e.getKey(), e.getValue())));
+            transitions.entrySet().stream().filter(e -> e.getKey().getFirst().equals(node))
+                    .forEach(e -> result.add(new ICEdge<>(e.getKey(), e.getValue())));
             return result;
         }
 
@@ -156,10 +152,8 @@ public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomat
             return new DefaultVisualizationHelper<Word<I>, ICEdge<I>>() {
 
                 @Override
-                public boolean getEdgeProperties(Word<I> src,
-                                                 ICEdge<I> edge,
-                                                 Word<I> tgt,
-                                                 Map<String, String> properties) {
+                public boolean getEdgeProperties(Word<I> src, ICEdge<I> edge, Word<I> tgt,
+                        Map<String, String> properties) {
                     properties.put(EdgeAttrs.LABEL, String.valueOf(edge.transition.getSecond()));
                     return true;
                 }

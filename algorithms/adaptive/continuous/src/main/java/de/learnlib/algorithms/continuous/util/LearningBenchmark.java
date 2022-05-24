@@ -51,7 +51,8 @@ import net.automatalib.words.impl.FastAlphabet;
 import net.automatalib.words.impl.Symbol;
 
 public class LearningBenchmark {
-    private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"), new Symbol("2"));
+    private static final Alphabet<Symbol> ALPHABET = new FastAlphabet<>(new Symbol("0"), new Symbol("1"),
+            new Symbol("2"));
     private static final PhiMetric<Symbol> PD = new PhiMetric<>(ALPHABET, 0.999, false);
     private static final Random RAND = new Random();
 
@@ -64,7 +65,9 @@ public class LearningBenchmark {
         }
         return Word.epsilon();
     }
-    private static DefaultQuery<Symbol, Boolean> findCex(CompactDFA<Symbol> hyp, Counter counter, MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
+
+    private static DefaultQuery<Symbol, Boolean> findCex(CompactDFA<Symbol> hyp, Counter counter,
+            MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
         Word<Symbol> input = sampleWord();
         Boolean output = oracle.answerQuery(input);
         while (hyp.computeOutput(input) == output) {
@@ -77,67 +80,89 @@ public class LearningBenchmark {
         return new DefaultQuery<>(input, output);
     }
 
-    private static Pair<KearnsVaziraniDFAState<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnClassic(MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
+    @SuppressWarnings("unchecked")
+    private static Pair<KearnsVaziraniDFAState<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnClassic(
+            MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
         List<Pair<Integer, CompactDFA<Symbol>>> results = new LinkedList<>();
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACacheOracle<Symbol> cacheOracle = new DFACacheOracle<>(queryOracle);
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(cacheOracle, "Number of membership queries");
-        KearnsVaziraniDFA<Symbol> learner = new KearnsVaziraniDFA<>(ALPHABET, memOracle, false, AcexAnalyzers.BINARY_SEARCH_BWD);
+        KearnsVaziraniDFA<Symbol> learner = new KearnsVaziraniDFA<>(ALPHABET, memOracle, false,
+                AcexAnalyzers.BINARY_SEARCH_BWD);
 
         learner.startLearning();
-        results.add(Pair.of((int) queryOracle.getCount(), new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
-        DefaultQuery<Symbol, Boolean> cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(), cacheOracle, limit);
+        results.add(Pair.of((int) queryOracle.getCount(),
+                new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
+        DefaultQuery<Symbol, Boolean> cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()),
+                queryOracle.getCounter(), cacheOracle, limit);
 
         while (cex != null) {
             learner.refineHypothesis(cex);
-            results.add(Pair.of((int) queryOracle.getCount(), new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
-            cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(), cacheOracle, limit);
+            results.add(Pair.of((int) queryOracle.getCount(),
+                    new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
+            cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(),
+                    cacheOracle, limit);
         }
 
         return Pair.of(learner.suspend(), results);
     }
 
-    private static Pair<ClassicDLStarDFA<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnPDLStar(List<Word<Symbol>> initialPrefixes, List<Word<Symbol>> initialSuffixes, MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
+    @SuppressWarnings("unchecked")
+    private static Pair<ClassicDLStarDFA<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnPDLStar(
+            List<Word<Symbol>> initialPrefixes, List<Word<Symbol>> initialSuffixes,
+            MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
         List<Pair<Integer, CompactDFA<Symbol>>> results = new LinkedList<>();
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACacheOracle<Symbol> cacheOracle = new DFACacheOracle<>(queryOracle);
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(cacheOracle, "Number of membership queries");
-        ClassicDLStarDFA<Symbol> learner = new ClassicDLStarDFA<>(ALPHABET, initialPrefixes, initialSuffixes, memOracle);
+        ClassicDLStarDFA<Symbol> learner = new ClassicDLStarDFA<>(ALPHABET, initialPrefixes, initialSuffixes,
+                memOracle);
         learner.startLearning();
-        results.add(Pair.of((int) queryOracle.getCount(), new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
-        DefaultQuery<Symbol, Boolean> cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(), cacheOracle, limit);
+        results.add(Pair.of((int) queryOracle.getCount(),
+                new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
+        DefaultQuery<Symbol, Boolean> cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()),
+                queryOracle.getCounter(), cacheOracle, limit);
 
         while (cex != null) {
             learner.refineHypothesis(cex);
-            results.add(Pair.of((int) queryOracle.getCount(), new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
-            cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(), cacheOracle, limit);
+            results.add(Pair.of((int) queryOracle.getCount(),
+                    new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
+            cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(),
+                    cacheOracle, limit);
         }
 
         return Pair.of(learner, results);
     }
 
-
-    private static List<Pair<Integer, CompactDFA<Symbol>>> learnIncremental(KearnsVaziraniDFAState<Symbol> state, MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
+    @SuppressWarnings("unchecked")
+    private static List<Pair<Integer, CompactDFA<Symbol>>> learnIncremental(KearnsVaziraniDFAState<Symbol> state,
+            MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
         List<Pair<Integer, CompactDFA<Symbol>>> results = new LinkedList<>();
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
         DFACacheOracle<Symbol> cacheOracle = new DFACacheOracle<>(queryOracle);
         DFACounterOracle<Symbol> memOracle = new DFACounterOracle<>(cacheOracle, "Number of membership queries");
-        IKearnsVaziraniDFA<Symbol> learner = new IKearnsVaziraniDFA<>(ALPHABET, memOracle, AcexAnalyzers.BINARY_SEARCH_FWD, state);
+        IKearnsVaziraniDFA<Symbol> learner = new IKearnsVaziraniDFA<>(ALPHABET, memOracle,
+                AcexAnalyzers.BINARY_SEARCH_FWD, state);
 
         learner.startLearning();
-        results.add(Pair.of((int) queryOracle.getCount(), new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
-        DefaultQuery<Symbol, Boolean> cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(), cacheOracle, limit);
+        results.add(Pair.of((int) queryOracle.getCount(),
+                new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
+        DefaultQuery<Symbol, Boolean> cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()),
+                queryOracle.getCounter(), cacheOracle, limit);
 
         while (cex != null) {
             learner.refineHypothesis(cex);
-            results.add(Pair.of((int) queryOracle.getCount(), new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
-            cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(), cacheOracle, limit);
+            results.add(Pair.of((int) queryOracle.getCount(),
+                    new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel())));
+            cex = findCex(new CompactDFA<>((CompactDFA<Symbol>) learner.getHypothesisModel()), queryOracle.getCounter(),
+                    cacheOracle, limit);
         }
 
         return results;
     }
 
-    private static List<Pair<Integer, CompactDFA<Symbol>>>  learnContinuous(MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
+    private static List<Pair<Integer, CompactDFA<Symbol>>> learnContinuous(
+            MembershipOracle.DFAMembershipOracle<Symbol> oracle, int limit) {
         DFACounterOracle<Symbol> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
 
         ContinuousDFA<Symbol> learner = new ContinuousDFA<>(ALPHABET, 0.9, queryOracle, RAND);
@@ -147,11 +172,10 @@ public class LearningBenchmark {
     public static void runClassic(List<CompactDFA<Symbol>> targets, int limit) {
         System.out.println("=== CLASSIC ===");
         for (CompactDFA<Symbol> target : targets) {
-            Pair<KearnsVaziraniDFAState<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnerRes = learnClassic(new SimulatorOracle.DFASimulatorOracle<>(target), limit);
-            List<Pair<Integer, Double>> classic = learnerRes.getSecond().stream()
-                .parallel()
-                .map(p -> Pair.of(p.getFirst(), PD.sim(target, p.getSecond())))
-                .collect(Collectors.toList());
+            Pair<KearnsVaziraniDFAState<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnerRes = learnClassic(
+                    new SimulatorOracle.DFASimulatorOracle<>(target), limit);
+            List<Pair<Integer, Double>> classic = learnerRes.getSecond().stream().parallel()
+                    .map(p -> Pair.of(p.getFirst(), PD.sim(target, p.getSecond()))).collect(Collectors.toList());
             List<Double> run = new LinkedList<>();
             for (int i = 0; i < classic.size() - 1; i++) {
                 while (run.size() < classic.get(i + 1).getFirst()) {
@@ -172,11 +196,11 @@ public class LearningBenchmark {
 
     public static void runPDLStar(List<CompactDFA<Symbol>> targets, int limit) {
         System.out.println("=== PDLStar ===");
-        Pair<ClassicDLStarDFA<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnRes = learnPDLStar(Collections.singletonList(Word.epsilon()), Collections.singletonList(Word.epsilon()), new SimulatorOracle.DFASimulatorOracle<>(targets.get(0)), limit);
-        List<Pair<Integer, Double>> classic = learnRes.getSecond().stream()
-            .parallel()
-            .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(0), p.getSecond())))
-            .collect(Collectors.toList());
+        Pair<ClassicDLStarDFA<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnRes = learnPDLStar(
+                Collections.singletonList(Word.epsilon()), Collections.singletonList(Word.epsilon()),
+                new SimulatorOracle.DFASimulatorOracle<>(targets.get(0)), limit);
+        List<Pair<Integer, Double>> classic = learnRes.getSecond().stream().parallel()
+                .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(0), p.getSecond()))).collect(Collectors.toList());
         List<Double> runClassic = new LinkedList<>();
         for (int i = 0; i < classic.size() - 1; i++) {
             while (runClassic.size() < classic.get(i + 1).getFirst()) {
@@ -193,11 +217,12 @@ public class LearningBenchmark {
             System.out.println(metric.toString());
         }
 
-        Pair<ClassicDLStarDFA<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> result = learnPDLStar(new LinkedList<>(learnRes.getFirst().getObservationTable().getShortPrefixes()), learnRes.getFirst().getObservationTable().getSuffixes(), new SimulatorOracle.DFASimulatorOracle<>(targets.get(1)), limit);
-        List<Pair<Integer, Double>> incremental = result.getSecond().stream()
-            .parallel()
-            .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(1), p.getSecond())))
-            .collect(Collectors.toList());
+        Pair<ClassicDLStarDFA<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> result = learnPDLStar(
+                new LinkedList<>(learnRes.getFirst().getObservationTable().getShortPrefixes()),
+                learnRes.getFirst().getObservationTable().getSuffixes(),
+                new SimulatorOracle.DFASimulatorOracle<>(targets.get(1)), limit);
+        List<Pair<Integer, Double>> incremental = result.getSecond().stream().parallel()
+                .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(1), p.getSecond()))).collect(Collectors.toList());
         List<Double> run = new LinkedList<>();
         for (int i = 0; i < incremental.size() - 1; i++) {
             while (run.size() < incremental.get(i + 1).getFirst()) {
@@ -215,14 +240,12 @@ public class LearningBenchmark {
         }
     }
 
-
     public static void runIncremental(List<CompactDFA<Symbol>> targets, int limit) {
         System.out.println("=== INCREMENTAL ===");
-        Pair<KearnsVaziraniDFAState<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnRes = learnClassic(new SimulatorOracle.DFASimulatorOracle<>(targets.get(0)), limit);
-        List<Pair<Integer, Double>> classic = learnRes.getSecond().stream()
-            .parallel()
-            .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(0), p.getSecond())))
-            .collect(Collectors.toList());
+        Pair<KearnsVaziraniDFAState<Symbol>, List<Pair<Integer, CompactDFA<Symbol>>>> learnRes = learnClassic(
+                new SimulatorOracle.DFASimulatorOracle<>(targets.get(0)), limit);
+        List<Pair<Integer, Double>> classic = learnRes.getSecond().stream().parallel()
+                .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(0), p.getSecond()))).collect(Collectors.toList());
         List<Double> runClassic = new LinkedList<>();
         for (int i = 0; i < classic.size() - 1; i++) {
             while (runClassic.size() < classic.get(i + 1).getFirst()) {
@@ -239,11 +262,10 @@ public class LearningBenchmark {
             System.out.println(metric.toString());
         }
 
-        List<Pair<Integer, CompactDFA<Symbol>>> result = learnIncremental(learnRes.getFirst(), new SimulatorOracle.DFASimulatorOracle<>(targets.get(1)), limit);
-        List<Pair<Integer, Double>> incremental = result.stream()
-            .parallel()
-            .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(1), p.getSecond())))
-            .collect(Collectors.toList());
+        List<Pair<Integer, CompactDFA<Symbol>>> result = learnIncremental(learnRes.getFirst(),
+                new SimulatorOracle.DFASimulatorOracle<>(targets.get(1)), limit);
+        List<Pair<Integer, Double>> incremental = result.stream().parallel()
+                .map(p -> Pair.of(p.getFirst(), PD.sim(targets.get(1), p.getSecond()))).collect(Collectors.toList());
         List<Double> run = new LinkedList<>();
         for (int i = 0; i < incremental.size() - 1; i++) {
             while (run.size() < incremental.get(i + 1).getFirst()) {
@@ -262,13 +284,13 @@ public class LearningBenchmark {
     }
 
     public static void runContinuous(List<CompactDFA<Symbol>> targets, int limit) {
-        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(limit, targets);
+        MutatingSimulatorOracle.DFAMutatingSimulatorOracle<Symbol> ORACLE = new MutatingSimulatorOracle.DFAMutatingSimulatorOracle<>(
+                limit, targets);
         System.out.println("=== CONTINUOUS ===");
         List<Pair<Integer, CompactDFA<Symbol>>> result = learnContinuous(ORACLE, limit * targets.size());
-        List<Pair<Integer, Double>> dfas = result.stream()
-            .parallel()
-            .map(p -> Pair.of(p.getFirst(), PD.sim((CompactDFA<Symbol>) ORACLE.getTarget(p.getFirst()), p.getSecond())))
-            .collect(Collectors.toList());
+        List<Pair<Integer, Double>> dfas = result.stream().parallel().map(
+                p -> Pair.of(p.getFirst(), PD.sim((CompactDFA<Symbol>) ORACLE.getTarget(p.getFirst()), p.getSecond())))
+                .collect(Collectors.toList());
         List<Double> run = new LinkedList<>();
         for (int i = 0; i < dfas.size() - 1; i++) {
             while (run.size() < dfas.get(i + 1).getFirst()) {
@@ -277,7 +299,7 @@ public class LearningBenchmark {
         }
 
         run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
-//        assert run.get(run.size() - 1).equals(1.0);
+        // assert run.get(run.size() - 1).equals(1.0);
         while (run.size() < limit * targets.size()) {
             run.add(dfas.get(dfas.size() - 1).getSecond());
         }
@@ -401,7 +423,7 @@ public class LearningBenchmark {
         targets.add(target);
 
         runClassic(targets, limit);
-//        runPDLStar(targets, limit);
+        // runPDLStar(targets, limit);
         runIncremental(targets, limit);
         runContinuous(targets, limit);
     }
@@ -438,14 +460,14 @@ public class LearningBenchmark {
         }
 
         switch (args[1]) {
-            case "MUT":
-                benchmarkMutation(baseSize, limit);
-                break;
-            case "FEAT":
-                benchmarkFeature(baseSize, limit);
-                break;
-            default:
-                break;
+        case "MUT":
+            benchmarkMutation(baseSize, limit);
+            break;
+        case "FEAT":
+            benchmarkFeature(baseSize, limit);
+            break;
+        default:
+            break;
         }
     }
 }
