@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2021 TU Dortmund
+/* Copyright (C) 2021-2022 University College London
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,13 +37,11 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
 /**
- * The Kearns/Vazirani algorithm for learning DFA, as described in the book "An
- * Introduction to Computational Learning Theory" by Michael Kearns and Umesh
- * Vazirani.
+ * The Continuous algorithm for tree-based adaptive learning.
  *
  * @param <I> input symbol type
  *
- * @author Malte Isberner
+ * @author Tiago Fereira
  */
 public class ContinuousDFA<I> {
 
