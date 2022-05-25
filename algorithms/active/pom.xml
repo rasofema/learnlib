@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (C) 2013-2021 TU Dortmund
+Copyright (C) 2013-2022 TU Dortmund
 This file is part of LearnLib, http://www.learnlib.de/.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,8 +39,31 @@ limitations under the License.
         <module>kearns-vazirani</module>
         <module>lstar</module>
         <module>nlstar</module>
+        <module>oml</module>
         <module>spa</module>
         <module>ttt</module>
         <module>ttt-vpda</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>fix-xstream</id>
+            <activation>
+                <jdk>[16,)</jdk>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -169,9 +169,9 @@ public class ContinuousDFA<I> {
         this.RAND = random;
     }
 
-    private Pair<ICHypothesisDFA<I>, Word<I>> update(Boolean answer) {
+    private Pair<ICHypothesisDFA<I>, Word<I>> update(boolean answer) {
         applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
-        advanceHypothesis(query, answer, tree);
+        tree = advanceHypothesis(query, answer, tree);
         activity.process(answer);
         ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
         return Pair.of(hyp, query);
@@ -201,7 +201,7 @@ public class ContinuousDFA<I> {
                 }
             }
 
-            hyp.setAccepting(localTree.accessSequence, localTree.accepting == true);
+            hyp.setAccepting(localTree.accessSequence, localTree.accepting != null ? localTree.accepting : false);
 
             return hyp;
         } else {
@@ -542,7 +542,7 @@ public class ContinuousDFA<I> {
 
     public List<Pair<Integer, CompactDFA<I>>> learn(int limit, int sample) {
         List<Pair<Integer, CompactDFA<I>>> hyps = new LinkedList<>();
-        Boolean answer = null;
+        Boolean answer = oracle.answerQuery(query);
         for (int i = 0; i < limit; i++) {
             Pair<ICHypothesisDFA<I>, Word<I>> pair = update(answer);
             ICHypothesisDFA<I> hyp = pair.getFirst();

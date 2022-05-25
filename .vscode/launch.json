@@ -15,7 +15,8 @@
       "name": "Launch LearningBenchmark",
       "request": "launch",
       "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmark",
-      "projectName": "learnlib-continuous"
+      "projectName": "learnlib-continuous",
+      "args": ["3", "FEAT", "10000", "true"]
     }
   ]
 }
