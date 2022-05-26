@@ -301,7 +301,7 @@ public class LearningBenchmark {
         }
 
         run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
-        // assert run.get(run.size() - 1).equals(1.0);
+        assert run.get(run.size() - 1).equals(1.0);
         while (run.size() < limit * targets.size()) {
             run.add(dfas.get(dfas.size() - 1).getSecond());
         }
@@ -451,7 +451,7 @@ public class LearningBenchmark {
     }
 
     public static void main(String[] args) {
-        long seed = /* System.nanoTime() */ 172764189008083L;
+        long seed = System.nanoTime();
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 
