@@ -15,8 +15,12 @@
  */
 package de.learnlib.algorithms.continuous.mealy;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import de.learnlib.algorithms.continuous.base.AbstractICHypothesis;
 import net.automatalib.automata.transducers.MealyMachine;
@@ -24,7 +28,7 @@ import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class ICHypothesisMealy<I, O> extends AbstractICHypothesis<I>
+public class ICHypothesisMealy<I, O> extends AbstractICHypothesis<I, Pair<Word<I>, I>>
         implements MealyMachine<Word<I>, I, Pair<Word<I>, I>, O> {
     public final Map<Pair<Word<I>, I>, O> outputs = new HashMap<>();
 
@@ -50,6 +54,21 @@ public class ICHypothesisMealy<I, O> extends AbstractICHypothesis<I>
     public void addTransition(Word<I> start, I input, Word<I> dest, O output) {
         transitions.put(Pair.of(start, input), dest);
         outputs.put(Pair.of(start, input), output);
+    }
+
+    @Override
+    public Collection<Pair<Word<I>, I>> getTransitions(Word<I> state, I input) {
+        return Collections.singleton(getTransition(state, input));
+    }
+
+    @Override
+    public Word<I> getSuccessor(Pair<Word<I>, I> transition) {
+        return transitions.get(transition);
+    }
+
+    @Override
+    public @Nullable Pair<Word<I>, I> getTransition(Word<I> state, I input) {
+        return Pair.of(state, input);
     }
 
 }

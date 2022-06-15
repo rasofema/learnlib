@@ -46,8 +46,8 @@ import net.automatalib.words.impl.Alphabets;
  *
  * @author Tiago Ferreira
  */
-public class AbstractICHypothesis<I> implements DeterministicAutomaton<Word<I>, I, Pair<Word<I>, I>>,
-        FiniteAlphabetAutomaton<Word<I>, I, Pair<Word<I>, I>>, SupportsGrowingAlphabet<I> {
+public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomaton<Word<I>, I, T>,
+        FiniteAlphabetAutomaton<Word<I>, I, T>, SupportsGrowingAlphabet<I> {
 
     private final Alphabet<I> alphabet;
     public Word<I> initialState;
@@ -65,11 +65,6 @@ public class AbstractICHypothesis<I> implements DeterministicAutomaton<Word<I>, 
     @Override
     public Word<I> getInitialState() {
         return initialState;
-    }
-
-    @Override
-    public Pair<Word<I>, I> getTransition(Word<I> state, I input) {
-        return Pair.of(state, input);
     }
 
     @Override
@@ -103,16 +98,6 @@ public class AbstractICHypothesis<I> implements DeterministicAutomaton<Word<I>, 
 
     public void setInitial(Word<I> initial) {
         initialState = initial;
-    }
-
-    @Override
-    public Collection<Pair<Word<I>, I>> getTransitions(Word<I> state, I input) {
-        return Collections.singleton(Pair.of(state, input));
-    }
-
-    @Override
-    public Word<I> getSuccessor(Pair<Word<I>, I> transition) {
-        return transitions.get(transition);
     }
 
     @Override

@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.algorithms.continuous.base.ICNode;
+import de.learnlib.algorithms.continuous.dfa.ICHypothesisDFA;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
@@ -236,10 +237,10 @@ public class ContinuousDFA<I> {
                 hyp.addTransition(trans.getKey().getFirst(), trans.getKey().getSecond(), trans.getValue());
             }
 
-            Set<Map.Entry<Word<I>, Boolean>> unionAcc = new HashSet<>(leftHyp.acceptance.entrySet());
-            unionAcc.addAll(rightHyp.acceptance.entrySet());
-            for (Map.Entry<Word<I>, Boolean> acc : unionAcc) {
-                hyp.setAccepting(acc.getKey(), acc.getValue());
+            Set<Word<I>> unionAcc = new HashSet<>(leftHyp.getAcceptingStates());
+            unionAcc.addAll(rightHyp.getAcceptingStates());
+            for (Word<I> acc : unionAcc) {
+                hyp.setAccepting(acc, true);
             }
 
             return hyp;

@@ -139,42 +139,51 @@ public class LearningBenchmarkMealy {
         }
     }
 
-    private static List<Pair<Integer, CompactMealy<Character, Character>>> learnContinuous(
-            MembershipOracle.MealyMembershipOracle<Character, Character> oracle, int limit) {
-        MealyCounterOracle<Character, Character> queryOracle = new MealyCounterOracle<>(oracle,
-                "Number of total queries");
+    // private static List<Pair<Integer, CompactMealy<Character, Character>>>
+    // learnContinuous(
+    // MembershipOracle.MealyMembershipOracle<Character, Character> oracle, int
+    // limit) {
+    // MealyCounterOracle<Character, Character> queryOracle = new
+    // MealyCounterOracle<>(oracle,
+    // "Number of total queries");
 
-        ContinuousMealy<Character, Character> learner = new ContinuousMealy<>(ALPHABET, 0.9, queryOracle, RAND);
-        return learner.learn(limit, limit / 2 / 100);
-    }
+    // ContinuousMealy<Character, Character> learner = new
+    // ContinuousMealy<>(ALPHABET, 0.9, queryOracle, RAND);
+    // return learner.learn(limit, limit / 2 / 100);
+    // }
 
-    public static void runContinuous(List<CompactMealy<Character, Character>> targets, int limit) {
-        MutatingSimulatorOracle.MealyMutatingSimulatorOracle<Character, Character> ORACLE = new MutatingSimulatorOracle.MealyMutatingSimulatorOracle<>(
-                limit, targets);
-        System.out.println("=== CONTINUOUS ===");
-        List<Pair<Integer, CompactMealy<Character, Character>>> result = learnContinuous(ORACLE,
-                limit * targets.size());
-        List<Pair<Integer, Double>> dfas = result.stream().parallel()
-                .map(p -> Pair.of(p.getFirst(),
-                        PD.sim((CompactMealy<Character, Character>) ORACLE.getTarget(p.getFirst()), p.getSecond())))
-                .collect(Collectors.toList());
-        List<Double> run = new LinkedList<>();
-        for (int i = 0; i < dfas.size() - 1; i++) {
-            while (run.size() < dfas.get(i + 1).getFirst()) {
-                run.add(dfas.get(i).getSecond());
-            }
-        }
+    // public static void runContinuous(List<CompactMealy<Character, Character>>
+    // targets, int limit) {
+    // MutatingSimulatorOracle.MealyMutatingSimulatorOracle<Character, Character>
+    // ORACLE = new MutatingSimulatorOracle.MealyMutatingSimulatorOracle<>(
+    // limit, targets);
+    // System.out.println("=== CONTINUOUS ===");
+    // List<Pair<Integer, CompactMealy<Character, Character>>> result =
+    // learnContinuous(ORACLE,
+    // limit * targets.size());
+    // List<Pair<Integer, Double>> dfas = result.stream().parallel()
+    // .map(p -> Pair.of(p.getFirst(),
+    // PD.sim((CompactMealy<Character, Character>) ORACLE.getTarget(p.getFirst()),
+    // p.getSecond())))
+    // .collect(Collectors.toList());
+    // List<Double> run = new LinkedList<>();
+    // for (int i = 0; i < dfas.size() - 1; i++) {
+    // while (run.size() < dfas.get(i + 1).getFirst()) {
+    // run.add(dfas.get(i).getSecond());
+    // }
+    // }
 
-        run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
-        assert run.get(run.size() - 1).equals(1.0);
-        while (run.size() < limit * targets.size()) {
-            run.add(dfas.get(dfas.size() - 1).getSecond());
-        }
+    // run = run.stream().limit(limit *
+    // targets.size()).collect(Collectors.toList());
+    // assert run.get(run.size() - 1).equals(1.0);
+    // while (run.size() < limit * targets.size()) {
+    // run.add(dfas.get(dfas.size() - 1).getSecond());
+    // }
 
-        for (Double metric : run) {
-            System.out.println(metric.toString());
-        }
-    }
+    // for (Double metric : run) {
+    // System.out.println(metric.toString());
+    // }
+    // }
 
     public static CompactMealy<Character, Character> randomAutomatonGen(int size) {
         CompactMealy<Character, Character> aut = RandomAutomata.randomMealy(RAND, size, ALPHABET, ALPHABET);
@@ -296,7 +305,7 @@ public class LearningBenchmarkMealy {
         targets.add(target);
 
         runClassic(targets, limit);
-        runContinuous(targets, limit);
+        // runContinuous(targets, limit);
     }
 
     public static void benchmarkMutation(int size, int limit) {

@@ -16,6 +16,7 @@
 package de.learnlib.algorithms.continuous.dfa;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,8 +28,8 @@ import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class ICHypothesisDFA<I> extends AbstractICHypothesis<I> implements DFA<Word<I>, I> {
-    public final Set<Word<I>> acceptingStates = new HashSet<>();
+public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Word<I>> implements DFA<Word<I>, I> {
+    private final Set<Word<I>> acceptingStates = new HashSet<>();
 
     public ICHypothesisDFA(Alphabet<I> alphabet) {
         super(alphabet);
@@ -46,6 +47,10 @@ public class ICHypothesisDFA<I> extends AbstractICHypothesis<I> implements DFA<W
         return acceptingStates.contains(state);
     }
 
+    public Set<Word<I>> getAcceptingStates() {
+        return new HashSet<>(acceptingStates);
+    }
+
     @Override
     public Word<I> getSuccessor(Word<I> transition) {
         return transition;
@@ -58,5 +63,20 @@ public class ICHypothesisDFA<I> extends AbstractICHypothesis<I> implements DFA<W
     @Override
     public Void getTransitionProperty(Word<I> transition) {
         return null;
+    }
+
+    @Override
+    public Collection<Word<I>> getTransitions(Word<I> state, I input) {
+        return Collections.singleton(getTransition(state, input));
+    }
+
+    @Override
+    public @Nullable Word<I> getTransition(Word<I> state, I input) {
+        return transitions.get(Pair.of(state, input));
+    }
+
+    @Override
+    public Boolean getStateProperty(Word<I> state) {
+        return isAccepting(state);
     }
 }
