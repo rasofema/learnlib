@@ -119,7 +119,12 @@ public class ContinuousDFA<I> {
 
         @Override
         public void process(Boolean answer) {
-            initialiseCounterexample(answer, cex);
+            ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
+            if (hyp.computeOutput(cex) == answer) {
+                finishCounterexample(answer, hyp.getState(Word.epsilon()), Word.epsilon(), cex);
+            } else {
+                splitCounterexample(Word.epsilon(), cex, Word.epsilon());
+            }
         }
     }
 
@@ -138,7 +143,15 @@ public class ContinuousDFA<I> {
 
         @Override
         public void process(Boolean answer) {
-            handleCounterexample(answer, this);
+            ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
+            if (this.u.size() == 1 && this.v.equals(Word.epsilon())) {
+                finishCounterexample(answer, Objects.requireNonNull(hyp.getState(this.pre.concat(this.u))),
+                        Objects.requireNonNull(hyp.getState(this.pre)).concat(this.u), this.post);
+            } else if (hyp.computeOutput(query) == answer) {
+                splitCounterexample(this.pre, this.u, this.v.concat(this.post));
+            } else {
+                splitCounterexample(this.pre.concat(this.u), this.v, this.post);
+            }
         }
     }
 
@@ -468,27 +481,6 @@ public class ContinuousDFA<I> {
         Set<DefaultQuery<I, Boolean>> result = new HashSet<>(left);
         result.addAll(right);
         return result;
-    }
-
-    private void initialiseCounterexample(Boolean answer, Word<I> cex) {
-        ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
-        if (hyp.computeOutput(cex) == answer) {
-            finishCounterexample(answer, hyp.getState(Word.epsilon()), Word.epsilon(), cex);
-        } else {
-            splitCounterexample(Word.epsilon(), cex, Word.epsilon());
-        }
-    }
-
-    private void handleCounterexample(Boolean answer, CexActivity bsState) {
-        ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
-        if (bsState.u.size() == 1 && bsState.v.equals(Word.epsilon())) {
-            finishCounterexample(answer, Objects.requireNonNull(hyp.getState(bsState.pre.concat(bsState.u))),
-                    Objects.requireNonNull(hyp.getState(bsState.pre)).concat(bsState.u), bsState.post);
-        } else if (hyp.computeOutput(query) == answer) {
-            splitCounterexample(bsState.pre, bsState.u, bsState.v.concat(bsState.post));
-        } else {
-            splitCounterexample(bsState.pre.concat(bsState.u), bsState.v, bsState.post);
-        }
     }
 
     private void splitCounterexample(Word<I> pre, Word<I> middle, Word<I> post) {

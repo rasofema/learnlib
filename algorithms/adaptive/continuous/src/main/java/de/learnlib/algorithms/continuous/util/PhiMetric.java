@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import Jama.Matrix;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
+import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.words.Alphabet;
@@ -27,6 +28,11 @@ public class PhiMetric<I> {
 
     public double sim(CompactDFA<I> dfa1, CompactDFA<I> dfa2) {
         return 1 - diff(dfa1, dfa2);
+    }
+
+    public double sim(CompactMealy<Character, Character> mealy1, CompactMealy<Character, Character> mealy2) {
+        // TODO: The entire metric is undefined for mealy machies.
+        return 0.0;
     }
 
     private double coefficient(CompactDFA<I> dfa, Integer q, Integer qPrime) {

@@ -29,13 +29,14 @@ import java.util.stream.Collectors;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.dfa.ContinuousDFA;
-import de.learnlib.algorithms.continuous.dfa.DFACacheOracle;
 import de.learnlib.algorithms.dlstar.dfa.ClassicDLStarDFA;
 import de.learnlib.algorithms.incremental.dfa.IKearnsVaziraniDFA;
 import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFA;
 import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFAState;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.filter.cache.dfa.DFACacheOracle;
+import de.learnlib.filter.cache.dfa.DFACaches;
 import de.learnlib.filter.statistic.Counter;
 import de.learnlib.filter.statistic.oracle.DFACounterOracle;
 import de.learnlib.oracle.membership.MutatingSimulatorOracle;
@@ -49,7 +50,7 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
-public class LearningBenchmark {
+public class LearningBenchmarkDFA {
     private static final Alphabet<Character> ALPHABET = Alphabets.characters('0', '2');
     private static final PhiMetric<Character> PD = new PhiMetric<>(ALPHABET, 0.999, false);
     private static final Random RAND = new Random();
@@ -83,7 +84,7 @@ public class LearningBenchmark {
             MembershipOracle.DFAMembershipOracle<Character> oracle, int limit) {
         List<Pair<Integer, CompactDFA<Character>>> results = new LinkedList<>();
         DFACounterOracle<Character> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
-        DFACacheOracle<Character> cacheOracle = new DFACacheOracle<>(queryOracle);
+        DFACacheOracle<Character> cacheOracle = DFACaches.createCache(ALPHABET, queryOracle);
         DFACounterOracle<Character> memOracle = new DFACounterOracle<>(cacheOracle, "Number of membership queries");
         KearnsVaziraniDFA<Character> learner = new KearnsVaziraniDFA<>(ALPHABET, memOracle, false,
                 AcexAnalyzers.BINARY_SEARCH_BWD);
@@ -112,7 +113,7 @@ public class LearningBenchmark {
             MembershipOracle.DFAMembershipOracle<Character> oracle, int limit) {
         List<Pair<Integer, CompactDFA<Character>>> results = new LinkedList<>();
         DFACounterOracle<Character> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
-        DFACacheOracle<Character> cacheOracle = new DFACacheOracle<>(queryOracle);
+        DFACacheOracle<Character> cacheOracle = DFACaches.createCache(ALPHABET, queryOracle);
         DFACounterOracle<Character> memOracle = new DFACounterOracle<>(cacheOracle, "Number of membership queries");
         ClassicDLStarDFA<Character> learner = new ClassicDLStarDFA<>(ALPHABET, initialPrefixes, initialSuffixes,
                 memOracle);
@@ -139,7 +140,7 @@ public class LearningBenchmark {
             MembershipOracle.DFAMembershipOracle<Character> oracle, int limit) {
         List<Pair<Integer, CompactDFA<Character>>> results = new LinkedList<>();
         DFACounterOracle<Character> queryOracle = new DFACounterOracle<>(oracle, "Number of total queries");
-        DFACacheOracle<Character> cacheOracle = new DFACacheOracle<>(queryOracle);
+        DFACacheOracle<Character> cacheOracle = DFACaches.createCache(ALPHABET, queryOracle);
         DFACounterOracle<Character> memOracle = new DFACounterOracle<>(cacheOracle, "Number of membership queries");
         IKearnsVaziraniDFA<Character> learner = new IKearnsVaziraniDFA<>(ALPHABET, memOracle,
                 AcexAnalyzers.BINARY_SEARCH_FWD, state);

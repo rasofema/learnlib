@@ -21,6 +21,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import net.automatalib.SupportsGrowingAlphabet;
 import net.automatalib.automata.DeterministicAutomaton;
@@ -42,13 +46,12 @@ import net.automatalib.words.impl.Alphabets;
  *
  * @author Tiago Ferreira
  */
-public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomaton<Word<I>, I, T>,
-        FiniteAlphabetAutomaton<Word<I>, I, T>, SupportsGrowingAlphabet<I> {
+public class AbstractICHypothesis<I> implements DeterministicAutomaton<Word<I>, I, Pair<Word<I>, I>>,
+        FiniteAlphabetAutomaton<Word<I>, I, Pair<Word<I>, I>>, SupportsGrowingAlphabet<I> {
 
     private final Alphabet<I> alphabet;
     public Word<I> initialState;
     public final Map<Pair<Word<I>, I>, Word<I>> transitions = new HashMap<>();
-    public final Map<Word<I>, Boolean> acceptance = new HashMap<>();
 
     /**
      * Constructor.
@@ -65,11 +68,9 @@ public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomat
     }
 
     @Override
-    public T getTransition(Word<I> state, I input) {
-        return mapTransition(Pair.of(state, input));
+    public Pair<Word<I>, I> getTransition(Word<I> state, I input) {
+        return Pair.of(state, input);
     }
-
-    protected abstract T mapTransition(Pair<Word<I>, I> internalTransition);
 
     @Override
     public Alphabet<I> getInputAlphabet() {
@@ -92,28 +93,36 @@ public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomat
 
     @Override
     public Collection<Word<I>> getStates() {
-        return Collections.unmodifiableSet(acceptance.keySet());
+        return transitions.keySet().stream().map(p -> p.getFirst()).collect(Collectors.toSet());
     }
 
     @Override
     public int size() {
-        return acceptance.size();
+        return getStates().size();
     }
 
     public void setInitial(Word<I> initial) {
         initialState = initial;
     }
 
-    public void setAccepting(Word<I> state, boolean accepting) {
-        acceptance.put(state, accepting);
+    @Override
+    public Collection<Pair<Word<I>, I>> getTransitions(Word<I> state, I input) {
+        return Collections.singleton(Pair.of(state, input));
     }
 
-    public boolean isAccepting(Word<I> state) {
-        return acceptance.getOrDefault(state, false);
+    @Override
+    public Word<I> getSuccessor(Pair<Word<I>, I> transition) {
+        return transitions.get(transition);
     }
 
-    public void addTransition(Word<I> start, I input, Word<I> dest) {
-        transitions.put(Pair.of(start, input), dest);
+    @Override
+    public Set<Word<I>> getInitialStates() {
+        return Collections.singleton(initialState);
+    }
+
+    @Override
+    public @Nullable Word<I> getSuccessor(Word<I> state, I input) {
+        return transitions.get(Pair.of(state, input));
     }
 
     public static final class ICEdge<I> {
@@ -131,7 +140,7 @@ public abstract class AbstractICHypothesis<I, T> implements DeterministicAutomat
 
         @Override
         public Collection<Word<I>> getNodes() {
-            return acceptance.keySet();
+            return getStates();
         }
 
         @Override

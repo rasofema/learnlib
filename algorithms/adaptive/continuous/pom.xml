@@ -48,6 +48,10 @@ limitations under the License.
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-util</artifactId>
         </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-cache</artifactId>
+        </dependency>
 
         <!-- external -->
         <dependency>

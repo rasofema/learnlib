@@ -4,6 +4,7 @@ import java.util.List;
 
 import net.automatalib.automata.concepts.SuffixOutput;
 import net.automatalib.automata.fsa.DFA;
+import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.words.Word;
 
 public class MutatingSimulatorOracle<I, D> extends SimulatorOracle<I, D> {
@@ -36,9 +37,18 @@ public class MutatingSimulatorOracle<I, D> extends SimulatorOracle<I, D> {
         return automata.get((n - 1) / limit);
     }
 
-    public static class DFAMutatingSimulatorOracle<I> extends MutatingSimulatorOracle<I, Boolean> implements SingleQueryOracleDFA<I> {
+    public static class DFAMutatingSimulatorOracle<I> extends MutatingSimulatorOracle<I, Boolean>
+            implements SingleQueryOracleDFA<I> {
 
         public DFAMutatingSimulatorOracle(int limit, List<? extends DFA<?, I>> automata) {
+            super(limit, automata);
+        }
+    }
+
+    public static class MealyMutatingSimulatorOracle<I, O> extends MutatingSimulatorOracle<I, Word<O>>
+            implements SingleQueryOracleMealy<I, O> {
+
+        public MealyMutatingSimulatorOracle(int limit, List<? extends MealyMachine<?, I, ?, O>> automata) {
             super(limit, automata);
         }
     }

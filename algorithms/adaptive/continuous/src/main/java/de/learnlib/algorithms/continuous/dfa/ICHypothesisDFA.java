@@ -15,17 +15,35 @@
  */
 package de.learnlib.algorithms.continuous.dfa;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import de.learnlib.algorithms.continuous.base.AbstractICHypothesis;
 import net.automatalib.automata.fsa.DFA;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Word<I>>
-        implements DFA<Word<I>, I> {
+public class ICHypothesisDFA<I> extends AbstractICHypothesis<I> implements DFA<Word<I>, I> {
+    public final Set<Word<I>> acceptingStates = new HashSet<>();
 
     public ICHypothesisDFA(Alphabet<I> alphabet) {
         super(alphabet);
+    }
+
+    public void setAccepting(Word<I> state, boolean accepting) {
+        if (accepting) {
+            acceptingStates.add(state);
+        } else {
+            acceptingStates.remove(state);
+        }
+    }
+
+    public boolean isAccepting(Word<I> state) {
+        return acceptingStates.contains(state);
     }
 
     @Override
@@ -33,9 +51,8 @@ public class ICHypothesisDFA<I> extends AbstractICHypothesis<I, Word<I>>
         return transition;
     }
 
-    @Override
-    protected Word<I> mapTransition(Pair<Word<I>, I> internalTransition) {
-        return transitions.getOrDefault(internalTransition, null);
+    public void addTransition(Word<I> start, I input, Word<I> dest) {
+        transitions.put(Pair.of(start, input), dest);
     }
 
     @Override
