@@ -81,7 +81,7 @@ public class LearningBenchmarkMealy {
             input = sampleWord();
             output = oracle.answerQuery(input);
         }
-        return new DefaultQuery<>(input, output);
+        return new DefaultQuery<>(Word.epsilon(), input, output);
     }
 
     @SuppressWarnings("unchecked")
@@ -325,7 +325,7 @@ public class LearningBenchmarkMealy {
     }
 
     public static void main(String[] args) {
-        long seed = System.nanoTime();
+        long seed = 263294685378083L /* System.nanoTime() */;
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 

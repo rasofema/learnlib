@@ -452,25 +452,27 @@ public class LearningBenchmarkDFA {
     }
 
     public static void main(String[] args) {
-        long seed = System.nanoTime();
-        RAND.setSeed(seed);
-        System.out.println("# SEED: " + seed);
+        for (int i = 0; i < 10_000; i++) {
+            long seed = System.nanoTime();
+            RAND.setSeed(seed);
+            System.out.println("# SEED: " + seed);
 
-        int baseSize = Integer.parseInt(args[0]);
-        int limit = Integer.parseInt(args[2]);
-        if (args.length >= 4) {
-            PD.isBinary = Boolean.parseBoolean(args[3]);
-        }
+            int baseSize = Integer.parseInt(args[0]);
+            int limit = Integer.parseInt(args[2]);
+            if (args.length >= 4) {
+                PD.isBinary = Boolean.parseBoolean(args[3]);
+            }
 
-        switch (args[1]) {
-        case "MUT":
-            benchmarkMutation(baseSize, limit);
-            break;
-        case "FEAT":
-            benchmarkFeature(baseSize, limit);
-            break;
-        default:
-            break;
+            switch (args[1]) {
+            case "MUT":
+                benchmarkMutation(baseSize, limit);
+                break;
+            case "FEAT":
+                benchmarkFeature(baseSize, limit);
+                break;
+            default:
+                break;
+            }
         }
     }
 }

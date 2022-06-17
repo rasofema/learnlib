@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.algorithms.continuous.dfa;
+package de.learnlib.algorithms.continuous.mealy;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -30,8 +30,10 @@ import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
+import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.fsa.DFAs;
+import net.automatalib.util.automata.transducers.MealyMachines;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
@@ -42,7 +44,7 @@ import net.automatalib.words.Word;
  *
  * @author Tiago Fereira
  */
-public class ContinuousDFA<I> {
+public class ContinuousMealy<I, O> {
 
     public interface Activity {
         void process(Boolean answer);
@@ -51,7 +53,7 @@ public class ContinuousDFA<I> {
     public class TestActivity implements Activity {
         @Override
         public void process(Boolean answer) {
-            ICHypothesisDFA<I> hyp = extractHypothesis(Collections.emptySet(), tree);
+            ICHypothesisMealy<I, O> hyp = extractHypothesis(Collections.emptySet(), tree);
             if (hyp.accepts(query) == answer) {
                 query = sampleWord();
             } else {
@@ -118,7 +120,7 @@ public class ContinuousDFA<I> {
 
         @Override
         public void process(Boolean answer) {
-            ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
+            ICHypothesisMealy<I, O> hyp = extractHypothesis(new HashSet<>(), tree);
             if (hyp.computeOutput(cex) == answer) {
                 finishCounterexample(answer, hyp.getState(Word.epsilon()), Word.epsilon(), cex);
             } else {
@@ -142,7 +144,7 @@ public class ContinuousDFA<I> {
 
         @Override
         public void process(Boolean answer) {
-            ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
+            ICHypothesisMealy<I, O> hyp = extractHypothesis(new HashSet<>(), tree);
             if (this.u.size() == 1 && this.v.equals(Word.epsilon())) {
                 finishCounterexample(answer, Objects.requireNonNull(hyp.getState(this.pre.concat(this.u))),
                         Objects.requireNonNull(hyp.getState(this.pre)).concat(this.u), this.post);
@@ -156,11 +158,11 @@ public class ContinuousDFA<I> {
 
     private final Alphabet<I> alphabet;
     private final double alpha;
-    private final MembershipOracle<I, Boolean> oracle;
+    private final MembershipOracle<I, Word<O>> oracle;
     private final Random RAND;
     private Activity activity;
-    private BinaryICNode<I> tree;
-    private Word<I> query;
+    private MultiICNode<I, O> tree;
+    private Pair<Word<I>, Word<I>> query;
 
     /**
      * Constructor.
@@ -168,35 +170,35 @@ public class ContinuousDFA<I> {
      * @param alphabet the learning alphabet
      * @param oracle   the membership oracle
      */
-    public ContinuousDFA(Alphabet<I> alphabet, double alpha, MembershipOracle<I, Boolean> oracle, Random random) {
+    public ContinuousMealy(Alphabet<I> alphabet, double alpha, MembershipOracle<I, Word<O>> oracle, Random random) {
         // TODO: State.
         this.alphabet = alphabet;
         this.alpha = alpha;
         this.oracle = oracle;
         this.activity = new HypActivity();
-        this.query = Word.epsilon();
-        this.tree = new BinaryICNode<>(Word.epsilon());
+        this.query = Pair.of(Word.epsilon(), Word.epsilon());
+        this.tree = new MultiICNode<>(Word.epsilon());
         tree.origins.add(Word.epsilon());
         this.alphabet.forEach(s -> tree.origins.add(Word.fromSymbols(s)));
         this.RAND = random;
     }
 
-    private Pair<ICHypothesisDFA<I>, Word<I>> update(boolean answer) {
-        applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
+    private Pair<ICHypothesisMealy<I, O>, Word<I>> update(Word<O> answer) {
+        applyAnswers(Collections.singleton(new DefaultQuery<>(query.getFirst(), query.getSecond(), answer)));
         tree = advanceHypothesis(query, answer, tree);
         activity.process(answer);
-        ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
+        ICHypothesisMealy<I, O> hyp = extractHypothesis(new HashSet<>(), tree);
         return Pair.of(hyp, query);
     }
 
-    private ICHypothesisDFA<I> extractHypothesis(Set<Word<I>> extraOrigins, BinaryICNode<I> localTree) {
+    private ICHypothesisMealy<I, O> extractHypothesis(Set<Word<I>> extraOrigins, MultiICNode<I, O> localTree) {
         if (localTree.isLeaf()) {
             Word<I> initial = null;
             if (localTree.origins.contains(Word.epsilon()) || extraOrigins.contains(Word.epsilon())) {
                 initial = localTree.accessSequence;
             }
 
-            ICHypothesisDFA<I> hyp = new ICHypothesisDFA<>(alphabet);
+            ICHypothesisMealy<I, O> hyp = new ICHypothesisMealy<>(alphabet);
             hyp.setInitial(initial);
 
             for (Word<I> origin : localTree.origins) {
@@ -221,10 +223,10 @@ public class ContinuousDFA<I> {
             leftOrigins.addAll(extraOrigins);
             leftOrigins.addAll(localTree.origins);
 
-            ICHypothesisDFA<I> leftHyp = extractHypothesis(leftOrigins, localTree.getChild(false));
-            ICHypothesisDFA<I> rightHyp = extractHypothesis(new HashSet<>(), localTree.getChild(true));
+            ICHypothesisMealy<I, O> leftHyp = extractHypothesis(leftOrigins, localTree.getChild(false));
+            ICHypothesisMealy<I, O> rightHyp = extractHypothesis(new HashSet<>(), localTree.getChild(true));
 
-            ICHypothesisDFA<I> hyp = new ICHypothesisDFA<>(alphabet);
+            ICHypothesisMealy<I, O> hyp = new ICHypothesisMealy<>(alphabet);
             Word<I> initial = leftHyp.getInitialState() != null ? leftHyp.getInitialState()
                     : rightHyp.getInitialState();
             hyp.setInitial(initial);
@@ -245,12 +247,12 @@ public class ContinuousDFA<I> {
         }
     }
 
-    private void applyAnswers(Set<DefaultQuery<I, Boolean>> answers) {
-        Pair<BinaryICNode<I>, Set<Word<I>>> stateAdjustment = adjustStates(answers, tree);
+    private void applyAnswers(Set<DefaultQuery<I, Word<O>>> answers) {
+        Pair<MultiICNode<I, O>, Set<Word<I>>> stateAdjustment = adjustStates(answers, tree);
         tree = stateAdjustment.getFirst();
 
         if (tree == null) {
-            this.tree = new BinaryICNode<>(Word.epsilon());
+            this.tree = new MultiICNode<>(Word.epsilon());
             tree.origins.add(Word.epsilon());
             this.alphabet.forEach(s -> tree.origins.add(Word.fromSymbols(s)));
         } else {
@@ -259,12 +261,12 @@ public class ContinuousDFA<I> {
         tree = adjustStructure(answers, tree);
     }
 
-    private BinaryICNode<I> adjustStructure(Set<DefaultQuery<I, Boolean>> answers, BinaryICNode<I> tree) {
+    private MultiICNode<I, O> adjustStructure(Set<DefaultQuery<I, Boolean>> answers, MultiICNode<I, O> tree) {
         return adjustStructure(answers, new HashSet<>(), tree);
     }
 
-    private BinaryICNode<I> adjustStructure(Set<DefaultQuery<I, Boolean>> answers, Set<Word<I>> removed,
-            BinaryICNode<I> tree) {
+    private MultiICNode<I, O> adjustStructure(Set<DefaultQuery<I, Boolean>> answers, Set<Word<I>> removed,
+            MultiICNode<I, O> tree) {
         if (tree.isLeaf()) {
             tree.origins.removeAll(removed);
             if (tree.accepting != null) {
@@ -295,11 +297,11 @@ public class ContinuousDFA<I> {
 
             Set<Word<I>> adjustLeft = new HashSet<>(removed);
             adjustLeft.addAll(removeLeft);
-            BinaryICNode<I> leftPrime = adjustStructure(answers, adjustLeft, tree.getChild(false));
+            MultiICNode<I, O> leftPrime = adjustStructure(answers, adjustLeft, tree.getChild(false));
 
             Set<Word<I>> adjustRight = new HashSet<>(removed);
             adjustRight.addAll(removeRight);
-            BinaryICNode<I> rightPrime = adjustStructure(answers, adjustRight, tree.getChild(true));
+            MultiICNode<I, O> rightPrime = adjustStructure(answers, adjustRight, tree.getChild(true));
 
             leftPrime.origins.addAll(removeRight);
             rightPrime.origins.addAll(removeLeft);
@@ -309,13 +311,13 @@ public class ContinuousDFA<I> {
         return tree;
     }
 
-    private Pair<BinaryICNode<I>, Set<Word<I>>> adjustStates(Set<DefaultQuery<I, Boolean>> answers,
-            BinaryICNode<I> tree) {
+    private Pair<MultiICNode<I, O>, Set<Word<I>>> adjustStates(Set<DefaultQuery<I, Word<O>>> answers,
+            MultiICNode<I, O> tree) {
         return adjustStates(answers, new HashSet<>(), tree);
     }
 
-    private Pair<BinaryICNode<I>, Set<Word<I>>> adjustStates(Set<DefaultQuery<I, Boolean>> answers,
-            Set<Word<I>> removed, BinaryICNode<I> tree) {
+    private Pair<MultiICNode<I, O>, Set<Word<I>>> adjustStates(Set<DefaultQuery<I, Word<O>>> answers,
+            Set<Word<I>> removed, MultiICNode<I, O> tree) {
         if (tree.isLeaf()) {
             if (removed.contains(tree.accessSequence)) {
                 return Pair.of(null, new HashSet<>(tree.origins));
@@ -325,23 +327,23 @@ public class ContinuousDFA<I> {
             Set<Word<I>> removeLeft = new HashSet<>();
             DiscriminationTreeIterators.leafIterator(tree.getChild(false)).forEachRemaining(l -> {
                 for (DefaultQuery<I, Boolean> query : answers) {
-                    if (query.getInput().equals(((BinaryICNode<I>) l).accessSequence.concat(tree.getDiscriminator()))
+                    if (query.getInput().equals(((MultiICNode<I, O>) l).accessSequence.concat(tree.getDiscriminator()))
                             && query.getOutput().equals(true)) {
-                        removeLeft.add(((BinaryICNode<I>) l).accessSequence);
+                        removeLeft.add(((MultiICNode<I, O>) l).accessSequence);
                     }
                 }
             });
             HashSet<Word<I>> adjustLeft = new HashSet<>();
             adjustLeft.addAll(removeLeft);
             adjustLeft.addAll(removed);
-            Pair<BinaryICNode<I>, Set<Word<I>>> leftAdjustment = adjustStates(answers, adjustLeft,
+            Pair<MultiICNode<I, O>, Set<Word<I>>> leftAdjustment = adjustStates(answers, adjustLeft,
                     tree.getChild(false));
-            BinaryICNode<I> leftPrime = leftAdjustment.getFirst();
+            MultiICNode<I, O> leftPrime = leftAdjustment.getFirst();
             Set<Word<I>> originsLeft = leftAdjustment.getSecond();
             if (leftPrime == null) {
-                Pair<BinaryICNode<I>, Set<Word<I>>> rightAdjustment = adjustStates(answers, removed,
+                Pair<MultiICNode<I, O>, Set<Word<I>>> rightAdjustment = adjustStates(answers, removed,
                         tree.getChild(true));
-                BinaryICNode<I> rightPrime = rightAdjustment.getFirst();
+                MultiICNode<I, O> rightPrime = rightAdjustment.getFirst();
                 Set<Word<I>> originsRight = rightAdjustment.getSecond();
 
                 if (rightPrime == null) {
@@ -362,9 +364,9 @@ public class ContinuousDFA<I> {
             Set<Word<I>> removeRight = new HashSet<>();
             DiscriminationTreeIterators.leafIterator(tree.getChild(true)).forEachRemaining(l -> {
                 for (DefaultQuery<I, Boolean> query : answers) {
-                    if (query.getInput().equals(((BinaryICNode<I>) l).accessSequence.concat(tree.getDiscriminator()))
+                    if (query.getInput().equals(((MultiICNode<I, O>) l).accessSequence.concat(tree.getDiscriminator()))
                             && query.getOutput().equals(false)) {
-                        removeRight.add(((BinaryICNode<I>) l).accessSequence);
+                        removeRight.add(((MultiICNode<I, O>) l).accessSequence);
                     }
                 }
             });
@@ -372,9 +374,9 @@ public class ContinuousDFA<I> {
             HashSet<Word<I>> adjustRight = new HashSet<>();
             adjustRight.addAll(removeRight);
             adjustRight.addAll(removed);
-            Pair<BinaryICNode<I>, Set<Word<I>>> rightAdjustment = adjustStates(answers, adjustRight,
+            Pair<MultiICNode<I, O>, Set<Word<I>>> rightAdjustment = adjustStates(answers, adjustRight,
                     tree.getChild(true));
-            BinaryICNode<I> rightPrime = rightAdjustment.getFirst();
+            MultiICNode<I, O> rightPrime = rightAdjustment.getFirst();
             Set<Word<I>> originsRight = rightAdjustment.getSecond();
 
             if (rightPrime == null) {
@@ -385,7 +387,7 @@ public class ContinuousDFA<I> {
                 return Pair.of(leftPrime, new HashSet<>());
             }
 
-            BinaryICNode<I> node = new BinaryICNode<>();
+            MultiICNode<I, O> node = new BinaryICNode<>();
             node.origins.addAll(tree.origins);
             node.setDiscriminator(tree.getDiscriminator());
             node.setChildren(leftPrime, rightPrime);
@@ -393,13 +395,13 @@ public class ContinuousDFA<I> {
         }
     }
 
-    private BinaryICNode<I> advanceHypothesis(Word<I> query, Boolean answer, BinaryICNode<I> tree) {
+    private MultiICNode<I, O> advanceHypothesis(Pair<Word<I>, Word<I>> query, Word<O> answer, MultiICNode<I, O> tree) {
         return advanceHypothesis(query, answer, new HashSet<>(), tree);
     }
 
-    private BinaryICNode<I> advanceHypothesis(Word<I> query, Boolean answer, Set<Word<I>> extraOrigins,
-            BinaryICNode<I> tree) {
-        BinaryICNode<I> newNode = new BinaryICNode<>();
+    private MultiICNode<I, O> advanceHypothesis(Pair<Word<I>, Word<I>> query, Word<O> answer, Set<Word<I>> extraOrigins,
+            MultiICNode<I, O> tree) {
+        MultiICNode<I, O> newNode = new BinaryICNode<>();
         if (tree.isLeaf()) {
             newNode.accessSequence = tree.accessSequence;
             newNode.origins.addAll(tree.origins);
@@ -437,7 +439,7 @@ public class ContinuousDFA<I> {
         return newNode;
     }
 
-    private Word<I> hypothesisQuery(BinaryICNode<I> tree) {
+    private Word<I> hypothesisQuery(MultiICNode<I, O> tree) {
         if (tree.isLeaf()) {
             if (tree.accepting == null) {
                 return tree.accessSequence;
@@ -466,7 +468,7 @@ public class ContinuousDFA<I> {
     }
 
     private Set<DefaultQuery<I, Boolean>> implications(Word<I> leaf, Set<DefaultQuery<I, Boolean>> current,
-            BinaryICNode<I> currentTree) {
+            MultiICNode<I, O> currentTree) {
         if (currentTree.isLeaf()) {
             if (currentTree.accessSequence.equals(leaf)) {
                 return current.stream().map(q -> new DefaultQuery<>(leaf.concat(q.getInput()), q.getOutput()))
@@ -493,12 +495,12 @@ public class ContinuousDFA<I> {
         Word<I> v = middle.suffix((middle.length()) / 2);
 
         assert u.concat(v).equals(middle) && ((u.length() - v.length()) == 0 || (u.length() - v.length()) == 1);
-        ICHypothesisDFA<I> hyp = extractHypothesis(new HashSet<>(), tree);
+        ICHypothesisMealy<I, O> hyp = extractHypothesis(new HashSet<>(), tree);
         activity = new CexActivity(pre, u, v, post);
         query = Objects.requireNonNull(hyp.getState(pre.concat(u))).concat(v).concat(post);
     }
 
-    private BinaryICNode<I> replaceLeaf(Word<I> s, BinaryICNode<I> node, BinaryICNode<I> tree) {
+    private MultiICNode<I, O> replaceLeaf(Word<I> s, MultiICNode<I, O> node, MultiICNode<I, O> tree) {
         if (tree.isLeaf() && tree.accessSequence.equals(s)) {
             node.origins.addAll(tree.origins);
             return node;
@@ -516,10 +518,10 @@ public class ContinuousDFA<I> {
         assert tree.getLeaves().contains(shrt);
 
         Boolean duplicate = tree.getLeaves().contains(lng);
-        BinaryICNode<I> node = new BinaryICNode<>();
+        MultiICNode<I, O> node = new BinaryICNode<>();
         node.setDiscriminator(e);
-        BinaryICNode<I> longNode = new BinaryICNode<>(lng);
-        BinaryICNode<I> shortNode = new BinaryICNode<>(shrt);
+        MultiICNode<I, O> longNode = new BinaryICNode<>(lng);
+        MultiICNode<I, O> shortNode = new BinaryICNode<>(shrt);
         node.setChildren(swap ? longNode : shortNode, swap ? shortNode : longNode);
 
         tree = replaceLeaf(shrt, node, tree);
@@ -537,14 +539,16 @@ public class ContinuousDFA<I> {
         query = shrt.concat(e);
     }
 
-    public List<Pair<Integer, CompactDFA<I>>> learn(int limit, int sample) {
-        List<Pair<Integer, CompactDFA<I>>> hyps = new LinkedList<>();
-        Boolean answer = oracle.answerQuery(query);
+    public List<Pair<Integer, CompactMealy<I, O>>> learn(int limit, int sample) {
+        List<Pair<Integer, CompactMealy<I, O>>> hyps = new LinkedList<>();
+        Word<O> answer = oracle.answerQuery(query.getFirst(), query.getSecond());
         for (int i = 0; i < limit; i++) {
-            Pair<ICHypothesisDFA<I>, Word<I>> pair = update(answer);
-            ICHypothesisDFA<I> hyp = pair.getFirst();
+            Pair<ICHypothesisMealy<I, O>, Word<I>> pair = update(answer);
+            ICHypothesisMealy<I, O> hyp = pair.getFirst();
             if (i % sample == 0) {
-                hyps.add(Pair.of(i, DFAs.or(hyp, hyp, alphabet)));
+                // FIXME: Hacky ICHypothesisMealy<I, O> -> CompactMealy<I, O>
+                O filler = hyp.computeOutput(Word.fromLetter(alphabet.getSymbol(0))).firstSymbol();
+                hyps.add(Pair.of(i, MealyMachines.complete(hyp, alphabet,  )));
             }
             answer = oracle.answerQuery(pair.getSecond());
         }

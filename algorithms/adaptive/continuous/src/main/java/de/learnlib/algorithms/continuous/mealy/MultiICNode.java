@@ -1,45 +1,51 @@
-package de.learnlib.algorithms.continuous.base;
+package de.learnlib.algorithms.continuous.mealy;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
-import de.learnlib.datastructure.discriminationtree.BinaryDTNode;
+import de.learnlib.datastructure.discriminationtree.MultiDTNode;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import net.automatalib.words.Word;
 
-public class ICNode<I> extends BinaryDTNode<I, Object> {
+public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
 
     public Word<I> accessSequence;
-    public Boolean accepting = null;
     public final Set<Word<I>> origins = new HashSet<>();
+    // Store outputs in state even though it's a transtition property and not a
+    // state property? Controversial but it works.
+    public final Map<I, O> outputs = new HashMap<>();
 
-    public ICNode(ICNode<I> node) {
+    public MultiICNode(MultiICNode<I, O> node) {
         super((Object) null);
-        this.accepting = node.accepting;
+        this.outputs.putAll(node.outputs);
         this.accessSequence = node.accessSequence;
         this.origins.addAll(node.origins);
     }
 
-    public ICNode(Word<I> accessSequence) {
+    public MultiICNode(Word<I> accessSequence) {
         super((Object) null);
         this.accessSequence = accessSequence;
     }
 
-    public ICNode() {
+    public MultiICNode() {
         super((Object) null);
     }
 
     @Override
-    public ICNode<I> child(Boolean out) {
-        return (ICNode<I>) super.child(out);
+    public MultiICNode<I, O> child(O out) {
+        return (MultiICNode<I, O>) super.child(out);
     }
 
     @Override
-    public ICNode<I> getChild(Boolean out) {
-        return (ICNode<I>) super.getChild(out);
+    public MultiICNode<I, O> getChild(O out) {
+        // This is quite important. A Binary tree always has each possible branch.
+        // In a multi tree, we may be requesting a branch that does not exist, so we
+        // create it JIT.
+        return (MultiICNode<I, O>) super.child(out);
     }
 
     @Override
@@ -68,28 +74,27 @@ public class ICNode<I> extends BinaryDTNode<I, Object> {
     }
 
     @Override
-    public void replaceChildren(Map<Boolean, AbstractWordBasedDTNode<I, Boolean, Object>> repChildren) {
+    public void replaceChildren(Map<O, AbstractWordBasedDTNode<I, O, Object>> repChildren) {
         throw new UnsupportedOperationException("Not in use, use setChildren.");
     }
 
     public Set<Word<I>> getLeaves() {
         Set<Word<I>> leaves = new HashSet<>();
         DiscriminationTreeIterators.leafIterator(this)
-                .forEachRemaining(n -> leaves.add(((ICNode<I>) n).accessSequence));
+                .forEachRemaining(n -> leaves.add(((MultiICNode<I, O>) n).accessSequence));
         return leaves;
     }
 
     public Set<Word<I>> getNodeOrigins() {
         HashSet<Word<I>> allOrigins = new HashSet<>();
         DiscriminationTreeIterators.nodeIterator(this)
-                .forEachRemaining(n -> allOrigins.addAll(((ICNode<I>) n).origins));
+                .forEachRemaining(n -> allOrigins.addAll(((MultiICNode<I, O>) n).origins));
         return allOrigins;
     }
 
-    public ICNode<I> restrictOrigins(Set<Word<I>> origins) {
-        ICNode<I> result = new ICNode<>();
+    public MultiICNode<I, O> restrictOrigins(Set<Word<I>> origins) {
+        MultiICNode<I, O> result = new MultiICNode<>();
         result.accessSequence = this.accessSequence;
-        result.accepting = this.accepting;
 
         HashSet<Word<I>> oldTargets = new HashSet<>(this.origins);
         for (Word<I> origin : oldTargets) {
@@ -102,25 +107,23 @@ public class ICNode<I> extends BinaryDTNode<I, Object> {
             }
         }
 
+        // This here is different but expected. We don't just recursively go left and
+        // right, we recursively go to all child nodes.
         if (!this.isLeaf()) {
             result.setDiscriminator(this.getDiscriminator());
-            result.setChildren(this.getChild(false).restrictOrigins(origins),
-                    this.getChild(true).restrictOrigins(origins));
+            for (Entry<O, AbstractWordBasedDTNode<I, O, Object>> child : this.getChildEntries()) {
+                result.setChild(child.getKey(), ((MultiICNode<I, O>) child.getValue()).restrictOrigins(origins));
+            }
         }
 
         return result;
     }
 
-    public void setChildren(ICNode<I> lChild, ICNode<I> rChild) {
-        lChild.setParentOutcome(false);
-        rChild.setParentOutcome(true);
+    public void setChild(O out, MultiICNode<I, O> newChild) {
+        newChild.setParentOutcome(out);
+        newChild.setParent(this);
 
-        lChild.setParent(this);
-        rChild.setParent(this);
-
-        HashMap<Boolean, AbstractWordBasedDTNode<I, Boolean, Object>> children = new HashMap<>();
-        children.put(false, lChild);
-        children.put(true, rChild);
+        children.put(out, newChild);
         super.replaceChildren(children);
     }
 }
