@@ -1,10 +1,12 @@
 package de.learnlib.algorithms.continuous.mealy;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import de.learnlib.datastructure.discriminationtree.MultiDTNode;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
@@ -46,6 +48,14 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
         // In a multi tree, we may be requesting a branch that does not exist, so we
         // create it JIT.
         return (MultiICNode<I, O>) super.child(out);
+    }
+
+    public Collection<MultiICNode<I, O>> getChildrenNative() {
+        HashSet<MultiICNode<I, O>> children = new HashSet<>(super.getChildren().size());
+        for (AbstractWordBasedDTNode<I, O, Object> multiICNode : super.getChildren()) {
+            children.add((MultiICNode<I, O>) multiICNode);
+        }
+        return children;
     }
 
     @Override
