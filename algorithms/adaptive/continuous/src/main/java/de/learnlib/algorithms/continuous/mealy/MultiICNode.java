@@ -136,4 +136,8 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
         children.put(out, newChild);
         super.replaceChildren(children);
     }
+
+    public void removeChild(O out) {
+        children.remove(out);
+    }
 }

@@ -18,12 +18,18 @@ package de.learnlib.algorithms.continuous.mealy;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import de.learnlib.algorithms.continuous.base.AbstractICHypothesis;
 import net.automatalib.automata.transducers.MealyMachine;
+import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
@@ -69,6 +75,31 @@ public class ICHypothesisMealy<I, O> extends AbstractICHypothesis<I, Pair<Word<I
     @Override
     public @Nullable Pair<Word<I>, I> getTransition(Word<I> state, I input) {
         return Pair.of(state, input);
+    }
+
+    public CompactMealy<I, O> toCompactMealy() {
+        CompactMealy<I, O> compact = new CompactMealy<>(this.getInputAlphabet(), this.getStates().size());
+        List<Integer> compactStates = new LinkedList<>(compact.getStates());
+        List<Word<I>> thisStates = new LinkedList<>(this.getStates());
+
+        HashMap<Word<I>, Integer> toCompactStates = new HashMap<>(this.getStates().size());
+
+        IntStream.range(0, Math.min(thisStates.size(), compactStates.size()))
+                .map(i -> toCompactStates.put(thisStates.get(i), compactStates.get(i)));
+        for (Word<I> state : thisStates) {
+            Integer compactState = toCompactStates.get(state);
+
+            if (this.initialState.equals(state)) {
+                compact.setInitialState(compactState);
+            }
+
+            for (I input : this.getInputAlphabet()) {
+                compact.addTransition(compactState, input, toCompactStates.get(this.getSuccessor(state, input)),
+                        this.getOutput(state, input));
+            }
+        }
+
+        return compact;
     }
 
 }

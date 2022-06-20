@@ -267,12 +267,10 @@ public class ContinuousDFA<I> {
             BinaryICNode<I> tree) {
         if (tree.isLeaf()) {
             tree.origins.removeAll(removed);
-            if (tree.accepting != null) {
-                for (DefaultQuery<I, Boolean> answer : answers) {
-                    if (answer.getInput().equals(tree.accessSequence) && answer.getOutput().equals(!tree.accepting)) {
-                        tree.accepting = !tree.accepting;
-                        return tree;
-                    }
+            for (DefaultQuery<I, Boolean> answer : answers) {
+                if (answer.getInput().equals(tree.accessSequence)) {
+                    tree.accepting = answer.getOutput();
+                    return tree;
                 }
             }
         } else {
