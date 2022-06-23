@@ -5,11 +5,14 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import Jama.Matrix;
+import de.learnlib.util.mealy.MealyUtil;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
+import net.automatalib.util.automata.equivalence.DeterministicEquivalenceTest;
 import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.words.Alphabet;
+import net.automatalib.words.Word;
 
 public class PhiMetric<I> {
     private final Alphabet<I> alphabet;
@@ -30,9 +33,11 @@ public class PhiMetric<I> {
         return 1 - diff(dfa1, dfa2);
     }
 
-    public double sim(CompactMealy<Character, Character> mealy1, CompactMealy<Character, Character> mealy2) {
+    public double sim(CompactMealy<I, I> mealy1, CompactMealy<I, I> mealy2) {
         // TODO: The entire metric is undefined for mealy machies.
-        return 0.0;
+        Word<I> cex = DeterministicEquivalenceTest.findSeparatingWord(mealy1, mealy2,
+                alphabet.stream().collect(Collectors.toSet()));
+        return cex == null ? 1.0 : 0.0;
     }
 
     private double coefficient(CompactDFA<I> dfa, Integer q, Integer qPrime) {

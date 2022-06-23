@@ -65,26 +65,20 @@ public class ContinuousMealy<I, O> {
 
     public class QueryActivity implements Activity<O> {
         public final Queue<Word<I>> queue = new LinkedList<>();
-        public Word<I> suffix;
 
         @SafeVarargs
-        public QueryActivity(Word<I> suffix, Word<I>... queries) {
-            this.suffix = suffix;
-            for (Word<I> query : queries) {
-                this.queue.add(query);
+        public QueryActivity(Word<I>... words) {
+            for (Word<I> word : words) {
+                queue.add(word);
             }
         }
 
         @Override
         public void process(Word<O> answer) {
-            Word<I> word = queue.poll();
+            queue.removeIf(w -> !tree.getLeaves().contains(w.prefix(w.length() - 1)));
+
             if (!queue.isEmpty()) {
-                if (tree.getLeaves().contains(word)) {
-                    query = queue.peek();
-                } else {
-                    query = sampleWord();
-                    activity = new TestActivity();
-                }
+                query = queue.poll();
             } else {
                 Word<I> nextQuery = hypothesisQuery(tree);
                 if (nextQuery == null) {
@@ -133,13 +127,14 @@ public class ContinuousMealy<I, O> {
                 Word<I> effInput = cex.prefix(mismatchIdx + 1);
                 Word<O> effOutput = answer.prefix(mismatchIdx + 1);
 
-                finishCounterexample(hyp.computeOutput(cex).lastSymbol(), effOutput.lastSymbol(),
+                finishCounterexample(hyp.computeOutput(effInput).lastSymbol(), effOutput.lastSymbol(),
                         hyp.getState(effInput), effInput.prefix(effInput.length() - 1), effInput.suffix(1));
             }
         }
     }
 
     private final Alphabet<I> alphabet;
+    private final O defaultOutputSymbol;
     private final double alpha;
     private final MembershipOracle<I, Word<O>> oracle;
     private final Random RAND;
@@ -153,13 +148,15 @@ public class ContinuousMealy<I, O> {
      * @param alphabet the learning alphabet
      * @param oracle   the membership oracle
      */
-    public ContinuousMealy(Alphabet<I> alphabet, double alpha, MembershipOracle<I, Word<O>> oracle, Random random) {
+    public ContinuousMealy(Alphabet<I> alphabet, O defaultOutputSymbol, double alpha,
+            MembershipOracle<I, Word<O>> oracle, Random random) {
         // TODO: State.
         this.alphabet = alphabet;
         this.alpha = alpha;
+        this.defaultOutputSymbol = defaultOutputSymbol;
         this.oracle = oracle;
         this.activity = new HypActivity();
-        this.query = Word.epsilon();
+        this.query = Word.fromLetter(alphabet.iterator().next());
         this.tree = new MultiICNode<>(Word.epsilon());
         tree.origins.add(Word.epsilon());
         this.alphabet.forEach(s -> tree.origins.add(Word.fromSymbols(s)));
@@ -168,51 +165,53 @@ public class ContinuousMealy<I, O> {
 
     private Pair<ICHypothesisMealy<I, O>, Word<I>> update(Word<O> answer) {
         applyAnswers(Collections.singleton(new DefaultQuery<>(query, answer)));
-        tree = advanceHypothesis(query, answer, tree);
+        assert tree.getNodeOrigins().size() == (tree.getLeaves().size() * alphabet.size()) + 1;
+        Pair<MultiICNode<I, O>, Set<Word<I>>> advanced = advanceHypothesis(query, answer, tree);
+        tree = advanced.getFirst();
+        tree.origins.addAll(advanced.getSecond());
         activity.process(answer);
         ICHypothesisMealy<I, O> hyp = extractHypothesis(new HashSet<>(), tree);
         return Pair.of(hyp, query);
     }
 
     private ICHypothesisMealy<I, O> extractHypothesis(Set<Word<I>> extraOrigins, MultiICNode<I, O> localTree) {
+        Set<Word<I>> origins = new HashSet<>(localTree.origins);
+        origins.addAll(extraOrigins);
+
         if (localTree.isLeaf()) {
             Word<I> initial = null;
             if (localTree.origins.contains(Word.epsilon()) || extraOrigins.contains(Word.epsilon())) {
                 initial = localTree.accessSequence;
             }
 
-            ICHypothesisMealy<I, O> hyp = new ICHypothesisMealy<>(alphabet);
+            ICHypothesisMealy<I, O> hyp = new ICHypothesisMealy<>(alphabet, defaultOutputSymbol);
             hyp.setInitial(initial);
 
-            for (Word<I> origin : localTree.origins) {
-                if (!origin.equals(Word.epsilon())) {
-                    hyp.addTransition(origin.prefix(origin.length() - 1), origin.lastSymbol(),
-                            localTree.accessSequence, localTree.outputs.get(origin.lastSymbol()));
-                }
-            }
+            HashMap<Word<I>, MultiICNode<I, O>> accessSeqToLeaf = new HashMap<>();
+            DiscriminationTreeIterators.leafIterator(this.tree).forEachRemaining(l -> {
+                MultiICNode<I, O> originLeaf = (MultiICNode<I, O>) l;
+                accessSeqToLeaf.put(originLeaf.accessSequence, originLeaf);
+            });
 
-            for (Word<I> origin : extraOrigins) {
+            for (Word<I> origin : origins) {
                 if (!origin.equals(Word.epsilon())) {
-                    hyp.addTransition(origin.prefix(origin.length() - 1), origin.lastSymbol(),
-                            localTree.accessSequence, localTree.outputs.get(origin.lastSymbol()));
+                    Word<I> originString = origin.prefix(origin.length() - 1);
+                    hyp.addTransition(originString, origin.lastSymbol(), localTree.accessSequence,
+                            accessSeqToLeaf.get(originString).outputs.get(origin.lastSymbol()));
                 }
             }
 
             return hyp;
         } else {
-            Set<Word<I>> leftOrigins = new HashSet<>();
-            leftOrigins.addAll(extraOrigins);
-            leftOrigins.addAll(localTree.origins);
-
             LinkedList<MultiICNode<I, O>> children = new LinkedList<>(localTree.getChildrenNative());
             Set<ICHypothesisMealy<I, O>> childHyps = new HashSet<>();
-            childHyps.add(extractHypothesis(leftOrigins, children.pop()));
+            childHyps.add(extractHypothesis(origins, children.pop()));
 
             for (MultiICNode<I, O> child : children) {
                 childHyps.add(extractHypothesis(new HashSet<>(), child));
             }
 
-            ICHypothesisMealy<I, O> hyp = new ICHypothesisMealy<>(alphabet);
+            ICHypothesisMealy<I, O> hyp = new ICHypothesisMealy<>(alphabet, defaultOutputSymbol);
 
             for (ICHypothesisMealy<I, O> childHyp : childHyps) {
                 if (childHyp.getInitialState() != null) {
@@ -249,7 +248,14 @@ public class ContinuousMealy<I, O> {
             tree.origins.add(Word.epsilon());
             this.alphabet.forEach(s -> tree.origins.add(Word.fromSymbols(s)));
         } else {
-            tree.restrictOrigins(tree.getLeaves());
+            Set<Word<I>> origins = new HashSet<>();
+            origins.add(Word.epsilon());
+            for (Word<I> leaf : tree.getLeaves()) {
+                for (I a : alphabet) {
+                    origins.add(leaf.append(a));
+                }
+            }
+            tree.restrictOrigins(origins);
         }
         tree = adjustStructure(answers, tree);
     }
@@ -299,7 +305,8 @@ public class ContinuousMealy<I, O> {
             }
 
             for (Entry<O, AbstractWordBasedDTNode<I, O, Object>> child : children.entrySet()) {
-                ((MultiICNode<I, O>) child.getValue()).origins.addAll(sortOrigins.get(child.getKey()));
+                ((MultiICNode<I, O>) child.getValue()).origins
+                        .addAll(sortOrigins.getOrDefault(child.getKey(), Collections.emptySet()));
             }
 
             tree.replaceChildren(children);
@@ -326,58 +333,65 @@ public class ContinuousMealy<I, O> {
             Map<O, AbstractWordBasedDTNode<I, O, Object>> childPrime = new HashMap<>();// new childs
             for (O o : tree.getChildMap().keySet()) {
                 remove.clear();
-                DiscriminationTreeIterators.leafIterator(tree.getChild(o)).forEachRemaining(l -> {
+                Word<I> treeDiscriminator = tree.getDiscriminator();
+                DiscriminationTreeIterators.leafIterator(tree.child(o)).forEachRemaining(l -> {
                     for (DefaultQuery<I, Word<O>> query : answers) {
                         if (query.getInput()
-                                .equals(((MultiICNode<I, O>) l).accessSequence.concat(tree.getDiscriminator()))
-                                && !query.getOutput().equals(o)) {
+                                .equals(((MultiICNode<I, O>) l).accessSequence.concat(treeDiscriminator))
+                                && !query.getOutput().lastSymbol().equals(o)) {
                             remove.add(((MultiICNode<I, O>) l).accessSequence);
                         }
                     }
                 });
                 remove.addAll(removed);
-                Pair<MultiICNode<I, O>, Set<Word<I>>> adjustment = adjustStates(answers, remove, tree.getChild(o));
+                Pair<MultiICNode<I, O>, Set<Word<I>>> adjustment = adjustStates(answers, remove,
+                        (MultiICNode<I, O>) tree.child(o));
                 if (adjustment.getFirst() == null) {
-                    tree.removeChild(o);
                     origins.addAll(adjustment.getSecond());
                 } else {
                     childPrime.put(o, adjustment.getFirst());
                 }
             }
+
+            tree.replaceChildren(childPrime);
+
             if (tree.isLeaf()) {
                 origins.addAll(tree.origins);
                 return Pair.of(null, origins);
             }
-            tree.replaceChildren(childPrime);
+
             // replace node by unique child
             if (tree.getChildren().size() == 1) {
-                for (O o : tree.getChildMap().keySet()) {
-                    MultiICNode<I, O> node = tree.getChild(o);
-                    node.origins.addAll(origins);
-                    node.origins.addAll(tree.origins);
-                    node.setParent(null);
-                    node.setParentOutcome(null);
-                    return Pair.of(node, new HashSet<>());
-                }
+                MultiICNode<I, O> newNode = new MultiICNode<>(tree.getChildrenNative().iterator().next());
+                newNode.origins.addAll(origins);
+                newNode.origins.addAll(tree.origins);
+                newNode.setParent(null);
+                newNode.setParentOutcome(null);
+                return Pair.of(newNode, new HashSet<>());
             }
             tree.origins.addAll(origins);
             return Pair.of(tree, new HashSet<>());
         }
     }
 
-    private MultiICNode<I, O> advanceHypothesis(Word<I> query, Word<O> answer, MultiICNode<I, O> tree) {
+    private Pair<MultiICNode<I, O>, Set<Word<I>>> advanceHypothesis(Word<I> query, Word<O> answer,
+            MultiICNode<I, O> tree) {
         return advanceHypothesis(query, answer, new HashSet<>(), tree);
     }
 
-    private MultiICNode<I, O> advanceHypothesis(Word<I> query, Word<O> answer, Set<Word<I>> extraOrigins,
+    private Pair<MultiICNode<I, O>, Set<Word<I>>> advanceHypothesis(Word<I> query, Word<O> answer,
+            Set<Word<I>> extraOrigins,
             MultiICNode<I, O> tree) {
         MultiICNode<I, O> newNode = new MultiICNode<>();
+        Set<Word<I>> newOrigins = new HashSet<>();
         if (tree.isLeaf()) {
             newNode.accessSequence = tree.accessSequence;
             newNode.origins.addAll(tree.origins);
             newNode.origins.addAll(extraOrigins);
             newNode.outputs.putAll(tree.outputs);
 
+            assert tree.accessSequence != null;
+            assert newNode.accessSequence != null;
             if (tree.accessSequence.equals(query.prefix(query.length() - 1))) {
                 newNode.outputs.put(query.lastSymbol(), answer.lastSymbol());
             }
@@ -386,6 +400,16 @@ public class ContinuousMealy<I, O> {
             newNode.setDiscriminator(tree.getDiscriminator());
             newNode.setParent(null);
             newNode.setParentOutcome(null);
+
+            // Make sure we have the appropriate branch child.
+            if (tree.child(answer.lastSymbol()) == null) {
+                MultiICNode<I, O> answerChild = new MultiICNode<>();
+                answerChild.accessSequence = query.prefix(query.length() - 1);
+                answerChild.setParent(tree);
+                answerChild.setParentOutcome(answer.lastSymbol());
+                tree.setChild(answer.lastSymbol(), answerChild);
+                this.alphabet.stream().forEach(a -> newOrigins.add(answerChild.accessSequence.append(a)));
+            }
 
             Set<Word<I>> allTrans = new HashSet<>(tree.origins);
             allTrans.addAll(extraOrigins);
@@ -396,26 +420,32 @@ public class ContinuousMealy<I, O> {
 
             newNode.origins.clear();
             newNode.origins.addAll(remaining);
-            if (moved.isEmpty()) {
-                HashMap<O, AbstractWordBasedDTNode<I, O, Object>> children = new HashMap<>(tree.getChildMap());
-                for (Entry<O, AbstractWordBasedDTNode<I, O, Object>> child : children.entrySet()) {
-                    children.put(child.getKey(),
-                            advanceHypothesis(query, answer, (MultiICNode<I, O>) child.getValue()));
-                }
-            } else {
-                HashMap<O, AbstractWordBasedDTNode<I, O, Object>> children = new HashMap<>(tree.getChildMap());
-                for (Entry<O, AbstractWordBasedDTNode<I, O, Object>> child : children.entrySet()) {
-                    if (child.getKey().equals(answer)) {
-                        children.put(child.getKey(),
-                                advanceHypothesis(query, answer, moved, (MultiICNode<I, O>) child.getValue()));
+
+            HashMap<O, AbstractWordBasedDTNode<I, O, Object>> children = new HashMap<>(tree.getChildMap());
+            for (Entry<O, AbstractWordBasedDTNode<I, O, Object>> child : children.entrySet()) {
+                if (moved.isEmpty()) {
+                    Pair<MultiICNode<I, O>, Set<Word<I>>> advanced = advanceHypothesis(query, answer,
+                            (MultiICNode<I, O>) child.getValue());
+                    children.put(child.getKey(), advanced.getFirst());
+                    newOrigins.addAll(advanced.getSecond());
+                } else {
+                    if (child.getKey().equals(answer.lastSymbol())) {
+                        Pair<MultiICNode<I, O>, Set<Word<I>>> advanced = advanceHypothesis(query, answer, moved,
+                                (MultiICNode<I, O>) child.getValue());
+                        children.put(child.getKey(), advanced.getFirst());
+                        newOrigins.addAll(advanced.getSecond());
                     } else {
-                        children.put(child.getKey(),
-                                advanceHypothesis(query, answer, (MultiICNode<I, O>) child.getValue()));
+                        Pair<MultiICNode<I, O>, Set<Word<I>>> advanced = advanceHypothesis(query, answer,
+                                (MultiICNode<I, O>) child.getValue());
+                        children.put(child.getKey(), advanced.getFirst());
+                        newOrigins.addAll(advanced.getSecond());
                     }
                 }
             }
+
+            newNode.replaceChildren(children);
         }
-        return newNode;
+        return Pair.of(newNode, newOrigins);
     }
 
     private Word<I> hypothesisQuery(MultiICNode<I, O> tree) {
@@ -442,19 +472,22 @@ public class ContinuousMealy<I, O> {
     }
 
     private Word<I> sampleWord() {
+        List<I> alphas = new LinkedList<>(alphabet);
+        Collections.shuffle(alphas, RAND);
         if (RAND.nextFloat() < alpha) {
-            List<I> alphas = new LinkedList<>(alphabet);
-            Collections.shuffle(alphas, RAND);
-            return Word.fromSymbols(alphas.get(0)).concat(sampleWord());
+            return Word.fromLetter(alphas.get(0)).concat(sampleWord());
         }
-        return Word.epsilon();
+        return Word.fromLetter(alphas.get(0));
     }
 
     private Set<DefaultQuery<I, Word<O>>> implications(Word<I> leaf, Set<DefaultQuery<I, Word<O>>> current,
             MultiICNode<I, O> currentTree) {
         if (currentTree.isLeaf()) {
             if (currentTree.accessSequence.equals(leaf)) {
-                return current.stream().map(q -> new DefaultQuery<>(leaf.concat(q.getInput()), q.getOutput()))
+                return current.stream()
+                        .map(q -> new DefaultQuery<>(
+                                leaf.concat(q.getInput()).prefix(leaf.concat(q.getInput()).length() - 1),
+                                leaf.concat(q.getInput()).suffix(1), q.getOutput()))
                         .collect(Collectors.toSet());
 
             }
@@ -490,6 +523,9 @@ public class ContinuousMealy<I, O> {
         // guaranteed.
         assert tree.getLeaves().contains(shrt);
 
+        // FIXME: Testing hypothesis.
+        assert e.length() == 1;
+
         Boolean duplicate = tree.getLeaves().contains(lng);
         MultiICNode<I, O> node = new MultiICNode<>();
         node.setDiscriminator(e);
@@ -504,12 +540,11 @@ public class ContinuousMealy<I, O> {
             alphabet.forEach(a -> tree.origins.add(lng.append(a)));
         }
 
-        // FIXME: Should implications be a list? Does order matter?
         Set<DefaultQuery<I, Word<O>>> newImp = implications(lng, new HashSet<>(), tree);
         newImp.add(new DefaultQuery<>(shrt.concat(e), Word.fromLetter(shrtSym)));
         applyAnswers(newImp);
 
-        activity = new QueryActivity(e, shrt, lng);
+        activity = new QueryActivity(shrt.concat(e), lng.concat(e));
         query = shrt.concat(e);
     }
 

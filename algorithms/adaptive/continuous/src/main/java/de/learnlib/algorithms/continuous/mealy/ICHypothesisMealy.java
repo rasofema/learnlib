@@ -18,11 +18,9 @@ package de.learnlib.algorithms.continuous.mealy;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -36,10 +34,12 @@ import net.automatalib.words.Word;
 
 public class ICHypothesisMealy<I, O> extends AbstractICHypothesis<I, Pair<Word<I>, I>>
         implements MealyMachine<Word<I>, I, Pair<Word<I>, I>, O> {
+    private final O defaultOutSymbol;
     public final Map<Pair<Word<I>, I>, O> outputs = new HashMap<>();
 
-    public ICHypothesisMealy(Alphabet<I> alphabet) {
+    public ICHypothesisMealy(Alphabet<I> alphabet, O defaultOutSymbol) {
         super(alphabet);
+        this.defaultOutSymbol = defaultOutSymbol;
     }
 
     @Override
@@ -79,14 +79,13 @@ public class ICHypothesisMealy<I, O> extends AbstractICHypothesis<I, Pair<Word<I
 
     public CompactMealy<I, O> toCompactMealy() {
         CompactMealy<I, O> compact = new CompactMealy<>(this.getInputAlphabet(), this.getStates().size());
-        List<Integer> compactStates = new LinkedList<>(compact.getStates());
-        List<Word<I>> thisStates = new LinkedList<>(this.getStates());
-
         HashMap<Word<I>, Integer> toCompactStates = new HashMap<>(this.getStates().size());
 
-        IntStream.range(0, Math.min(thisStates.size(), compactStates.size()))
-                .map(i -> toCompactStates.put(thisStates.get(i), compactStates.get(i)));
-        for (Word<I> state : thisStates) {
+        for (Word<I> state : this.getStates()) {
+            toCompactStates.put(state, compact.addState());
+        }
+
+        for (Word<I> state : this.getStates()) {
             Integer compactState = toCompactStates.get(state);
 
             if (this.initialState.equals(state)) {
@@ -94,8 +93,10 @@ public class ICHypothesisMealy<I, O> extends AbstractICHypothesis<I, Pair<Word<I
             }
 
             for (I input : this.getInputAlphabet()) {
-                compact.addTransition(compactState, input, toCompactStates.get(this.getSuccessor(state, input)),
-                        this.getOutput(state, input));
+                O outputSymbol = this.getOutput(state, input);
+                Integer destState = toCompactStates.get(this.getSuccessor(state, input));
+                compact.addTransition(compactState, input, destState,
+                        outputSymbol != null ? outputSymbol : defaultOutSymbol);
             }
         }
 

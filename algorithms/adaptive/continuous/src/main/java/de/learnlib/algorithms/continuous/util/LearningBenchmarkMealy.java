@@ -28,11 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
-import de.learnlib.algorithms.continuous.dfa.ContinuousDFA;
-import de.learnlib.algorithms.dlstar.dfa.ClassicDLStarDFA;
-import de.learnlib.algorithms.incremental.dfa.IKearnsVaziraniDFA;
-import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFA;
-import de.learnlib.algorithms.kv.dfa.KearnsVaziraniDFAState;
+import de.learnlib.algorithms.continuous.mealy.ContinuousMealy;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealy;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealyState;
 import de.learnlib.api.oracle.MembershipOracle;
@@ -43,12 +39,8 @@ import de.learnlib.filter.statistic.Counter;
 import de.learnlib.filter.statistic.oracle.MealyCounterOracle;
 import de.learnlib.oracle.membership.MutatingSimulatorOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
-import net.automatalib.automata.base.compact.CompactTransition;
-import net.automatalib.automata.fsa.impl.compact.CompactDFA;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
-import net.automatalib.commons.util.Triple;
-import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.util.automata.transducers.MealyMachines;
 import net.automatalib.words.Alphabet;
@@ -74,7 +66,7 @@ public class LearningBenchmarkMealy {
             Counter counter, MembershipOracle.MealyMembershipOracle<Character, Character> oracle, int limit) {
         Word<Character> input = sampleWord();
         Word<Character> output = oracle.answerQuery(input);
-        while (hyp.computeOutput(input) == output) {
+        while (hyp.computeOutput(input).equals(output)) {
             if (counter.getCount() > limit) {
                 return null;
             }
@@ -139,51 +131,55 @@ public class LearningBenchmarkMealy {
         }
     }
 
-    // private static List<Pair<Integer, CompactMealy<Character, Character>>>
-    // learnContinuous(
-    // MembershipOracle.MealyMembershipOracle<Character, Character> oracle, int
-    // limit) {
-    // MealyCounterOracle<Character, Character> queryOracle = new
-    // MealyCounterOracle<>(oracle,
-    // "Number of total queries");
+    private static List<Pair<Integer, CompactMealy<Character, Character>>> learnContinuous(
+            MembershipOracle.MealyMembershipOracle<Character, Character> oracle, int limit) {
+        MealyCounterOracle<Character, Character> queryOracle = new MealyCounterOracle<>(oracle,
+                "Number of total queries");
 
-    // ContinuousMealy<Character, Character> learner = new
-    // ContinuousMealy<>(ALPHABET, 0.9, queryOracle, RAND);
-    // return learner.learn(limit, limit / 2 / 100);
-    // }
+        ContinuousMealy<Character, Character> learner = new ContinuousMealy<>(ALPHABET, '?', 0.9, queryOracle, RAND);
+        return learner.learn(limit, limit / 2 / 100);
+    }
 
-    // public static void runContinuous(List<CompactMealy<Character, Character>>
-    // targets, int limit) {
-    // MutatingSimulatorOracle.MealyMutatingSimulatorOracle<Character, Character>
-    // ORACLE = new MutatingSimulatorOracle.MealyMutatingSimulatorOracle<>(
-    // limit, targets);
-    // System.out.println("=== CONTINUOUS ===");
-    // List<Pair<Integer, CompactMealy<Character, Character>>> result =
-    // learnContinuous(ORACLE,
-    // limit * targets.size());
-    // List<Pair<Integer, Double>> dfas = result.stream().parallel()
-    // .map(p -> Pair.of(p.getFirst(),
-    // PD.sim((CompactMealy<Character, Character>) ORACLE.getTarget(p.getFirst()),
-    // p.getSecond())))
-    // .collect(Collectors.toList());
-    // List<Double> run = new LinkedList<>();
-    // for (int i = 0; i < dfas.size() - 1; i++) {
-    // while (run.size() < dfas.get(i + 1).getFirst()) {
-    // run.add(dfas.get(i).getSecond());
-    // }
-    // }
+    public static void runContinuous(List<CompactMealy<Character, Character>> targets, int limit) {
+        MutatingSimulatorOracle.MealyMutatingSimulatorOracle<Character, Character> ORACLE = new MutatingSimulatorOracle.MealyMutatingSimulatorOracle<>(
+                limit, targets);
+        System.out.println("=== CONTINUOUS ===");
+        List<Pair<Integer, CompactMealy<Character, Character>>> result = learnContinuous(ORACLE,
+                limit * targets.size());
+        List<Pair<Integer, Double>> mealys = result.stream().parallel()
+                .map(p -> Pair.of(p.getFirst(),
+                        PD.sim((CompactMealy<Character, Character>) ORACLE.getTarget(p.getFirst()), p.getSecond())))
+                .collect(Collectors.toList());
+        List<Double> run = new LinkedList<>();
+        for (int i = 0; i < mealys.size() - 1; i++) {
+            while (run.size() < mealys.get(i + 1).getFirst()) {
+                run.add(mealys.get(i).getSecond());
+            }
+        }
 
-    // run = run.stream().limit(limit *
-    // targets.size()).collect(Collectors.toList());
-    // assert run.get(run.size() - 1).equals(1.0);
-    // while (run.size() < limit * targets.size()) {
-    // run.add(dfas.get(dfas.size() - 1).getSecond());
-    // }
+        List<Character> alphas = new LinkedList<>(ALPHABET);
+        Word<Character> testWord = Word.epsilon();
+        for (int i = 0; i < 1000; i++) {
+            Collections.shuffle(alphas, RAND);
+            testWord.append(alphas.get(0));
+        }
 
-    // for (Double metric : run) {
-    // System.out.println(metric.toString());
-    // }
-    // }
+        Boolean same1 = targets.get(0).computeOutput(testWord)
+                .equals(result.get(99).getSecond().computeOutput(testWord));
+
+        Boolean same2 = targets.get(1).computeOutput(testWord)
+                .equals(result.get(199).getSecond().computeOutput(testWord));
+
+        run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
+        assert run.get(run.size() - 1).equals(1.0);
+        while (run.size() < limit * targets.size()) {
+            run.add(mealys.get(mealys.size() - 1).getSecond());
+        }
+
+                for (Double metric : run) {
+                    System.out.println(metric.toString());
+                }
+            }
 
     public static CompactMealy<Character, Character> randomAutomatonGen(int size) {
         CompactMealy<Character, Character> aut = RandomAutomata.randomMealy(RAND, size, ALPHABET, ALPHABET);
@@ -305,7 +301,7 @@ public class LearningBenchmarkMealy {
         targets.add(target);
 
         runClassic(targets, limit);
-        // runContinuous(targets, limit);
+        runContinuous(targets, limit);
     }
 
     public static void benchmarkMutation(int size, int limit) {

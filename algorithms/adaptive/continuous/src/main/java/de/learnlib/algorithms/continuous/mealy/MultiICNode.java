@@ -1,12 +1,12 @@
 package de.learnlib.algorithms.continuous.mealy;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import de.learnlib.datastructure.discriminationtree.MultiDTNode;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
@@ -39,18 +39,15 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
 
     @Override
     public MultiICNode<I, O> child(O out) {
-        return (MultiICNode<I, O>) super.child(out);
-    }
-
-    @Override
-    public MultiICNode<I, O> getChild(O out) {
-        // This is quite important. A Binary tree always has each possible branch.
-        // In a multi tree, we may be requesting a branch that does not exist, so we
-        // create it JIT.
-        return (MultiICNode<I, O>) super.child(out);
+        assert !isLeaf();
+        return (MultiICNode<I, O>) this.getChild(out);
     }
 
     public Collection<MultiICNode<I, O>> getChildrenNative() {
+        if (isLeaf()) {
+            return Collections.emptySet();
+        }
+
         HashSet<MultiICNode<I, O>> children = new HashSet<>(super.getChildren().size());
         for (AbstractWordBasedDTNode<I, O, Object> multiICNode : super.getChildren()) {
             children.add((MultiICNode<I, O>) multiICNode);
@@ -83,11 +80,6 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
         throw new UnsupportedOperationException("Not in use, use origins / accessSequence directly.");
     }
 
-    @Override
-    public void replaceChildren(Map<O, AbstractWordBasedDTNode<I, O, Object>> repChildren) {
-        throw new UnsupportedOperationException("Not in use, use setChildren.");
-    }
-
     public Set<Word<I>> getLeaves() {
         Set<Word<I>> leaves = new HashSet<>();
         DiscriminationTreeIterators.leafIterator(this)
@@ -102,36 +94,21 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
         return allOrigins;
     }
 
-    public MultiICNode<I, O> restrictOrigins(Set<Word<I>> origins) {
-        MultiICNode<I, O> result = new MultiICNode<>();
-        result.accessSequence = this.accessSequence;
+    public void restrictOrigins(Set<Word<I>> origins) {
+        this.origins.removeIf(o -> !origins.contains(o));
 
-        HashSet<Word<I>> oldTargets = new HashSet<>(this.origins);
-        for (Word<I> origin : oldTargets) {
-            if (!origin.equals(Word.epsilon())) {
-                if (origins.contains(origin.prefix(origin.length() - 1))) {
-                    result.origins.add(origin);
-                }
-            } else if (oldTargets.contains(Word.epsilon())) {
-                result.origins.add(Word.epsilon());
-            }
-        }
-
-        // This here is different but expected. We don't just recursively go left and
-        // right, we recursively go to all child nodes.
         if (!this.isLeaf()) {
-            result.setDiscriminator(this.getDiscriminator());
-            for (Entry<O, AbstractWordBasedDTNode<I, O, Object>> child : this.getChildEntries()) {
-                result.setChild(child.getKey(), ((MultiICNode<I, O>) child.getValue()).restrictOrigins(origins));
-            }
+            this.getChildren().stream().map(c -> (MultiICNode<I, O>) c).forEach(c -> c.restrictOrigins(origins));
         }
-
-        return result;
     }
 
     public void setChild(O out, MultiICNode<I, O> newChild) {
         newChild.setParentOutcome(out);
         newChild.setParent(this);
+
+        if (isLeaf()) {
+            children = new HashMap<>();
+        }
 
         children.put(out, newChild);
         super.replaceChildren(children);
