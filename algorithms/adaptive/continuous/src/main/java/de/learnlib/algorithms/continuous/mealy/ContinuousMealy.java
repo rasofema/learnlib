@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -239,59 +240,78 @@ public class ContinuousMealy<I, O> {
         tree = adjustStructure(answers, tree);
     }
 
-    private MultiICNode<I, O> adjustStructure(Set<DefaultQuery<I, Word<O>>> answers, MultiICNode<I, O> tree) {
-        return adjustStructure(answers, new HashSet<>(), tree);
+    private Set<DefaultQuery<I, Word<O>>> originImplications(Word<I> origin) {
+        AtomicReference<MultiICNode<I, O>> targetNodeRef = new AtomicReference<>();
+        DiscriminationTreeIterators.nodeIterator(tree).forEachRemaining(n -> {
+            MultiICNode<I, O> node = (MultiICNode<I, O>) n;
+            if (node.origins.contains(origin)) {
+                targetNodeRef.set(node);
+            }
+        });
+
+        MultiICNode<I, O> targetNode = targetNodeRef.get();
+        assert targetNode != null;
+
+        Set<DefaultQuery<I, Word<O>>> implications = new HashSet<>();
+
+        while (!targetNode.isRoot()) {
+            implications.add(new DefaultQuery<>(origin, targetNode.getParent().getDiscriminator(),
+                    targetNode.getParentOutcome()));
+            targetNode = (MultiICNode<I, O>) targetNode.getParent();
+        }
+
+        return implications;
     }
 
-    private MultiICNode<I, O> adjustStructure(Set<DefaultQuery<I, Word<O>>> answers, Set<Word<I>> removed,
-            MultiICNode<I, O> tree) {
-        if (tree.isLeaf()) {
-            tree.origins.removeAll(removed);
+    private Boolean conflictsTreeImplications(Word<I> origin, Set<DefaultQuery<I, Word<O>>> answers) {
+        Set<DefaultQuery<I, Word<O>>> implications = originImplications(origin);
+
+        for (DefaultQuery<I, Word<O>> implication : implications) {
             for (DefaultQuery<I, Word<O>> answer : answers) {
-                Word<I> input = answer.getInput().prefix(answer.getInput().length() - 1);
-                if (input.equals(tree.accessSequence)) {
-                    tree.outputs.put(answer.getInput().lastSymbol(), answer.getOutput().lastSymbol());
-                    return tree;
+                int smallestOutput = Math.min(implication.getOutput().length(), answer.getOutput().length());
+                if (implication.getInput().equals(answer.getInput())) {
+                    if (implication.getOutput().suffix(smallestOutput)
+                            .equals(answer.getOutput().suffix(smallestOutput))) {
+                        return true;
+                    }
                 }
             }
-        } else {
-            HashMap<Word<O>, AbstractWordBasedDTNode<I, Word<O>, Object>> children = new HashMap<>(tree.getChildMap());
-            HashMap<O, Set<Word<I>>> sortOrigins = new HashMap<>();
+        }
+        return false;
+    }
 
-            for (Entry<Word<O>, AbstractWordBasedDTNode<I, Word<O>, Object>> child : children.entrySet()) {
-                ((MultiICNode<I, O>) child.getValue()).getNodeOrigins().stream().forEach(t -> {
-                    if (!removed.contains(t)) {
-                        for (DefaultQuery<I, Word<O>> query : answers) {
-                            if (query.getInput().equals(t.concat(tree.getDiscriminator()))) {
-                                Set<Word<I>> set = sortOrigins.getOrDefault(query.getOutput().lastSymbol(),
-                                        new HashSet<>());
-                                set.add(t);
-                                sortOrigins.put(query.getOutput().lastSymbol(), set);
-                            }
+    private MultiICNode<I, O> adjustStructure(Set<DefaultQuery<I, Word<O>>> answers, MultiICNode<I, O> tree) {
+        Set<Word<I>> originsToFix = tree.getNodeOrigins().stream().filter(o -> conflictsTreeImplications(o, answers))
+                .collect(Collectors.toSet());
+
+        for (Word<I> originToFix : originsToFix) {
+            MultiICNode<I, O> currentNode = tree;
+            while (currentNode != null) {
+                if (currentNode.isLeaf()) {
+                    currentNode.origins.add(originToFix);
+                    for (DefaultQuery<I, Word<O>> answer : answers) {
+                        Word<I> input = answer.getInput().prefix(answer.getInput().length() - 1);
+                        if (input.equals(tree.accessSequence)) {
+                            tree.outputs.put(answer.getInput().lastSymbol(), answer.getOutput().lastSymbol());
                         }
                     }
-                });
+                    break;
+                } else {
+                    Word<I> disc = currentNode.getDiscriminator();
+                    DefaultQuery<I, Word<O>> answer = answers.stream()
+                            .filter(q -> q.getInput().equals(originToFix.concat(disc))).findFirst().orElse(null);
+                    assert answer != null;
+                    Word<O> answerSuffix = answer.getOutput().suffix(currentNode.getDiscriminator().length());
+                    if (currentNode.getChildMap().keySet().contains(answerSuffix)) {
+                        currentNode = (MultiICNode<I, O>) currentNode.getChild(answerSuffix);
+                    } else {
+                        currentNode.origins.add(originToFix);
+                    }
+                }
             }
-
-            for (Entry<Word<O>, AbstractWordBasedDTNode<I, Word<O>, Object>> child : children.entrySet()) {
-                Set<Word<I>> adjust = new HashSet<>(removed);
-                sortOrigins.entrySet().stream().filter(e -> e.getKey() != child.getKey()).map(e -> e.getValue())
-                        .forEach(s -> adjust.addAll(s));
-
-                MultiICNode<I, O> prime = adjustStructure(answers, adjust, (MultiICNode<I, O>) child.getValue());
-                children.put(child.getKey(), prime);
-                tree.setChild(child.getKey(), prime);
-            }
-
-            for (Entry<Word<O>, AbstractWordBasedDTNode<I, Word<O>, Object>> child : children.entrySet()) {
-                ((MultiICNode<I, O>) child.getValue()).origins
-                        .addAll(sortOrigins.getOrDefault(child.getKey(), Collections.emptySet()));
-            }
-
-            tree.replaceChildren(children);
-            tree.origins.removeAll(removed);
         }
         return tree;
+
     }
 
     private Pair<MultiICNode<I, O>, Set<Word<I>>> adjustStates(Set<DefaultQuery<I, Word<O>>> answers,
