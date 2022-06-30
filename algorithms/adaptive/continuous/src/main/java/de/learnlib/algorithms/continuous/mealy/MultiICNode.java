@@ -6,14 +6,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import de.learnlib.datastructure.discriminationtree.MultiDTNode;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import net.automatalib.words.Word;
 
-public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
+public class MultiICNode<I, O> extends MultiDTNode<I, Word<O>, Object> {
 
     public Word<I> accessSequence;
     public final Set<Word<I>> origins = new HashSet<>();
@@ -38,7 +37,7 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
     }
 
     @Override
-    public MultiICNode<I, O> child(O out) {
+    public MultiICNode<I, O> child(Word<O> out) {
         assert !isLeaf();
         return (MultiICNode<I, O>) this.getChild(out);
     }
@@ -49,7 +48,7 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
         }
 
         HashSet<MultiICNode<I, O>> children = new HashSet<>(super.getChildren().size());
-        for (AbstractWordBasedDTNode<I, O, Object> multiICNode : super.getChildren()) {
+        for (AbstractWordBasedDTNode<I, Word<O>, Object> multiICNode : super.getChildren()) {
             children.add((MultiICNode<I, O>) multiICNode);
         }
         return children;
@@ -102,7 +101,7 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
         }
     }
 
-    public void setChild(O out, MultiICNode<I, O> newChild) {
+    public void setChild(Word<O> out, MultiICNode<I, O> newChild) {
         newChild.setParentOutcome(out);
         newChild.setParent(this);
 
@@ -114,7 +113,7 @@ public class MultiICNode<I, O> extends MultiDTNode<I, O, Object> {
         super.replaceChildren(children);
     }
 
-    public void removeChild(O out) {
+    public void removeChild(Word<O> out) {
         children.remove(out);
     }
 }

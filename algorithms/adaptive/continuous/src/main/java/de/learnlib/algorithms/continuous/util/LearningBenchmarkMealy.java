@@ -42,7 +42,6 @@ import de.learnlib.oracle.membership.SimulatorOracle;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.random.RandomAutomata;
-import net.automatalib.util.automata.transducers.MealyMachines;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
@@ -159,27 +158,27 @@ public class LearningBenchmarkMealy {
 
         List<Character> alphas = new LinkedList<>(ALPHABET);
         Word<Character> testWord = Word.epsilon();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10_000; i++) {
             Collections.shuffle(alphas, RAND);
             testWord.append(alphas.get(0));
         }
 
-        Boolean same1 = targets.get(0).computeOutput(testWord)
+        assert targets.get(0).computeOutput(testWord)
                 .equals(result.get(99).getSecond().computeOutput(testWord));
 
-        Boolean same2 = targets.get(1).computeOutput(testWord)
+        assert targets.get(1).computeOutput(testWord)
                 .equals(result.get(199).getSecond().computeOutput(testWord));
 
         run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
-        assert run.get(run.size() - 1).equals(1.0);
+        // assert run.get(run.size() - 1).equals(1.0);
         while (run.size() < limit * targets.size()) {
             run.add(mealys.get(mealys.size() - 1).getSecond());
         }
 
-                for (Double metric : run) {
-                    System.out.println(metric.toString());
-                }
-            }
+        for (Double metric : run) {
+            System.out.println(metric.toString());
+        }
+    }
 
     public static CompactMealy<Character, Character> randomAutomatonGen(int size) {
         CompactMealy<Character, Character> aut = RandomAutomata.randomMealy(RAND, size, ALPHABET, ALPHABET);
@@ -317,11 +316,13 @@ public class LearningBenchmarkMealy {
         CompactMealy<Character, Character> base = randomAutomatonGen(size);
         CompactMealy<Character, Character> baseWithFeature = randomAddFeature(base, 3);
 
-        benchmark(base, baseWithFeature, limit);
+        benchmark(base, base, limit);
     }
 
     public static void main(String[] args) {
-        long seed = 263294685378083L /* System.nanoTime() */;
+        // for (int i = 0; i < 10_000; i++) {
+        // System.out.println("# RUN: " + i);
+        long seed = 233764157992125L /* System.nanoTime() */;
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 
@@ -341,5 +342,6 @@ public class LearningBenchmarkMealy {
         default:
             break;
         }
-    }
+        // }
+}
 }
