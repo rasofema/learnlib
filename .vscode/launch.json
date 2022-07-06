@@ -26,7 +26,7 @@
       "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmarkMealy",
       "projectName": "learnlib-continuous",
       "vmArgs": ["-ea"],
-      "args": ["3", "FEAT", "10000", "true"]
+      "args": ["20", "FEAT", "10000", "true"]
     }
   ]
 }

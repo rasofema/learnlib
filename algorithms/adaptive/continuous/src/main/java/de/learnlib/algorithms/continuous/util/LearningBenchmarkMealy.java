@@ -160,7 +160,7 @@ public class LearningBenchmarkMealy {
         Word<Character> testWord = Word.epsilon();
         for (int i = 0; i < 10_000; i++) {
             Collections.shuffle(alphas, RAND);
-            testWord.append(alphas.get(0));
+            testWord = testWord.append(alphas.get(0));
         }
 
         assert targets.get(0).computeOutput(testWord)
@@ -320,9 +320,9 @@ public class LearningBenchmarkMealy {
     }
 
     public static void main(String[] args) {
-        // for (int i = 0; i < 10_000; i++) {
-        // System.out.println("# RUN: " + i);
-        long seed = 233764157992125L /* System.nanoTime() */;
+        for (int i = 0; i < 10_000; i++) {
+            System.out.println("# RUN: " + i);
+            long seed = System.nanoTime();
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 
@@ -342,6 +342,6 @@ public class LearningBenchmarkMealy {
         default:
             break;
         }
-        // }
+    }
 }
 }
