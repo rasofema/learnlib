@@ -137,5 +137,15 @@ limitations under the License.
             <version>0.17.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-dot-visualizer</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-serialization-dot</artifactId>
+            <version>0.10.0</version>
+        </dependency>
     </dependencies>
 </project>

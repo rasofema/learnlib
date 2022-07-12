@@ -30,11 +30,18 @@ import java.util.stream.Collectors;
 
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.datastructure.discriminationtree.BinaryDTree;
 import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTreeIterators;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import de.learnlib.util.mealy.MealyUtil;
+import net.automatalib.automata.base.compact.CompactTransition;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import net.automatalib.automata.visualization.MealyVisualizationHelper;
 import net.automatalib.commons.util.Pair;
+import net.automatalib.visualization.Visualization;
+import net.automatalib.visualization.VisualizationHelper;
+import net.automatalib.visualization.VisualizationProvider;
+import net.automatalib.visualization.dot.GraphVizBrowserVisualizationProvider;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
@@ -555,6 +562,16 @@ public class ContinuousMealy<I, O> {
 
         activity = new HypActivity();
         activity.process(null);
+    }
+
+    private void visualise(ICHypothesisMealy<I, O> hyp) {
+        new GraphVizBrowserVisualizationProvider().visualize(hyp.transitionGraphView(),
+                Collections.singletonList(new MealyVisualizationHelper<>(hyp)), false, new HashMap<String, String>());
+    }
+
+    private void visualiseTree(MultiICNode<I, O> tree) {
+        new GraphVizBrowserVisualizationProvider().visualize(tree.asNormalGraph(),
+                Collections.singletonList(tree.getVisualizationHelper()), false, new HashMap<String, String>());
     }
 
     public List<Pair<Integer, CompactMealy<I, O>>> learn(int limit, int sample) {
