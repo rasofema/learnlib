@@ -316,7 +316,7 @@ public class LearningBenchmarkMealy {
         CompactMealy<Character, Character> base = randomAutomatonGen(size);
         CompactMealy<Character, Character> baseWithFeature = randomAddFeature(base, 3);
 
-        benchmark(base, base, limit);
+        benchmark(base, baseWithFeature, limit);
     }
 
     public static void main(String[] args) {
