@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
-import de.learnlib.algorithms.continuous.mealy.ContinuousMealy;
+import de.learnlib.algorithms.continuous.base.PAS;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealy;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealyState;
 import de.learnlib.api.oracle.MembershipOracle;
@@ -132,11 +132,14 @@ public class LearningBenchmarkMealy {
 
     private static List<Pair<Integer, CompactMealy<Character, Character>>> learnContinuous(
             MembershipOracle.MealyMembershipOracle<Character, Character> oracle, int limit) {
+
         MealyCounterOracle<Character, Character> queryOracle = new MealyCounterOracle<>(oracle,
                 "Number of total queries");
 
-        ContinuousMealy<Character, Character> learner = new ContinuousMealy<>(ALPHABET, '?', 0.9, queryOracle, RAND);
-        return learner.learn(limit, limit / 2 / 100);
+        PAS env = new PAS(sulOracle -> new KearnsVaziraniMealy<Character, Character>(ALPHABET, sulOracle, true,
+                AcexAnalyzers.BINARY_SEARCH_BWD), queryOracle, ALPHABET, RAND);
+
+        return env.run();
     }
 
     public static void runContinuous(List<CompactMealy<Character, Character>> targets, int limit) {
@@ -145,16 +148,16 @@ public class LearningBenchmarkMealy {
         System.out.println("=== CONTINUOUS ===");
         List<Pair<Integer, CompactMealy<Character, Character>>> result = learnContinuous(ORACLE,
                 limit * targets.size());
-        List<Pair<Integer, Double>> mealys = result.stream().parallel()
-                .map(p -> Pair.of(p.getFirst(),
-                        PD.sim((CompactMealy<Character, Character>) ORACLE.getTarget(p.getFirst()), p.getSecond())))
-                .collect(Collectors.toList());
-        List<Double> run = new LinkedList<>();
-        for (int i = 0; i < mealys.size() - 1; i++) {
-            while (run.size() < mealys.get(i + 1).getFirst()) {
-                run.add(mealys.get(i).getSecond());
+        List<CompactMealy<Character, Character>> run = new LinkedList<>();
+        for (int i = 0; i < result.size() - 1; i++) {
+            while (run.size() < result.get(i + 1).getFirst()) {
+                run.add(result.get(i).getSecond());
             }
         }
+        while (run.size() < limit * targets.size()) {
+            run.add(result.get(result.size() - 1).getSecond());
+        }
+        run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
 
         List<Character> alphas = new LinkedList<>(ALPHABET);
         Word<Character> testWord = Word.epsilon();
@@ -164,20 +167,12 @@ public class LearningBenchmarkMealy {
         }
 
         assert targets.get(0).computeOutput(testWord)
-                .equals(result.get(99).getSecond().computeOutput(testWord));
+                .equals(run.get(limit - 1).computeOutput(testWord));
 
         assert targets.get(1).computeOutput(testWord)
-                .equals(result.get(199).getSecond().computeOutput(testWord));
+                .equals(run.get(run.size() - 1).computeOutput(testWord));
 
-        run = run.stream().limit(limit * targets.size()).collect(Collectors.toList());
         // assert run.get(run.size() - 1).equals(1.0);
-        while (run.size() < limit * targets.size()) {
-            run.add(mealys.get(mealys.size() - 1).getSecond());
-        }
-
-        for (Double metric : run) {
-            System.out.println(metric.toString());
-        }
     }
 
     public static CompactMealy<Character, Character> randomAutomatonGen(int size) {
@@ -319,6 +314,12 @@ public class LearningBenchmarkMealy {
         benchmark(base, baseWithFeature, limit);
     }
 
+    // Interesting seeds:
+    // 90800239093333L -> Shows an example where "trusing the cache" leads to an
+    // intermediate hypothesis bigger than the new target. Only to later be
+    // destroyed.
+    // 160939488765291L -> An example of why the initial state is no longer
+    // guaranteed as correct.
     public static void main(String[] args) {
         for (int i = 0; i < 10_000; i++) {
             System.out.println("# RUN: " + i);

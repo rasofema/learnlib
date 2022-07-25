@@ -15,46 +15,87 @@
  */
 package de.learnlib.algorithms.continuous.base;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.function.Function;
 
+import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealy;
 import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.filter.cache.mealy.PASOracle;
-import de.learnlib.oracle.membership.SimulatorOmegaOracle;
-import net.automatalib.automata.transducers.MealyMachine;
+
+import de.learnlib.filter.statistic.Counter;
+import de.learnlib.oracle.membership.PASOracle;
+import net.automatalib.automata.base.compact.CompactTransition;
+import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import net.automatalib.commons.util.Pair;
+import net.automatalib.incremental.ConflictException;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class PAS<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
-    private final PASOracle<I, O> oracle;
+import java.util.stream.Collectors;
 
-    private final Function<MembershipOracle.MealyMembershipOracle<I, O>, LearningAlgorithm.MealyLearner<I, O>> constructor;
-    private LearningAlgorithm.MealyLearner<I, O> algorithm;
+public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>, Character, Word<Character>> {
+    private final PASOracle<Integer, Character, CompactTransition<Character>, Character> oracle;
+    private final Function<MembershipOracle.MealyMembershipOracle<Character, Character>, KearnsVaziraniMealy<Character, Character>> constructor;
+    private KearnsVaziraniMealy<Character, Character> algorithm;
+    private final Alphabet<Character> alphabet;
+    private final List<Pair<Integer, CompactMealy<Character, Character>>> hypotheses;
+    public Counter counter;
 
-    public PAS(Function<MembershipOracle.MealyMembershipOracle<I, O>, LearningAlgorithm.MealyLearner<I, O>> constructor,
-            MembershipOracle.MealyMembershipOracle<I, O> sulOracle,
-            EquivalenceOracle.MealyEquivalenceOracle<I, O> eqOracle, Alphabet<I> alphabet) {
-        this.oracle = new PASOracle<>(alphabet, sulOracle, eqOracle);
+    public PAS(
+            Function<MembershipOracle.MealyMembershipOracle<Character, Character>, KearnsVaziraniMealy<Character, Character>> constructor,
+            MembershipOracle.MealyMembershipOracle<Character, Character> sulOracle, Alphabet<Character> alphabet,
+            Random random) {
+        this.counter = new Counter("Membership Queries", "Number of membership queries");
+        this.oracle = new PASOracle<>(alphabet, sulOracle, counter, random);
         this.constructor = constructor;
+        this.hypotheses = new LinkedList<>();
+        this.alphabet = alphabet;
+        oracle.skipSimulation();
     }
 
     @Override
     public void startLearning() {
-        algorithm = constructor.apply(simulator);
+        algorithm = constructor.apply(oracle);
         algorithm.startLearning();
+        hypotheses.add(Pair.of((int) (long) counter.getCount(),
+                new CompactMealy<>((CompactMealy<Character, Character>) algorithm.getHypothesisModel())));
+        oracle.setHypothesis(hypotheses.get(hypotheses.size() - 1).getSecond());
+    }
+
+    public List<Pair<Integer, CompactMealy<Character, Character>>> run() {
+        startLearning();
+        DefaultQuery<Character, Word<Character>> cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+        while (cex != null) {
+            try {
+                this.refineHypothesis(cex);
+                cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+            } catch (ConflictException e) {
+                startLearning();
+                cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+            }
+        }
+        return hypotheses;
     }
 
     @Override
-    public boolean refineHypothesis(DefaultQuery<I, Word<O>> ceQuery) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean refineHypothesis(DefaultQuery<Character, Word<Character>> ceQuery) throws ConflictException {
+        if (ceQuery.getInput().length() == 0) {
+            return false;
+        }
+
+        Boolean out = algorithm.refineHypothesis(ceQuery);
+        hypotheses.add(Pair.of((int) (long) counter.getCount(),
+                new CompactMealy<>((CompactMealy<Character, Character>) algorithm.getHypothesisModel())));
+        oracle.setHypothesis(hypotheses.get(hypotheses.size() - 1).getSecond());
+        return out;
     }
 
     @Override
-    public MealyMachine<?, I, ?, O> getHypothesisModel() {
-        return algorithm.getHypothesisModel();
+    public CompactMealy<Character, Character> getHypothesisModel() {
+        return hypotheses.get(hypotheses.size() - 1).getSecond();
     }
 
 }

@@ -16,6 +16,7 @@
 package de.learnlib.acex.analyzers;
 
 import de.learnlib.acex.AbstractCounterexample;
+import net.automatalib.incremental.ConflictException;
 
 public final class AcexAnalysisAlgorithms {
 
@@ -126,8 +127,9 @@ public final class AcexAnalysisAlgorithms {
         E effLow = acex.effect(low);
         E effHigh = acex.effect(high);
 
-        assert !acex.checkEffects(effLow, effHigh) :
-                "compatible effects at " + low + ", " + high + ": " + effLow + ", " + effHigh;
+        if (acex.checkEffects(effLow, effHigh)) {
+            throw new ConflictException("compatible effects at " + low + ", " + high + ": " + effLow + ", " + effHigh);
+        }
 
         int highIter = high;
         int lowIter = low;

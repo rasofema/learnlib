@@ -12,21 +12,17 @@
     },
     {
       "type": "java",
-      "name": "Launch LearningBenchmarkDFA",
-      "request": "launch",
-      "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmarkDFA",
-      "projectName": "learnlib-continuous",
-      "vmArgs": ["-ea"],
-      "args": ["20", "FEAT", "10000", "true"]
-    },
-    {
-      "type": "java",
       "name": "Launch LearningBenchmarkMealy",
       "request": "launch",
       "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmarkMealy",
       "projectName": "learnlib-continuous",
       "vmArgs": ["-ea"],
-      "args": ["20", "FEAT", "10000", "true"]
+      "args": [
+        "20",
+        "FEAT",
+        "10000",
+        "true"
+      ]
     }
   ]
 }

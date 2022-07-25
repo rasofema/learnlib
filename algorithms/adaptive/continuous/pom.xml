@@ -147,5 +147,10 @@ limitations under the License.
             <artifactId>automata-serialization-dot</artifactId>
             <version>0.10.0</version>
         </dependency>
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-statistics</artifactId>
+            <version>0.16.0</version>
+        </dependency>
     </dependencies>
 </project>
