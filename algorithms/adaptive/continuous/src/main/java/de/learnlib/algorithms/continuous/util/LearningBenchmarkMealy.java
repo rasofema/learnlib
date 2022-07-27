@@ -79,27 +79,24 @@ public class LearningBenchmarkMealy {
     private static Pair<KearnsVaziraniMealyState<Character, Character>, List<Pair<Integer, CompactMealy<Character, Character>>>> learnClassic(
             MembershipOracle.MealyMembershipOracle<Character, Character> oracle, int limit) {
         List<Pair<Integer, CompactMealy<Character, Character>>> results = new LinkedList<>();
-        MealyCounterOracle<Character, Character> queryOracle = new MealyCounterOracle<>(oracle,
-                "Number of total queries");
-        MealyCacheOracle<Character, Character> cacheOracle = MealyCaches.createCache(ALPHABET, queryOracle);
-        MealyCounterOracle<Character, Character> memOracle = new MealyCounterOracle<>(cacheOracle,
+        MealyCounterOracle<Character, Character> memOracle = new MealyCounterOracle<>(oracle,
                 "Number of membership queries");
         KearnsVaziraniMealy<Character, Character> learner = new KearnsVaziraniMealy<>(ALPHABET, memOracle, false,
                 AcexAnalyzers.BINARY_SEARCH_BWD);
 
         learner.startLearning();
-        results.add(Pair.of((int) queryOracle.getCount(),
+        results.add(Pair.of((int) memOracle.getCount(),
                 new CompactMealy<>((CompactMealy<Character, Character>) learner.getHypothesisModel())));
         DefaultQuery<Character, Word<Character>> cex = findCex(
                 new CompactMealy<>((CompactMealy<Character, Character>) learner.getHypothesisModel()),
-                queryOracle.getCounter(), cacheOracle, limit);
+                memOracle.getCounter(), memOracle, limit);
 
         while (cex != null) {
             learner.refineHypothesis(cex);
-            results.add(Pair.of((int) queryOracle.getCount(),
+            results.add(Pair.of((int) memOracle.getCount(),
                     new CompactMealy<>((CompactMealy<Character, Character>) learner.getHypothesisModel())));
             cex = findCex(new CompactMealy<>((CompactMealy<Character, Character>) learner.getHypothesisModel()),
-                    queryOracle.getCounter(), cacheOracle, limit);
+                    memOracle.getCounter(), memOracle, limit);
         }
 
         return Pair.of(learner.suspend(), results);

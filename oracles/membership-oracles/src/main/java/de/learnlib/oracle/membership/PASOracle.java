@@ -132,7 +132,7 @@ public class PASOracle<S, I, T, O>
     }
 
     private Word<I> sampleWord() {
-        double ALPHA = 0.9;
+        double ALPHA = 0.99;
         if (random.nextFloat() < ALPHA) {
             List<I> alphas = new LinkedList<>(cache.getInputAlphabet());
             Collections.shuffle(alphas, random);
@@ -153,9 +153,20 @@ public class PASOracle<S, I, T, O>
             }
         }
 
-        while (counter.getCount() <= 21_000) {
-            DefaultQuery<I, Word<O>> query = new DefaultQuery<>(sampleWord());
-            Word<O> out = internalProcessQuery(query, false);
+        for (int i = 0; i < 20_000; i++) {
+            DefaultQuery<I, Word<O>> query = new DefaultQuery<>(Word.epsilon());
+            Word<O> out = Word.epsilon();
+
+            // FIXME: Finding a right ratio for this will be tricky.
+            // Can be made easier by exploiting longer test strings.
+            if (random.nextFloat() < 0.7) {
+                query = new DefaultQuery<I, Word<O>>((Word<I>) cache.getOldestQuery());
+                out = internalProcessQuery(query, true);
+            } else {
+                query = new DefaultQuery<>(sampleWord());
+                out = internalProcessQuery(query, false);
+            }
+
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
                 return new DefaultQuery<>(query.getInput(), out);
             }

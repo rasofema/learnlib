@@ -43,6 +43,7 @@ public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>
     private final Alphabet<Character> alphabet;
     private final List<Pair<Integer, CompactMealy<Character, Character>>> hypotheses;
     public Counter counter;
+    private List<Integer> conflictIndexes;
 
     public PAS(
             Function<MembershipOracle.MealyMembershipOracle<Character, Character>, KearnsVaziraniMealy<Character, Character>> constructor,
@@ -53,6 +54,7 @@ public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>
         this.constructor = constructor;
         this.hypotheses = new LinkedList<>();
         this.alphabet = alphabet;
+        this.conflictIndexes = new LinkedList<>();
         oracle.skipSimulation();
     }
 
@@ -73,10 +75,13 @@ public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>
                 this.refineHypothesis(cex);
                 cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
             } catch (ConflictException e) {
+                conflictIndexes.add((int) (long) counter.getCount());
                 startLearning();
                 cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
             }
         }
+
+        System.out.println("# CONFLICTS: " + conflictIndexes);
         return hypotheses;
     }
 
