@@ -47,9 +47,12 @@ public class PASOracle<S, I, T, O>
     private Counter counter;
     private Random random;
     private Boolean skipSimulation = false;
+    private Integer limit;
+    private Double revisionRatio;
+    private Double lengthFactor;
 
     public PASOracle(Alphabet<I> alphabet, MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Counter counter,
-            Random random) {
+            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.conflicts = new HashSet<>();
         this.conflictedTransitions = new HashSet<>();
@@ -57,6 +60,9 @@ public class PASOracle<S, I, T, O>
         this.sulOracle = sulOracle;
         this.counter = counter;
         this.random = random;
+        this.limit = cexSearchLimit;
+        this.revisionRatio = revisionRatio;
+        this.lengthFactor = lengthFactor;
     }
 
     public MealyMachine<S, I, T, O> getHypothesis() {
@@ -132,8 +138,7 @@ public class PASOracle<S, I, T, O>
     }
 
     private Word<I> sampleWord() {
-        double ALPHA = 0.99;
-        if (random.nextFloat() < ALPHA) {
+        if (random.nextFloat() < lengthFactor) {
             List<I> alphas = new LinkedList<>(cache.getInputAlphabet());
             Collections.shuffle(alphas, random);
             return Word.fromSymbols(alphas.get(0)).concat(sampleWord());
@@ -153,13 +158,13 @@ public class PASOracle<S, I, T, O>
             }
         }
 
-        for (int i = 0; i < 20_000; i++) {
+        while (counter.getCount() < limit) {
             DefaultQuery<I, Word<O>> query = new DefaultQuery<>(Word.epsilon());
             Word<O> out = Word.epsilon();
 
             // FIXME: Finding a right ratio for this will be tricky.
             // Can be made easier by exploiting longer test strings.
-            if (random.nextFloat() < 0.7) {
+            if (random.nextFloat() < revisionRatio) {
                 query = new DefaultQuery<I, Word<O>>((Word<I>) cache.getOldestQuery());
                 out = internalProcessQuery(query, true);
             } else {

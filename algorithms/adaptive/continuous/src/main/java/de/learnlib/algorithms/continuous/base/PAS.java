@@ -34,8 +34,6 @@ import net.automatalib.incremental.ConflictException;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-import java.util.stream.Collectors;
-
 public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>, Character, Word<Character>> {
     private final PASOracle<Integer, Character, CompactTransition<Character>, Character> oracle;
     private final Function<MembershipOracle.MealyMembershipOracle<Character, Character>, KearnsVaziraniMealy<Character, Character>> constructor;
@@ -48,9 +46,11 @@ public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>
     public PAS(
             Function<MembershipOracle.MealyMembershipOracle<Character, Character>, KearnsVaziraniMealy<Character, Character>> constructor,
             MembershipOracle.MealyMembershipOracle<Character, Character> sulOracle, Alphabet<Character> alphabet,
+            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor,
             Random random) {
         this.counter = new Counter("Membership Queries", "Number of membership queries");
-        this.oracle = new PASOracle<>(alphabet, sulOracle, counter, random);
+        this.oracle = new PASOracle<>(alphabet, sulOracle, counter, cexSearchLimit, revisionRatio, lengthFactor,
+                random);
         this.constructor = constructor;
         this.hypotheses = new LinkedList<>();
         this.alphabet = alphabet;
