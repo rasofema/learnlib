@@ -329,7 +329,7 @@ public class LearningBenchmarkMealy {
     public static void main(String[] args) {
         for (int i = 0; i < 10_000; i++) {
             System.out.println("# RUN: " + i);
-            long seed = 149966005124750L /* System.nanoTime() */;
+            long seed = System.nanoTime();
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 
