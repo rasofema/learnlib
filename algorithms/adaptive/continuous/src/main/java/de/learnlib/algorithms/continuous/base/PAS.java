@@ -55,7 +55,6 @@ public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>
         this.hypotheses = new LinkedList<>();
         this.alphabet = alphabet;
         this.conflictIndexes = new LinkedList<>();
-        oracle.skipSimulation();
     }
 
     @Override

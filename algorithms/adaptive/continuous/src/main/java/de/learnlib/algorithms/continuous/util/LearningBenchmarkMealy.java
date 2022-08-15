@@ -26,7 +26,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.base.PAS;
@@ -44,6 +44,7 @@ import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
+import net.automatalib.util.automata.equivalence.DeterministicEquivalenceTest;
 
 public class LearningBenchmarkMealy {
     private static final Alphabet<Character> ALPHABET = Alphabets.characters('0', '2');
@@ -172,11 +173,13 @@ public class LearningBenchmarkMealy {
                 + targets.get(1).computeOutput(testWord).equals(run.get(run.size() - 1).computeOutput(testWord)));
 
         for (int j = 0; j < run.size(); j++) {
-            System.out.println(PD.sim(((CompactMealy<Character, Character>) ORACLE.getTarget(j)), run.get(j)));
+            System.err.println(run.get(j).getStates().size());
         }
 
-        // assert PD.sim(((CompactMealy<Character, Character>) ORACLE.getTarget(2 *
-        // LIMIT)), run.get(run.size() - 1)) == 1.0;
+        boolean correct = PD.sim(((CompactMealy<Character, Character>) ORACLE.getTarget(2 * LIMIT)),
+                run.get(run.size() - 1)) == 1.0;
+        correct = PD.sim(((CompactMealy<Character, Character>) ORACLE.getTarget(2 * LIMIT)),
+                run.get(run.size() - 1)) == 1.0;
     }
 
     public static CompactMealy<Character, Character> randomAutomatonGen(int size) {
@@ -297,7 +300,7 @@ public class LearningBenchmarkMealy {
         targets.add(base);
         targets.add(target);
 
-        runClassic(targets);
+        // runClassic(targets);
         runContinuous(targets);
     }
 
@@ -326,7 +329,7 @@ public class LearningBenchmarkMealy {
     public static void main(String[] args) {
         for (int i = 0; i < 10_000; i++) {
             System.out.println("# RUN: " + i);
-            long seed = System.nanoTime();
+            long seed = 149966005124750L /* System.nanoTime() */;
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 

@@ -37,7 +37,12 @@ public class PhiMetric<I> {
         // TODO: The entire metric is undefined for mealy machies.
         Word<I> cex = DeterministicEquivalenceTest.findSeparatingWord(mealy1, mealy2,
                 alphabet.stream().collect(Collectors.toSet()));
-        return cex == null ? 1.0 : 0.0;
+        if (cex != null) {
+            assert !mealy1.computeOutput(cex).equals(mealy2.computeOutput(cex));
+            return 0.0;
+        }
+
+        return 1.0;
     }
 
     private double coefficient(CompactDFA<I> dfa, Integer q, Integer qPrime) {

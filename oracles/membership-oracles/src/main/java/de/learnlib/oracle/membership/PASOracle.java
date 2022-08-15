@@ -41,12 +41,9 @@ public class PASOracle<S, I, T, O>
     private final AdaptiveMealyTreeBuilder<I, O> cache;
     private MealyMachine<S, I, T, O> hypothesis;
     private final Set<Word<I>> conflicts;
-    private final Set<T> conflictedTransitions;
-    private final Set<Word<I>> simulatedQueries;
     private final MembershipOracle.MealyMembershipOracle<I, O> sulOracle;
     private Counter counter;
     private Random random;
-    private Boolean skipSimulation = false;
     private Integer limit;
     private Double revisionRatio;
     private Double lengthFactor;
@@ -55,8 +52,6 @@ public class PASOracle<S, I, T, O>
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.conflicts = new HashSet<>();
-        this.conflictedTransitions = new HashSet<>();
-        this.simulatedQueries = new HashSet<>();
         this.sulOracle = sulOracle;
         this.counter = counter;
         this.random = random;
@@ -86,13 +81,11 @@ public class PASOracle<S, I, T, O>
 
     private void addConflict(Query<I, Word<O>> query) {
         conflicts.add(query.getInput());
-        conflictedTransitions.addAll(getTransitions(query.getInput()));
     }
 
     private Word<O> internalProcessQuery(Query<I, Word<O>> query, Boolean saveInCache) throws ConflictException {
         Word<O> answer = sulOracle.answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
-        simulatedQueries.remove(query.getInput());
         counter.increment();
 
         if (saveInCache) {
@@ -114,25 +107,14 @@ public class PASOracle<S, I, T, O>
     @Override
     public void processQueries(Collection<? extends Query<I, Word<O>>> queries) throws ConflictException {
         for (Query<I, Word<O>> query : queries) {
-            // 1: Check against cache.
+            // A: Check against cache.
             Word<O> cacheOutput = cache.lookup(query.getInput());
             if (query.getInput().length() == cacheOutput.length()) {
                 query.answer(cacheOutput.suffix(query.getSuffix().length()));
                 continue;
             }
 
-            // 2: Check against hypothesis.
-            if (hypothesis != null && !skipSimulation) {
-                Set<T> overlappedTransitions = new HashSet<>(conflictedTransitions);
-                overlappedTransitions.retainAll(getTransitions(query.getInput()));
-                if (overlappedTransitions.isEmpty()) {
-                    query.answer(hypothesis.computeOutput(query.getInput()));
-                    simulatedQueries.add(query.getInput());
-                    continue;
-                }
-            }
-
-            // 3: Ask the SUL Oracle.
+            // B: Ask the SUL Oracle.
             internalProcessQuery(query, true);
         }
     }
@@ -149,13 +131,15 @@ public class PASOracle<S, I, T, O>
     @Override
     public @Nullable DefaultQuery<I, Word<O>> findCounterExample(MealyMachine<?, I, ?, O> hypothesis,
             Collection<? extends I> inputs) throws ConflictException {
-        // FIXME: Weight based rather than full prioity.
-        for (Word<I> simQuery : simulatedQueries) {
-            DefaultQuery<I, Word<O>> query = new DefaultQuery<>(simQuery);
+
+        Word<I> sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
+        while (sepInput != null) {
+            DefaultQuery<I, Word<O>> query = new DefaultQuery<>(sepInput);
             Word<O> out = internalProcessQuery(query, true);
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
                 return new DefaultQuery<>(query.getInput(), out);
             }
+            sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         }
 
         while (counter.getCount() < limit) {
@@ -169,7 +153,7 @@ public class PASOracle<S, I, T, O>
                 out = internalProcessQuery(query, true);
             } else {
                 query = new DefaultQuery<>(sampleWord());
-                out = internalProcessQuery(query, false);
+                out = internalProcessQuery(query, true);
             }
 
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
@@ -179,13 +163,4 @@ public class PASOracle<S, I, T, O>
 
         return null;
     }
-
-    public void skipSimulation() {
-        skipSimulation = true;
-    }
-
-    public void useSimulation() {
-        skipSimulation = false;
-    }
-
 }

@@ -18,10 +18,10 @@
       "projectName": "learnlib-continuous",
       "vmArgs": ["-ea"],
       "args": [
-        "160",
+        "75",
         "FEAT",
         "20000",
-        "0.7",
+        "0.99",
         "0.99",
         "true"
       ]
