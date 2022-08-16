@@ -34,7 +34,7 @@ import net.automatalib.incremental.ConflictException;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class PAS implements LearningAlgorithm<CompactMealy<String, String>, String, Word<String>> {
+public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
     private final PASOracle<Integer, String, CompactTransition<String>, String> oracle;
     private final Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor;
     private KearnsVaziraniMealy<String, String> algorithm;
