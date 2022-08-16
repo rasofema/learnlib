@@ -34,18 +34,18 @@ import net.automatalib.incremental.ConflictException;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>, Character, Word<Character>> {
-    private final PASOracle<Integer, Character, CompactTransition<Character>, Character> oracle;
-    private final Function<MembershipOracle.MealyMembershipOracle<Character, Character>, KearnsVaziraniMealy<Character, Character>> constructor;
-    private KearnsVaziraniMealy<Character, Character> algorithm;
-    private final Alphabet<Character> alphabet;
-    private final List<Pair<Integer, CompactMealy<Character, Character>>> hypotheses;
+public class PAS implements LearningAlgorithm<CompactMealy<String, String>, String, Word<String>> {
+    private final PASOracle<Integer, String, CompactTransition<String>, String> oracle;
+    private final Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor;
+    private KearnsVaziraniMealy<String, String> algorithm;
+    private final Alphabet<String> alphabet;
+    private final List<Pair<Integer, CompactMealy<String, String>>> hypotheses;
     public Counter counter;
     private List<Integer> conflictIndexes;
 
     public PAS(
-            Function<MembershipOracle.MealyMembershipOracle<Character, Character>, KearnsVaziraniMealy<Character, Character>> constructor,
-            MembershipOracle.MealyMembershipOracle<Character, Character> sulOracle, Alphabet<Character> alphabet,
+            Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor,
+            MembershipOracle.MealyMembershipOracle<String, String> sulOracle, Alphabet<String> alphabet,
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor,
             Random random) {
         this.counter = new Counter("Membership Queries", "Number of membership queries");
@@ -62,13 +62,13 @@ public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>
         algorithm = constructor.apply(oracle);
         algorithm.startLearning();
         hypotheses.add(Pair.of((int) (long) counter.getCount(),
-                new CompactMealy<>((CompactMealy<Character, Character>) algorithm.getHypothesisModel())));
+                new CompactMealy<>((CompactMealy<String, String>) algorithm.getHypothesisModel())));
         oracle.setHypothesis(hypotheses.get(hypotheses.size() - 1).getSecond());
     }
 
-    public List<Pair<Integer, CompactMealy<Character, Character>>> run() {
+    public List<Pair<Integer, CompactMealy<String, String>>> run() {
         startLearning();
-        DefaultQuery<Character, Word<Character>> cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+        DefaultQuery<String, Word<String>> cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
         while (cex != null) {
             try {
                 this.refineHypothesis(cex);
@@ -85,20 +85,20 @@ public class PAS implements LearningAlgorithm<CompactMealy<Character, Character>
     }
 
     @Override
-    public boolean refineHypothesis(DefaultQuery<Character, Word<Character>> ceQuery) throws ConflictException {
+    public boolean refineHypothesis(DefaultQuery<String, Word<String>> ceQuery) throws ConflictException {
         if (ceQuery.getInput().length() == 0) {
             return false;
         }
 
         Boolean out = algorithm.refineHypothesis(ceQuery);
         hypotheses.add(Pair.of((int) (long) counter.getCount(),
-                new CompactMealy<>((CompactMealy<Character, Character>) algorithm.getHypothesisModel())));
+                new CompactMealy<>((CompactMealy<String, String>) algorithm.getHypothesisModel())));
         oracle.setHypothesis(hypotheses.get(hypotheses.size() - 1).getSecond());
         return out;
     }
 
     @Override
-    public CompactMealy<Character, Character> getHypothesisModel() {
+    public CompactMealy<String, String> getHypothesisModel() {
         return hypotheses.get(hypotheses.size() - 1).getSecond();
     }
 

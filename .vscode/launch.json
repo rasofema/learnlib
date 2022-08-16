@@ -14,7 +14,7 @@
       "type": "java",
       "name": "Launch LearningBenchmarkMealy",
       "request": "launch",
-      "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmarkMealy",
+      "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmark",
       "projectName": "learnlib-continuous",
       "vmArgs": ["-ea"],
       "args": [
