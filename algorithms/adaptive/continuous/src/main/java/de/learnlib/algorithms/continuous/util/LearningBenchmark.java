@@ -37,6 +37,7 @@ import de.learnlib.filter.statistic.Counter;
 import de.learnlib.filter.statistic.oracle.MealyCounterOracle;
 import de.learnlib.oracle.membership.MutatingSimulatorOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
+import de.learnlib.util.mealy.MealyUtil;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.random.RandomAutomata;
@@ -156,26 +157,16 @@ public class LearningBenchmark {
         }
         run = run.stream().limit(LIMIT * targets.size()).collect(Collectors.toList());
 
-        List<String> alphas = new LinkedList<>(ALPHABET);
-        Word<String> testWord = Word.epsilon();
-        for (int i = 0; i < 10_000; i++) {
-            Collections.shuffle(alphas, RAND);
-            testWord = testWord.append(alphas.get(0));
-        }
+        boolean check1 = (PD.sim(((CompactMealy<String, String>) targets.get(0)), run.get(LIMIT - 1)) == 1.0);
+        System.out.println("# EQ CHECK 1: " + check1);
 
-        System.out.println("# SANITY CHECK 1: "
-                + targets.get(0).computeOutput(testWord).equals(run.get(LIMIT - 1).computeOutput(testWord)));
-
-        System.out.println("# SANITY CHECK 1: "
-                + targets.get(1).computeOutput(testWord).equals(run.get(run.size() - 1).computeOutput(testWord)));
+        boolean check2 = (PD.sim(((CompactMealy<String, String>) targets.get(1)), run.get(run.size() - 1)) == 1.0);
+        System.out.println("# EQ CHECK 2: " + check2);
 
         for (int j = 0; j < run.size(); j++) {
             System.err.println(run.get(j).getStates().size());
         }
 
-        boolean correct = PD.sim(((CompactMealy<String, String>) ORACLE.getTarget(2 * LIMIT)),
-                run.get(run.size() - 1)) == 1.0;
-        correct = PD.sim(((CompactMealy<String, String>) ORACLE.getTarget(2 * LIMIT)), run.get(run.size() - 1)) == 1.0;
     }
 
     public static CompactMealy<String, String> randomAutomatonGen(int size) {
@@ -321,8 +312,8 @@ public class LearningBenchmark {
     // 160939488765291L -> An example of why the initial state is no longer
     // guaranteed as correct.
     public static void main(String[] args) {
-        // for (int i = 0; i < 10_000; i++) {
-        // System.out.println("# RUN: " + i);
+        for (int i = 0; i < 10_000; i++) {
+            System.out.println("# RUN: " + i);
         long seed = System.nanoTime();
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
@@ -345,5 +336,5 @@ public class LearningBenchmark {
             break;
         }
     }
-    // }
+}
 }
