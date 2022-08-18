@@ -36,8 +36,10 @@ import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.filter.statistic.Counter;
 import de.learnlib.filter.statistic.oracle.MealyCounterOracle;
 import de.learnlib.oracle.membership.MutatingSimulatorOracle;
+import de.learnlib.oracle.membership.NoiseOracle;
+import de.learnlib.oracle.membership.ProbabilisticOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
-import de.learnlib.util.mealy.MealyUtil;
+import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.random.RandomAutomata;
@@ -117,7 +119,6 @@ public class LearningBenchmark {
                 }
             }
 
-            run = run.stream().limit(LIMIT).collect(Collectors.toList());
             while (run.size() < LIMIT) {
                 run.add(classic.get(classic.size() - 1).getSecond());
             }
@@ -129,23 +130,22 @@ public class LearningBenchmark {
     }
 
     private static List<Pair<Integer, CompactMealy<String, String>>> learnContinuous(
-            MembershipOracle.MealyMembershipOracle<String, String> oracle) {
-
-        MealyCounterOracle<String, String> queryOracle = new MealyCounterOracle<>(oracle, "Number of total queries");
+            MembershipOracle.MealyMembershipOracle<String, String> oracle, Counter counter) {
 
         PAS env = new PAS(
                 sulOracle -> new KearnsVaziraniMealy<String, String>(ALPHABET, sulOracle, true,
                         AcexAnalyzers.BINARY_SEARCH_BWD),
-                queryOracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, RAND);
+                oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, RAND, counter);
 
         return env.run();
     }
 
-    public static void runContinuous(List<CompactMealy<String, String>> targets) {
-        MutatingSimulatorOracle.MealyMutatingSimulatorOracle<String, String> ORACLE = new MutatingSimulatorOracle.MealyMutatingSimulatorOracle<>(
+    public static void runContinuousEvol(List<CompactMealy<String, String>> targets) {
+        MutatingSimulatorOracle.MealyMutatingSimulatorOracle<String, String> sulOracle = new MutatingSimulatorOracle.MealyMutatingSimulatorOracle<>(
                 LIMIT, targets);
-        System.out.println("=== CONTINUOUS ===");
-        List<Pair<Integer, CompactMealy<String, String>>> result = learnContinuous(ORACLE);
+        MealyCounterOracle<String, String> ORACLE = new MealyCounterOracle<>(sulOracle, "Membership Queries");
+        System.out.println("=== CONTINUOUS EVOL ===");
+        List<Pair<Integer, CompactMealy<String, String>>> result = learnContinuous(ORACLE, ORACLE.getCounter());
         List<CompactMealy<String, String>> run = new LinkedList<>();
         for (int i = 0; i < result.size() - 1; i++) {
             while (run.size() < result.get(i + 1).getFirst()) {
@@ -155,7 +155,6 @@ public class LearningBenchmark {
         while (run.size() < LIMIT * targets.size()) {
             run.add(result.get(result.size() - 1).getSecond());
         }
-        run = run.stream().limit(LIMIT * targets.size()).collect(Collectors.toList());
 
         boolean check1 = (PD.sim(((CompactMealy<String, String>) targets.get(0)), run.get(LIMIT - 1)) == 1.0);
         System.out.println("# EQ CHECK 1: " + check1);
@@ -164,10 +163,33 @@ public class LearningBenchmark {
         System.out.println("# EQ CHECK 2: " + check2);
 
         for (int j = 0; j < run.size(); j++) {
-            System.out.println(PD.sim(((CompactMealy<String, String>) ORACLE.getTarget(j)), run.get(j)));
+            System.out.println(PD.sim(((CompactMealy<String, String>) sulOracle.getTarget(j)), run.get(j)));
         }
 
         assert check1 && check2;
+    }
+
+    public static void runContinuousNoise(CompactMealy<String, String> target) {
+        System.out.println("=== CONTINUOUS NOISE ===");
+        MealySimulatorOracle<String, String> sulOracle = new MealySimulatorOracle<>(target);
+        NoiseOracle<String, String> noiseOracle = new NoiseOracle<>(ALPHABET, sulOracle, 0.15, RAND);
+        MealyCounterOracle<String, String> counterOracle = new MealyCounterOracle<>(noiseOracle, "Membership Queries");
+        ProbabilisticOracle<String, String> ORACLE = new ProbabilisticOracle<>(counterOracle, 3, 0.7, 10);
+
+        List<Pair<Integer, CompactMealy<String, String>>> result = learnContinuous(ORACLE, counterOracle.getCounter());
+        List<CompactMealy<String, String>> run = new LinkedList<>();
+        for (int i = 0; i < result.size() - 1; i++) {
+            while (run.size() < result.get(i + 1).getFirst()) {
+                run.add(result.get(i).getSecond());
+            }
+        }
+        while (run.size() < LIMIT * 2) {
+            run.add(result.get(result.size() - 1).getSecond());
+        }
+
+        for (int j = 0; j < run.size(); j++) {
+            System.out.println(PD.sim(((CompactMealy<String, String>) target), run.get(j)));
+        }
     }
 
     public static CompactMealy<String, String> randomAutomatonGen(int size) {
@@ -287,7 +309,8 @@ public class LearningBenchmark {
         targets.add(target);
 
         // runClassic(targets);
-        runContinuous(targets);
+        // runContinuousEvol(targets);
+        runContinuousNoise(targets.get(0));
     }
 
     public static void benchmarkMutation(int size) {
@@ -306,16 +329,10 @@ public class LearningBenchmark {
         benchmark(base, baseWithFeature);
     }
 
-    // Interesting seeds:
-    // 90800239093333L -> Shows an example where "trusing the cache" leads to an
-    // intermediate hypothesis bigger than the new target. Only to later be
-    // destroyed.
-    // 160939488765291L -> An example of why the initial state is no longer
-    // guaranteed as correct.
     public static void main(String[] args) {
-        for (int i = 0; i < 10_000; i++) {
-            System.out.println("# RUN: " + i);
-        long seed = System.nanoTime();
+        // for (int i = 0; i < 10_000; i++) {
+        // System.out.println("# RUN: " + i);
+        long seed = 99125518579000L /* System.nanoTime() */;
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 
@@ -336,6 +353,6 @@ public class LearningBenchmark {
         default:
             break;
         }
-    }
+        // }
 }
 }

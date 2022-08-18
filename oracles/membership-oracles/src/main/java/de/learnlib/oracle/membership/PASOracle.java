@@ -59,6 +59,7 @@ public class PASOracle<S, I, T, O>
         Word<O> answer = sulOracle.answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
         counter.increment();
+        System.out.println("COUNTER: " + counter.getCount());
 
         // Conflict detected
         if (cache.insert(query.getInput(), answer, (int) (long) counter.getCount())) {

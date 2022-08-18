@@ -47,8 +47,8 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
             Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor,
             MembershipOracle.MealyMembershipOracle<String, String> sulOracle, Alphabet<String> alphabet,
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor,
-            Random random) {
-        this.counter = new Counter("Membership Queries", "Number of membership queries");
+            Random random, Counter counter) {
+        this.counter = counter;
         this.oracle = new PASOracle<>(alphabet, sulOracle, counter, cexSearchLimit, revisionRatio, lengthFactor,
                 random);
         this.constructor = constructor;
@@ -76,6 +76,7 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
             cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
         }
 
+
         while (cex != null) {
             try {
                 this.refineHypothesis(cex);
@@ -87,7 +88,7 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
             }
         }
 
-        System.out.println("# CONFLICTS: " + conflictIndexes);
+        System.out.println("#CONFLICTS: " + conflictIndexes.size());
         return hypotheses;
     }
 
