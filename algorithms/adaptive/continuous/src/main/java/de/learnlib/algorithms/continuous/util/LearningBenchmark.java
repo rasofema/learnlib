@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
-import de.learnlib.algorithms.continuous.base.PAS;
+import de.learnlib.algorithms.continuous.base.PAR;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealy;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealyState;
 import de.learnlib.api.oracle.MembershipOracle;
@@ -132,7 +132,7 @@ public class LearningBenchmark {
     private static List<Pair<Integer, CompactMealy<String, String>>> learnContinuous(
             MembershipOracle.MealyMembershipOracle<String, String> oracle, Counter counter) {
 
-        PAS env = new PAS(
+        PAR env = new PAR(
                 sulOracle -> new KearnsVaziraniMealy<String, String>(ALPHABET, sulOracle, true,
                         AcexAnalyzers.BINARY_SEARCH_BWD),
                 oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, RAND, counter);
@@ -332,7 +332,7 @@ public class LearningBenchmark {
     public static void main(String[] args) {
         // for (int i = 0; i < 10_000; i++) {
         // System.out.println("# RUN: " + i);
-        long seed = 99125518579000L /* System.nanoTime() */;
+        long seed = System.nanoTime();
         RAND.setSeed(seed);
         System.out.println("# SEED: " + seed);
 

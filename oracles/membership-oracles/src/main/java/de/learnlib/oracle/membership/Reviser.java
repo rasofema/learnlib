@@ -34,7 +34,7 @@ import net.automatalib.incremental.mealy.tree.AdaptiveMealyTreeBuilder;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class PASOracle<S, I, T, O>
+public class Reviser<S, I, T, O>
         implements MembershipOracle.MealyMembershipOracle<I, O>, EquivalenceOracle.MealyEquivalenceOracle<I, O> {
     private final AdaptiveMealyTreeBuilder<I, O> cache;
     private final MembershipOracle.MealyMembershipOracle<I, O> sulOracle;
@@ -44,7 +44,7 @@ public class PASOracle<S, I, T, O>
     private Double revisionRatio;
     private Double lengthFactor;
 
-    public PASOracle(Alphabet<I> alphabet, MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Counter counter,
+    public Reviser(Alphabet<I> alphabet, MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Counter counter,
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.sulOracle = sulOracle;
@@ -59,7 +59,6 @@ public class PASOracle<S, I, T, O>
         Word<O> answer = sulOracle.answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
         counter.increment();
-        System.out.println("COUNTER: " + counter.getCount());
 
         // Conflict detected
         if (cache.insert(query.getInput(), answer, (int) (long) counter.getCount())) {

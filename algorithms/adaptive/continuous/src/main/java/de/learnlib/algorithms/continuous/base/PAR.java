@@ -26,7 +26,7 @@ import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 
 import de.learnlib.filter.statistic.Counter;
-import de.learnlib.oracle.membership.PASOracle;
+import de.learnlib.oracle.membership.Reviser;
 import net.automatalib.automata.base.compact.CompactTransition;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
@@ -34,8 +34,8 @@ import net.automatalib.incremental.ConflictException;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
-    private final PASOracle<Integer, String, CompactTransition<String>, String> oracle;
+public class PAR implements LearningAlgorithm.MealyLearner<String, String> {
+    private final Reviser<Integer, String, CompactTransition<String>, String> oracle;
     private final Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor;
     private KearnsVaziraniMealy<String, String> algorithm;
     private final Alphabet<String> alphabet;
@@ -43,14 +43,12 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
     public Counter counter;
     private List<Integer> conflictIndexes;
 
-    public PAS(
+    public PAR(
             Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor,
             MembershipOracle.MealyMembershipOracle<String, String> sulOracle, Alphabet<String> alphabet,
-            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor,
-            Random random, Counter counter) {
+            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random, Counter counter) {
         this.counter = counter;
-        this.oracle = new PASOracle<>(alphabet, sulOracle, counter, cexSearchLimit, revisionRatio, lengthFactor,
-                random);
+        this.oracle = new Reviser<>(alphabet, sulOracle, counter, cexSearchLimit, revisionRatio, lengthFactor, random);
         this.constructor = constructor;
         this.hypotheses = new LinkedList<>();
         this.alphabet = alphabet;
@@ -75,7 +73,6 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
             startLearning();
             cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
         }
-
 
         while (cex != null) {
             try {
