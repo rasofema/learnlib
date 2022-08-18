@@ -63,7 +63,6 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
         algorithm.startLearning();
         hypotheses.add(Pair.of((int) (long) counter.getCount(),
                 new CompactMealy<>((CompactMealy<String, String>) algorithm.getHypothesisModel())));
-        oracle.setHypothesis(hypotheses.get(hypotheses.size() - 1).getSecond());
     }
 
     public List<Pair<Integer, CompactMealy<String, String>>> run() {
@@ -93,7 +92,6 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
         Boolean out = algorithm.refineHypothesis(ceQuery);
         hypotheses.add(Pair.of((int) (long) counter.getCount(),
                 new CompactMealy<>((CompactMealy<String, String>) algorithm.getHypothesisModel())));
-        oracle.setHypothesis(hypotheses.get(hypotheses.size() - 1).getSecond());
         return out;
     }
 

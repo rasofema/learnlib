@@ -17,11 +17,9 @@ package de.learnlib.oracle.membership;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -39,8 +37,6 @@ import net.automatalib.words.Word;
 public class PASOracle<S, I, T, O>
         implements MembershipOracle.MealyMembershipOracle<I, O>, EquivalenceOracle.MealyEquivalenceOracle<I, O> {
     private final AdaptiveMealyTreeBuilder<I, O> cache;
-    private MealyMachine<S, I, T, O> hypothesis;
-    private final Set<Word<I>> conflicts;
     private final MembershipOracle.MealyMembershipOracle<I, O> sulOracle;
     private Counter counter;
     private Random random;
@@ -51,7 +47,6 @@ public class PASOracle<S, I, T, O>
     public PASOracle(Alphabet<I> alphabet, MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Counter counter,
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
-        this.conflicts = new HashSet<>();
         this.sulOracle = sulOracle;
         this.counter = counter;
         this.random = random;
@@ -60,45 +55,14 @@ public class PASOracle<S, I, T, O>
         this.lengthFactor = lengthFactor;
     }
 
-    public MealyMachine<S, I, T, O> getHypothesis() {
-        return hypothesis;
-    }
-
-    public void setHypothesis(MealyMachine<S, I, T, O> hypothesis) {
-        this.hypothesis = hypothesis;
-        conflicts.clear();
-    }
-
-    private List<T> getTransitions(Word<I> word) {
-        List<T> transitions = new LinkedList<>();
-        S state = hypothesis.getInitialState();
-        for (I sym : word) {
-            transitions.add(hypothesis.getTransition(state, sym));
-            state = hypothesis.getSuccessor(state, sym);
-        }
-        return transitions;
-    }
-
-    private void addConflict(Query<I, Word<O>> query) {
-        conflicts.add(query.getInput());
-    }
-
-    private Word<O> internalProcessQuery(Query<I, Word<O>> query, Boolean saveInCache) throws ConflictException {
+    private Word<O> internalProcessQuery(Query<I, Word<O>> query) throws ConflictException {
         Word<O> answer = sulOracle.answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
         counter.increment();
 
-        if (saveInCache) {
-            cache.insert(query.getInput(), answer, (int) (long) counter.getCount());
-        }
-
         // Conflict detected
-        if (cache.conflicts(query.getInput(), answer)) {
-            addConflict(query);
-            Word<O> cachedAnswer = cache.lookup(query.getInput());
-            cache.insert(query.getInput(), answer, (int) (long) counter.getCount());
-            throw new ConflictException(
-                    "Input: " + query.getInput() + ", Cache: " + cachedAnswer + ", Output: " + answer + ".");
+        if (cache.insert(query.getInput(), answer, (int) (long) counter.getCount())) {
+            throw new ConflictException("Input: " + query.getInput());
         }
 
         return answer;
@@ -115,7 +79,7 @@ public class PASOracle<S, I, T, O>
             }
 
             // B: Ask the SUL Oracle.
-            internalProcessQuery(query, true);
+            internalProcessQuery(query);
         }
     }
 
@@ -135,7 +99,7 @@ public class PASOracle<S, I, T, O>
         Word<I> sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         while (sepInput != null) {
             DefaultQuery<I, Word<O>> query = new DefaultQuery<>(sepInput);
-            Word<O> out = internalProcessQuery(query, true);
+            Word<O> out = internalProcessQuery(query);
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
                 return new DefaultQuery<>(query.getInput(), out);
             }
@@ -143,18 +107,11 @@ public class PASOracle<S, I, T, O>
         }
 
         while (counter.getCount() < limit) {
-            DefaultQuery<I, Word<O>> query = new DefaultQuery<>(Word.epsilon());
-            Word<O> out = Word.epsilon();
-
             // FIXME: Finding a right ratio for this will be tricky.
             // Can be made easier by exploiting longer test strings.
-            if (random.nextFloat() < revisionRatio) {
-                query = new DefaultQuery<I, Word<O>>((Word<I>) cache.getOldestQuery());
-                out = internalProcessQuery(query, true);
-            } else {
-                query = new DefaultQuery<>(sampleWord());
-                out = internalProcessQuery(query, true);
-            }
+            DefaultQuery<I, Word<O>> query = new DefaultQuery<>(
+                    random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestQuery() : sampleWord());
+            Word<O> out = internalProcessQuery(query);
 
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
                 return new DefaultQuery<>(query.getInput(), out);

@@ -164,9 +164,10 @@ public class LearningBenchmark {
         System.out.println("# EQ CHECK 2: " + check2);
 
         for (int j = 0; j < run.size(); j++) {
-            System.err.println(run.get(j).getStates().size());
+            System.out.println(PD.sim(((CompactMealy<String, String>) ORACLE.getTarget(j)), run.get(j)));
         }
 
+        assert check1 && check2;
     }
 
     public static CompactMealy<String, String> randomAutomatonGen(int size) {
