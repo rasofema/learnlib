@@ -67,7 +67,15 @@ public class PAS implements LearningAlgorithm.MealyLearner<String,String> {
 
     public List<Pair<Integer, CompactMealy<String, String>>> run() {
         startLearning();
-        DefaultQuery<String, Word<String>> cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+        DefaultQuery<String, Word<String>> cex;
+        try {
+            cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+        } catch (Exception e) {
+            conflictIndexes.add((int) (long) counter.getCount());
+            startLearning();
+            cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+        }
+
         while (cex != null) {
             try {
                 this.refineHypothesis(cex);
