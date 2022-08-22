@@ -16,11 +16,18 @@
       "request": "launch",
       "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmark",
       "projectName": "learnlib-continuous",
-      "vmArgs": ["-ea"],
+      "vmArgs": [
+        "-ea",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.util.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED"
+      ],
       "args": [
-        "20",
+        "10",
+        "LSTAR",
         "FEAT",
-        "2500",
+        "20000",
         "0.99",
         "0.99",
         "true"

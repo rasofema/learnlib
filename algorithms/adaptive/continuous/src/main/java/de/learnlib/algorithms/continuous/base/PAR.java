@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
-import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealy;
+import com.rits.cloning.Cloner;
+
 import de.learnlib.api.algorithm.LearningAlgorithm;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
@@ -28,23 +29,24 @@ import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.filter.statistic.Counter;
 import de.learnlib.oracle.membership.Reviser;
 import net.automatalib.automata.base.compact.CompactTransition;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.incremental.ConflictException;
+import net.automatalib.incremental.LimitException;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
 public class PAR implements LearningAlgorithm.MealyLearner<String, String> {
     private final Reviser<Integer, String, CompactTransition<String>, String> oracle;
-    private final Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor;
-    private KearnsVaziraniMealy<String, String> algorithm;
+    private final Function<MembershipOracle.MealyMembershipOracle<String, String>, LearningAlgorithm.MealyLearner<String, String>> constructor;
+    private LearningAlgorithm.MealyLearner<String, String> algorithm;
     private final Alphabet<String> alphabet;
-    private final List<Pair<Integer, CompactMealy<String, String>>> hypotheses;
+    private final List<Pair<Integer, MealyMachine<?, String, ?, String>>> hypotheses;
     public Counter counter;
     private List<Integer> conflictIndexes;
 
     public PAR(
-            Function<MembershipOracle.MealyMembershipOracle<String, String>, KearnsVaziraniMealy<String, String>> constructor,
+            Function<MembershipOracle.MealyMembershipOracle<String, String>, LearningAlgorithm.MealyLearner<String, String>> constructor,
             MembershipOracle.MealyMembershipOracle<String, String> sulOracle, Alphabet<String> alphabet,
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random, Counter counter) {
         this.counter = counter;
@@ -58,20 +60,31 @@ public class PAR implements LearningAlgorithm.MealyLearner<String, String> {
     @Override
     public void startLearning() {
         algorithm = constructor.apply(oracle);
-        algorithm.startLearning();
-        hypotheses.add(Pair.of((int) (long) counter.getCount(),
-                new CompactMealy<>((CompactMealy<String, String>) algorithm.getHypothesisModel())));
+        try {
+            algorithm.startLearning();
+            saveHypothesis();
+        } catch (ConflictException e) {
+            conflictIndexes.add((int) (long) counter.getCount());
+            startLearning();
+        }
     }
 
-    public List<Pair<Integer, CompactMealy<String, String>>> run() {
+    private void saveHypothesis() {
+        Cloner cloner = new Cloner();
+        hypotheses.add(Pair.of((int) (long) counter.getCount(), cloner.deepClone(algorithm.getHypothesisModel())));
+    }
+
+    public List<Pair<Integer, MealyMachine<?, String, ?, String>>> run() {
         startLearning();
         DefaultQuery<String, Word<String>> cex;
         try {
             cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
-        } catch (Exception e) {
+        } catch (ConflictException e) {
             conflictIndexes.add((int) (long) counter.getCount());
             startLearning();
             cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+        } catch (LimitException e) {
+            return hypotheses;
         }
 
         while (cex != null) {
@@ -82,6 +95,8 @@ public class PAR implements LearningAlgorithm.MealyLearner<String, String> {
                 conflictIndexes.add((int) (long) counter.getCount());
                 startLearning();
                 cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+            } catch (LimitException e) {
+                return hypotheses;
             }
         }
 
@@ -90,19 +105,19 @@ public class PAR implements LearningAlgorithm.MealyLearner<String, String> {
     }
 
     @Override
-    public boolean refineHypothesis(DefaultQuery<String, Word<String>> ceQuery) throws ConflictException {
+    public boolean refineHypothesis(DefaultQuery<String, Word<String>> ceQuery)
+            throws ConflictException, LimitException {
         if (ceQuery.getInput().length() == 0) {
             return false;
         }
 
         Boolean out = algorithm.refineHypothesis(ceQuery);
-        hypotheses.add(Pair.of((int) (long) counter.getCount(),
-                new CompactMealy<>((CompactMealy<String, String>) algorithm.getHypothesisModel())));
+        saveHypothesis();
         return out;
     }
 
     @Override
-    public CompactMealy<String, String> getHypothesisModel() {
+    public MealyMachine<?, String, ?, String> getHypothesisModel() {
         return hypotheses.get(hypotheses.size() - 1).getSecond();
     }
 

@@ -5,16 +5,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import Jama.Matrix;
-import de.learnlib.util.mealy.MealyUtil;
 import net.automatalib.automata.fsa.impl.compact.CompactDFA;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.equivalence.DeterministicEquivalenceTest;
 import net.automatalib.util.automata.fsa.DFAs;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
-public class PhiMetric<I> {
+public class PhiMetric<I, O> {
     private final Alphabet<I> alphabet;
     private final double alpha;
     boolean isBinary;
@@ -33,15 +32,17 @@ public class PhiMetric<I> {
         return 1 - diff(dfa1, dfa2);
     }
 
-    public double sim(CompactMealy<I, I> mealy1, CompactMealy<I, I> mealy2) {
+    public double sim(MealyMachine<?, I, ?, O> mealy1, MealyMachine<?, I, ?, O> mealy2) {
         // TODO: The entire metric is undefined for mealy machies.
-        Word<I> cex = DeterministicEquivalenceTest.findSeparatingWord(mealy1, mealy2,
-                alphabet.stream().collect(Collectors.toSet()));
+        Word<I> cex = Word.epsilon();
+        try {
+            cex = DeterministicEquivalenceTest.findSeparatingWord(mealy1, mealy2,
+                    alphabet.stream().collect(Collectors.toSet()));
+        } catch (AssertionError | Exception e) {
+        }
         if (cex != null) {
-            assert !mealy1.computeOutput(cex).equals(mealy2.computeOutput(cex));
             return 0.0;
         }
-
         return 1.0;
     }
 

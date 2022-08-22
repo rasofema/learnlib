@@ -25,12 +25,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.base.PAR;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealy;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealyState;
+import de.learnlib.algorithms.lstar.ce.ObservationTableCEXHandlers;
+import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
+import de.learnlib.algorithms.lstar.mealy.ExtensibleLStarMealy;
+import de.learnlib.algorithms.ttt.mealy.TTTLearnerMealy;
+import de.learnlib.api.algorithm.LearningAlgorithm;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.filter.statistic.Counter;
@@ -40,17 +46,20 @@ import de.learnlib.oracle.membership.NoiseOracle;
 import de.learnlib.oracle.membership.ProbabilisticOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
 import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
+import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.random.RandomAutomata;
+import net.automatalib.visualization.dot.GraphVizBrowserVisualizationProvider;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
 public class LearningBenchmark {
     private static final Alphabet<String> ALPHABET = Alphabets.fromArray("0", "1", "2");
-    private static final PhiMetric<String> PD = new PhiMetric<>(ALPHABET, 0.999, false);
+    private static final PhiMetric<String, String> PD = new PhiMetric<>(ALPHABET, 0.999, false);
     private static final Random RAND = new Random();
+    private static String ALGO;
     private static Integer LIMIT;
     private static Double REVISION_RATIO;
     private static Double LENGTH_FACTOR;
@@ -65,7 +74,7 @@ public class LearningBenchmark {
         return Word.epsilon();
     }
 
-    private static DefaultQuery<String, Word<String>> findCex(CompactMealy<String, String> hyp, Counter counter,
+    private static DefaultQuery<String, Word<String>> findCex(MealyMachine<?, String, ?, String> hyp, Counter counter,
             MembershipOracle.MealyMembershipOracle<String, String> oracle) {
         Word<String> input = sampleWord();
         Word<String> output = oracle.answerQuery(input);
@@ -79,36 +88,31 @@ public class LearningBenchmark {
         return new DefaultQuery<>(Word.epsilon(), input, output);
     }
 
-    @SuppressWarnings("unchecked")
-    private static Pair<KearnsVaziraniMealyState<String, String>, List<Pair<Integer, CompactMealy<String, String>>>> learnClassic(
+    private static Pair<KearnsVaziraniMealyState<String, String>, List<Pair<Integer, MealyMachine<?, String, ?, String>>>> learnClassic(
             MembershipOracle.MealyMembershipOracle<String, String> oracle) {
-        List<Pair<Integer, CompactMealy<String, String>>> results = new LinkedList<>();
+        List<Pair<Integer, MealyMachine<?, String, ?, String>>> results = new LinkedList<>();
         MealyCounterOracle<String, String> memOracle = new MealyCounterOracle<>(oracle, "Number of membership queries");
         KearnsVaziraniMealy<String, String> learner = new KearnsVaziraniMealy<>(ALPHABET, memOracle, false,
                 AcexAnalyzers.BINARY_SEARCH_BWD);
 
         learner.startLearning();
-        results.add(Pair.of((int) memOracle.getCount(),
-                new CompactMealy<>((CompactMealy<String, String>) learner.getHypothesisModel())));
-        DefaultQuery<String, Word<String>> cex = findCex(
-                new CompactMealy<>((CompactMealy<String, String>) learner.getHypothesisModel()), memOracle.getCounter(),
+        results.add(Pair.of((int) memOracle.getCount(), learner.getHypothesisModel()));
+        DefaultQuery<String, Word<String>> cex = findCex(learner.getHypothesisModel(), memOracle.getCounter(),
                 memOracle);
 
         while (cex != null) {
             learner.refineHypothesis(cex);
-            results.add(Pair.of((int) memOracle.getCount(),
-                    new CompactMealy<>((CompactMealy<String, String>) learner.getHypothesisModel())));
-            cex = findCex(new CompactMealy<>((CompactMealy<String, String>) learner.getHypothesisModel()),
-                    memOracle.getCounter(), memOracle);
+            results.add(Pair.of((int) memOracle.getCount(), learner.getHypothesisModel()));
+            cex = findCex(learner.getHypothesisModel(), memOracle.getCounter(), memOracle);
         }
 
         return Pair.of(learner.suspend(), results);
     }
 
-    public static void runClassic(List<CompactMealy<String, String>> targets) {
+    public static void runClassic(List<MealyMachine<?, String, ?, String>> targets) {
         System.out.println("=== CLASSIC ===");
-        for (CompactMealy<String, String> target : targets) {
-            Pair<KearnsVaziraniMealyState<String, String>, List<Pair<Integer, CompactMealy<String, String>>>> learnerRes = learnClassic(
+        for (MealyMachine<?, String, ?, String> target : targets) {
+            Pair<KearnsVaziraniMealyState<String, String>, List<Pair<Integer, MealyMachine<?, String, ?, String>>>> learnerRes = learnClassic(
                     new SimulatorOracle.MealySimulatorOracle<>(target));
             List<Pair<Integer, Double>> classic = learnerRes.getSecond().stream().parallel()
                     .map(p -> Pair.of(p.getFirst(), PD.sim(target, p.getSecond()))).collect(Collectors.toList());
@@ -129,55 +133,64 @@ public class LearningBenchmark {
         }
     }
 
-    private static List<Pair<Integer, CompactMealy<String, String>>> learnContinuous(
+    private static List<Pair<Integer, MealyMachine<?, String, ?, String>>> learnContinuous(
             MembershipOracle.MealyMembershipOracle<String, String> oracle, Counter counter) {
 
-        PAR env = new PAR(
-                sulOracle -> new KearnsVaziraniMealy<String, String>(ALPHABET, sulOracle, true,
-                        AcexAnalyzers.BINARY_SEARCH_BWD),
-                oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, RAND, counter);
+        Function<MembershipOracle.MealyMembershipOracle<String, String>, LearningAlgorithm.MealyLearner<String, String>> constructor;
+        if (ALGO.contentEquals("LSTAR")) {
+            constructor = (sulOracle -> new ExtensibleLStarMealy<>(ALPHABET, sulOracle, Collections.emptyList(),
+                    ObservationTableCEXHandlers.CLASSIC_LSTAR, ClosingStrategies.CLOSE_SHORTEST));
+        } else if (ALGO.contentEquals("KV")) {
+            constructor = (sulOracle -> new KearnsVaziraniMealy<>(ALPHABET, sulOracle, true,
+                    AcexAnalyzers.BINARY_SEARCH_BWD));
+        } else {
+            constructor = (sulOracle -> new TTTLearnerMealy<>(ALPHABET, sulOracle, AcexAnalyzers.BINARY_SEARCH_BWD));
+        }
+
+        PAR env = new PAR(constructor, oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, RAND, counter);
 
         return env.run();
     }
 
-    public static void runContinuousEvol(List<CompactMealy<String, String>> targets) {
+    public static void runContinuousEvol(List<MealyMachine<?, String, ?, String>> targets) {
         MutatingSimulatorOracle.MealyMutatingSimulatorOracle<String, String> sulOracle = new MutatingSimulatorOracle.MealyMutatingSimulatorOracle<>(
                 LIMIT, targets);
         MealyCounterOracle<String, String> ORACLE = new MealyCounterOracle<>(sulOracle, "Membership Queries");
         System.out.println("=== CONTINUOUS EVOL ===");
-        List<Pair<Integer, CompactMealy<String, String>>> result = learnContinuous(ORACLE, ORACLE.getCounter());
-        List<CompactMealy<String, String>> run = new LinkedList<>();
+        List<Pair<Integer, MealyMachine<?, String, ?, String>>> result = learnContinuous(ORACLE, ORACLE.getCounter());
+        List<MealyMachine<?, String, ?, String>> run = new LinkedList<>();
         for (int i = 0; i < result.size() - 1; i++) {
             while (run.size() < result.get(i + 1).getFirst()) {
                 run.add(result.get(i).getSecond());
             }
         }
+
+        run.add(result.get(result.size() - 1).getSecond());
         while (run.size() < LIMIT * targets.size()) {
             run.add(result.get(result.size() - 1).getSecond());
         }
 
-        boolean check1 = (PD.sim(((CompactMealy<String, String>) targets.get(0)), run.get(LIMIT - 1)) == 1.0);
+        boolean check1 = (PD.sim(targets.get(0), run.get(LIMIT - 1)) == 1.0);
         System.out.println("# EQ CHECK 1: " + check1);
 
-        boolean check2 = (PD.sim(((CompactMealy<String, String>) targets.get(1)), run.get(run.size() - 1)) == 1.0);
+        boolean check2 = (PD.sim(targets.get(1), run.get(run.size() - 1)) == 1.0);
         System.out.println("# EQ CHECK 2: " + check2);
 
         for (int j = 0; j < run.size(); j++) {
-            System.out.println(PD.sim(((CompactMealy<String, String>) sulOracle.getTarget(j)), run.get(j)));
+            System.out.println(PD.sim(((MealyMachine<?, String, ?, String>) sulOracle.getTarget(j)), run.get(j)));
         }
-
-        assert check1 && check2;
     }
 
-    public static void runContinuousNoise(CompactMealy<String, String> target) {
+    public static void runContinuousNoise(MealyMachine<?, String, ?, String> target) {
         System.out.println("=== CONTINUOUS NOISE ===");
         MealySimulatorOracle<String, String> sulOracle = new MealySimulatorOracle<>(target);
         NoiseOracle<String, String> noiseOracle = new NoiseOracle<>(ALPHABET, sulOracle, 0.15, RAND);
         MealyCounterOracle<String, String> counterOracle = new MealyCounterOracle<>(noiseOracle, "Membership Queries");
         ProbabilisticOracle<String, String> ORACLE = new ProbabilisticOracle<>(counterOracle, 3, 0.7, 10);
 
-        List<Pair<Integer, CompactMealy<String, String>>> result = learnContinuous(ORACLE, counterOracle.getCounter());
-        List<CompactMealy<String, String>> run = new LinkedList<>();
+        List<Pair<Integer, MealyMachine<?, String, ?, String>>> result = learnContinuous(ORACLE,
+                counterOracle.getCounter());
+        List<MealyMachine<?, String, ?, String>> run = new LinkedList<>();
         for (int i = 0; i < result.size() - 1; i++) {
             while (run.size() < result.get(i + 1).getFirst()) {
                 run.add(result.get(i).getSecond());
@@ -188,7 +201,7 @@ public class LearningBenchmark {
         }
 
         for (int j = 0; j < run.size(); j++) {
-            System.out.println(PD.sim(((CompactMealy<String, String>) target), run.get(j)));
+            System.out.println(PD.sim(((MealyMachine<?, String, ?, String>) target), run.get(j)));
         }
     }
 
@@ -303,14 +316,14 @@ public class LearningBenchmark {
         return aut;
     }
 
-    public static void benchmark(CompactMealy<String, String> base, CompactMealy<String, String> target) {
-        List<CompactMealy<String, String>> targets = new ArrayList<>(2);
+    public static void benchmark(MealyMachine<?, String, ?, String> base, MealyMachine<?, String, ?, String> target) {
+        List<MealyMachine<?, String, ?, String>> targets = new ArrayList<>(2);
         targets.add(base);
         targets.add(target);
 
         // runClassic(targets);
-        // runContinuousEvol(targets);
-        runContinuousNoise(targets.get(0));
+        runContinuousEvol(targets);
+        // runContinuousNoise(targets.get(0));
     }
 
     public static void benchmarkMutation(int size) {
@@ -338,12 +351,13 @@ public class LearningBenchmark {
 
         int baseSize = Integer.parseInt(args[0]);
 
-        LIMIT = Integer.parseInt(args[2]);
-        REVISION_RATIO = Double.parseDouble(args[3]);
-        LENGTH_FACTOR = Double.parseDouble(args[4]);
-        PD.isBinary = Boolean.parseBoolean(args[5]);
+        ALGO = args[1];
+        LIMIT = Integer.parseInt(args[3]);
+        REVISION_RATIO = Double.parseDouble(args[4]);
+        LENGTH_FACTOR = Double.parseDouble(args[5]);
+        PD.isBinary = Boolean.parseBoolean(args[6]);
 
-        switch (args[1]) {
+        switch (args[2]) {
         case "MUT":
             benchmarkMutation(baseSize);
             break;

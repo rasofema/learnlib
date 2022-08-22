@@ -30,6 +30,7 @@ import de.learnlib.api.query.Query;
 import de.learnlib.filter.statistic.Counter;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.incremental.ConflictException;
+import net.automatalib.incremental.LimitException;
 import net.automatalib.incremental.mealy.tree.AdaptiveMealyTreeBuilder;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
@@ -55,21 +56,25 @@ public class Reviser<S, I, T, O>
         this.lengthFactor = lengthFactor;
     }
 
-    private Word<O> internalProcessQuery(Query<I, Word<O>> query) throws ConflictException {
+    private Word<O> internalProcessQuery(Query<I, Word<O>> query) throws ConflictException, LimitException {
         Word<O> answer = sulOracle.answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
-        counter.increment();
 
         // Conflict detected
         if (cache.insert(query.getInput(), answer, (int) (long) counter.getCount())) {
             throw new ConflictException("Input: " + query.getInput());
         }
 
+        if (counter.getCount() >= limit) {
+            throw new LimitException("Reached query limit.");
+        }
+
         return answer;
     }
 
     @Override
-    public void processQueries(Collection<? extends Query<I, Word<O>>> queries) throws ConflictException {
+    public void processQueries(Collection<? extends Query<I, Word<O>>> queries)
+            throws ConflictException, LimitException {
         for (Query<I, Word<O>> query : queries) {
             // A: Check against cache.
             Word<O> cacheOutput = cache.lookup(query.getInput());
@@ -94,7 +99,7 @@ public class Reviser<S, I, T, O>
 
     @Override
     public @Nullable DefaultQuery<I, Word<O>> findCounterExample(MealyMachine<?, I, ?, O> hypothesis,
-            Collection<? extends I> inputs) throws ConflictException {
+            Collection<? extends I> inputs) throws ConflictException, LimitException {
 
         Word<I> sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         while (sepInput != null) {
