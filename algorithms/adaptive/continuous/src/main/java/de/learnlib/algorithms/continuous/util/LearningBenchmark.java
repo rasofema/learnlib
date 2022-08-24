@@ -63,6 +63,7 @@ public class LearningBenchmark {
     private static Integer LIMIT;
     private static Double REVISION_RATIO;
     private static Double LENGTH_FACTOR;
+    private static Boolean CACHING;
 
     private static Word<String> sampleWord() {
         double ALPHA = 0.9;
@@ -147,7 +148,8 @@ public class LearningBenchmark {
             constructor = (sulOracle -> new TTTLearnerMealy<>(ALPHABET, sulOracle, AcexAnalyzers.BINARY_SEARCH_BWD));
         }
 
-        PAR env = new PAR(constructor, oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, RAND, counter);
+        PAR env = new PAR(constructor, oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, CACHING, RAND,
+                counter);
 
         return env.run();
     }
@@ -355,7 +357,8 @@ public class LearningBenchmark {
         LIMIT = Integer.parseInt(args[3]);
         REVISION_RATIO = Double.parseDouble(args[4]);
         LENGTH_FACTOR = Double.parseDouble(args[5]);
-        PD.isBinary = Boolean.parseBoolean(args[6]);
+        CACHING = Boolean.parseBoolean(args[6]);
+        PD.isBinary = true;
 
         switch (args[2]) {
         case "MUT":

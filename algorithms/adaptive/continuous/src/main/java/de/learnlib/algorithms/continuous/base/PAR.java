@@ -48,9 +48,11 @@ public class PAR implements LearningAlgorithm.MealyLearner<String, String> {
     public PAR(
             Function<MembershipOracle.MealyMembershipOracle<String, String>, LearningAlgorithm.MealyLearner<String, String>> constructor,
             MembershipOracle.MealyMembershipOracle<String, String> sulOracle, Alphabet<String> alphabet,
-            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random, Counter counter) {
+            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Boolean caching, Random random,
+            Counter counter) {
         this.counter = counter;
-        this.oracle = new Reviser<>(alphabet, sulOracle, counter, cexSearchLimit, revisionRatio, lengthFactor, random);
+        this.oracle = new Reviser<>(alphabet, sulOracle, counter, cexSearchLimit, revisionRatio, lengthFactor, caching,
+                random);
         this.constructor = constructor;
         this.hypotheses = new LinkedList<>();
         this.alphabet = alphabet;

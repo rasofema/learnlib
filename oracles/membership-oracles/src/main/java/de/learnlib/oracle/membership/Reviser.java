@@ -44,9 +44,10 @@ public class Reviser<S, I, T, O>
     private Integer limit;
     private Double revisionRatio;
     private Double lengthFactor;
+    private Boolean caching;
 
     public Reviser(Alphabet<I> alphabet, MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Counter counter,
-            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Random random) {
+            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Boolean caching, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.sulOracle = sulOracle;
         this.counter = counter;
@@ -54,6 +55,7 @@ public class Reviser<S, I, T, O>
         this.limit = cexSearchLimit;
         this.revisionRatio = revisionRatio;
         this.lengthFactor = lengthFactor;
+        this.caching = caching;
     }
 
     private Word<O> internalProcessQuery(Query<I, Word<O>> query) throws ConflictException, LimitException {
@@ -77,10 +79,12 @@ public class Reviser<S, I, T, O>
             throws ConflictException, LimitException {
         for (Query<I, Word<O>> query : queries) {
             // A: Check against cache.
-            Word<O> cacheOutput = cache.lookup(query.getInput());
-            if (query.getInput().length() == cacheOutput.length()) {
-                query.answer(cacheOutput.suffix(query.getSuffix().length()));
-                continue;
+            if (caching) {
+                Word<O> cacheOutput = cache.lookup(query.getInput());
+                if (query.getInput().length() == cacheOutput.length()) {
+                    query.answer(cacheOutput.suffix(query.getSuffix().length()));
+                    continue;
+                }
             }
 
             // B: Ask the SUL Oracle.
