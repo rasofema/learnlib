@@ -68,6 +68,8 @@ public class PAR implements LearningAlgorithm.MealyLearner<String, String> {
         } catch (ConflictException e) {
             conflictIndexes.add((int) (long) counter.getCount());
             startLearning();
+        } catch (LimitException e) {
+            return;
         }
     }
 
