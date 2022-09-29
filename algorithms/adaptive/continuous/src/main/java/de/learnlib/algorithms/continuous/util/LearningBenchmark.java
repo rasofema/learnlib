@@ -50,7 +50,6 @@ import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.random.RandomAutomata;
-import net.automatalib.visualization.dot.GraphVizBrowserVisualizationProvider;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
@@ -148,7 +147,8 @@ public class LearningBenchmark {
             constructor = (sulOracle -> new TTTLearnerMealy<>(ALPHABET, sulOracle, AcexAnalyzers.BINARY_SEARCH_BWD));
         }
 
-        PAR env = new PAR(constructor, oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR, CACHING, RAND,
+        PAR<String, String> env = new PAR<>(constructor, oracle, ALPHABET, LIMIT * 2, REVISION_RATIO, LENGTH_FACTOR,
+                CACHING, RAND,
                 counter);
 
         return env.run();

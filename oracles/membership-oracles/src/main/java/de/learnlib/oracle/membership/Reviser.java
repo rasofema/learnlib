@@ -20,10 +20,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.function.Function;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import de.learnlib.api.exception.LimitException;
 import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
@@ -31,7 +31,6 @@ import de.learnlib.api.query.Query;
 import de.learnlib.filter.statistic.Counter;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.incremental.ConflictException;
-import net.automatalib.incremental.LimitException;
 import net.automatalib.incremental.mealy.tree.AdaptiveMealyTreeBuilder;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
@@ -117,8 +116,6 @@ public class Reviser<S, I, T, O>
         }
 
         while (counter.getCount() < limit) {
-            // FIXME: Finding a right ratio for this will be tricky.
-            // Can be made easier by exploiting longer test strings.
             DefaultQuery<I, Word<O>> query = new DefaultQuery<>(
                     random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestQuery() : sampleWord());
             Word<O> out = internalProcessQuery(query);
