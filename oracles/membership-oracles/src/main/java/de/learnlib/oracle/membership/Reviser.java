@@ -62,8 +62,11 @@ public class Reviser<S, I, T, O>
         Word<O> answer = sulOracle.answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
 
+        Boolean conflicts = cache.conflicts(query.getInput(), answer);
+        cache.insert(query.getInput(), answer);
+
         // Conflict detected
-        if (cache.insert(query.getInput(), answer, (int) (long) counter.getCount())) {
+        if (conflicts) {
             throw new ConflictException("Input: " + query.getInput());
         }
 
