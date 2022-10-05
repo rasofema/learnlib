@@ -31,6 +31,7 @@ import de.learnlib.api.query.Query;
 import de.learnlib.filter.statistic.Counter;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.incremental.ConflictException;
+import net.automatalib.incremental.mealy.tree.Node;
 import net.automatalib.incremental.mealy.tree.AdaptiveMealyTreeBuilder;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
@@ -62,11 +63,11 @@ public class Reviser<S, I, T, O>
         Word<O> answer = sulOracle.answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
 
-        Boolean conflicts = cache.conflicts(query.getInput(), answer);
+        Node<O> conflictedTree = cache.conflicts(query.getInput(), answer);
         cache.insert(query.getInput(), answer);
 
         // Conflict detected
-        if (conflicts) {
+        if (conflictedTree != null) {
             throw new ConflictException("Input: " + query.getInput());
         }
 
