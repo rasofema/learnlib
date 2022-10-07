@@ -15,6 +15,7 @@
  */
 package de.learnlib.algorithms.continuous.util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,6 +29,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.cli.*;
+
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.base.PAR;
 import de.learnlib.algorithms.kv.mealy.KearnsVaziraniMealy;
@@ -38,8 +41,11 @@ import de.learnlib.algorithms.lstar.mealy.ExtensibleLStarMealy;
 import de.learnlib.algorithms.ttt.mealy.TTTLearnerMealy;
 import de.learnlib.api.algorithm.LearningAlgorithm;
 import de.learnlib.api.oracle.MembershipOracle;
+import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.api.statistic.StatisticOracle;
 import de.learnlib.filter.statistic.Counter;
+import de.learnlib.filter.statistic.oracle.JointCounterOracle;
 import de.learnlib.filter.statistic.oracle.MealyCounterOracle;
 import de.learnlib.oracle.membership.MutatingSimulatorOracle;
 import de.learnlib.oracle.membership.NoiseOracle;
@@ -49,37 +55,103 @@ import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
+import net.automatalib.serialization.InputModelDeserializer;
+import net.automatalib.serialization.dot.DOTParsers;
 import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 import net.automatalib.words.impl.Alphabets;
 
-public class LearningBenchmark {
-    private static final Alphabet<String> ALPHABET = Alphabets.fromArray("0", "1", "2");
-    private static final PhiMetric<String, String> PD = new PhiMetric<>(ALPHABET, 0.999, false);
-    private static final Random RAND = new Random();
-    private static String ALGO;
-    private static Integer LIMIT;
-    private static Double REVISION_RATIO;
-    private static Double LENGTH_FACTOR;
-    private static Boolean CACHING;
+enum Framework {
+    MAT, PAR
+}
 
-    private static Word<String> sampleWord() {
+enum Algorithm {
+    LSTAR, KV, TTT, LSHARP
+}
+
+enum Noise {
+    N1, N2, N3
+}
+
+class Config {
+    public Framework framework;
+    public Algorithm algorithm;
+    public Noise noise;
+    public Double noiseLevel;
+    public Double revisionRatio;
+    public Double lengthFactor;
+    public Boolean caching;
+    public Integer minRepeats;
+    public Integer maxRepeats;
+    public Double percentAccuracy;
+    public Integer queryLimit;
+    public CompactMealy<String, String> target;
+    public Random random;
+
+    public Config(CommandLine cmd) throws Exception {
+        this.framework = Framework.valueOf(cmd.getOptionValue("framework", "PAR"));
+        this.algorithm = Algorithm.valueOf(cmd.getOptionValue("algorithm", "LSTAR"));
+        this.noise = Noise.valueOf(cmd.getOptionValue("noise", "N1"));
+        this.noiseLevel = Double.parseDouble(cmd.getOptionValue("noiseLevel", "0.0"));
+        this.revisionRatio = Double.parseDouble(cmd.getOptionValue("revisionRatio", "0.99"));
+        this.lengthFactor = Double.parseDouble(cmd.getOptionValue("lengthFactor", "0.99"));
+        this.caching = Boolean.parseBoolean(cmd.getOptionValue("caching", "true"));
+        this.minRepeats = Integer.parseInt(cmd.getOptionValue("minRepeats", "10"));
+        this.maxRepeats = Integer.parseInt(cmd.getOptionValue("maxRepeats", "20"));
+        this.percentAccuracy = Double.parseDouble(cmd.getOptionValue("percentAccuracy", "0.7"));
+        this.queryLimit = Integer.parseInt(cmd.getOptionValue("queryLimit", "20000"));
+        InputModelDeserializer<String, CompactMealy<String, String>> parser = DOTParsers
+                .mealy(new CompactMealy.Creator<String, String>(), DOTParsers.DEFAULT_MEALY_EDGE_PARSER);
+        this.target = parser.readModel(new File(cmd.getOptionValue("target"))).model;
+        this.random = new Random();
+        Long seed = Long.parseLong(cmd.getOptionValue("random", System.nanoTime() + ""));
+        this.random.setSeed(seed);
+    }
+
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("# FRAMEWORK: " + framework.toString() + '\n');
+        builder.append("# ALGORITHM: " + algorithm.toString() + '\n');
+        builder.append("# NOISE: " + noise.toString() + '\n');
+        builder.append("# NOISE LEVEL: " + noiseLevel.toString() + '\n');
+        builder.append("# REVISION RATIO: " + revisionRatio.toString() + '\n');
+        builder.append("# LENGTH FACTOR: " + lengthFactor.toString() + '\n');
+        builder.append("# CACHING: " + caching.toString() + '\n');
+        builder.append("# MIN REPEATS: " + minRepeats.toString() + '\n');
+        builder.append("# MAX REPEATS: " + maxRepeats.toString() + '\n');
+        builder.append("# PERCENT ACCURACY: " + percentAccuracy.toString() + '\n');
+        builder.append("# QUERY LIMIT: " + queryLimit.toString() + '\n');
+        builder.append("# RANDOM: " + random.toString());
+
+        return builder.toString();
+    }
+}
+
+public class LearningBenchmark {
+    private final Config config;
+    private static final Random RAND = new Random();
+
+    public LearningBenchmark(CommandLine cmd) throws Exception {
+        this.config = new Config(cmd);
+    }
+
+    private Word<String> sampleWord() {
         double ALPHA = 0.9;
         if (RAND.nextFloat() < ALPHA) {
-            List<String> alphas = new LinkedList<>(ALPHABET);
+            List<String> alphas = new LinkedList<>(config.target.getInputAlphabet());
             Collections.shuffle(alphas, RAND);
             return Word.fromSymbols(alphas.get(0)).concat(sampleWord());
         }
         return Word.epsilon();
     }
 
-    private static DefaultQuery<String, Word<String>> findCex(MealyMachine<?, String, ?, String> hyp, Counter counter,
+    private DefaultQuery<String, Word<String>> findCex(MealyMachine<?, String, ?, String> hyp, Counter counter,
             MembershipOracle.MealyMembershipOracle<String, String> oracle) {
         Word<String> input = sampleWord();
         Word<String> output = oracle.answerQuery(input);
         while (hyp.computeOutput(input).equals(output)) {
-            if (counter.getCount() > LIMIT) {
+            if (counter.getCount() > config.queryLimit) {
                 return null;
             }
             input = sampleWord();
@@ -88,11 +160,11 @@ public class LearningBenchmark {
         return new DefaultQuery<>(Word.epsilon(), input, output);
     }
 
-    private static Pair<KearnsVaziraniMealyState<String, String>, List<Pair<Integer, MealyMachine<?, String, ?, String>>>> learnClassic(
+    private Pair<KearnsVaziraniMealyState<String, String>, List<Pair<Integer, MealyMachine<?, String, ?, String>>>> learnClassic(
             MembershipOracle.MealyMembershipOracle<String, String> oracle) {
         List<Pair<Integer, MealyMachine<?, String, ?, String>>> results = new LinkedList<>();
         MealyCounterOracle<String, String> memOracle = new MealyCounterOracle<>(oracle, "Number of membership queries");
-        KearnsVaziraniMealy<String, String> learner = new KearnsVaziraniMealy<>(ALPHABET, memOracle, false,
+        KearnsVaziraniMealy<String, String> learner = new KearnsVaziraniMealy<>(conf, memOracle, false,
                 AcexAnalyzers.BINARY_SEARCH_BWD);
 
         learner.startLearning();
@@ -207,116 +279,20 @@ public class LearningBenchmark {
         }
     }
 
-    public static CompactMealy<String, String> randomAutomatonGen(int size) {
-        CompactMealy<String, String> aut = RandomAutomata.randomMealy(RAND, size, ALPHABET, ALPHABET);
-        while (aut.size() != size) {
-            aut = RandomAutomata.randomMealy(RAND, size, ALPHABET, ALPHABET);
-        }
-        return aut;
+    public void run() {
+        System.out.println("# ========== CONFIG ==========");
+        System.out.println(config.toString());
+
+        MealySimulatorOracle<String, String> sulOracle = new MealySimulatorOracle<>(config.target);
+        NoiseOracle<String, String> noiseOracle = new NoiseOracle<>(config.target.getInputAlphabet(), sulOracle,
+                config.noiseLevel, config.random);
+        JointCounterOracle<String, Word<String>> statisticOracle = new JointCounterOracle<>(noiseOracle);
+        ProbabilisticOracle<String, String> probabilisticOracle = new ProbabilisticOracle<String, String>(
+                (MealyMembershipOracle<String, String>) statisticOracle.asOracle(), config.minRepeats,
+                config.percentAccuracy, config.maxRepeats);
+
     }
 
-    public static CompactMealy<String, String> randomTransMutation(CompactMealy<String, String> source) {
-        CompactMealy<String, String> aut = new CompactMealy<>(source);
-        Integer stateFrom = RAND.nextInt(source.size() - 1);
-        Integer stateTo = RAND.nextInt(source.size() - 1);
-        String symbolIn = source.getInputAlphabet().getSymbol(RAND.nextInt(source.getInputAlphabet().size()));
-        String symbolOut = source.getInputAlphabet().getSymbol(RAND.nextInt(source.getInputAlphabet().size()));
-
-        aut.removeTransition(stateFrom, symbolIn, aut.getTransition(stateFrom, symbolIn));
-        aut.addTransition(stateFrom, symbolIn, stateTo, symbolOut);
-
-        return aut;
-    }
-
-    public static CompactMealy<String, String> randomAddStateMutation(CompactMealy<String, String> source) {
-        CompactMealy<String, String> aut = new CompactMealy<>(source);
-        Integer state = aut.addState();
-
-        for (String a : source.getInputAlphabet()) {
-            Integer sourceState = RAND.nextInt(aut.size() - 1);
-            String b = source.getInputAlphabet().getSymbol(RAND.nextInt(source.getInputAlphabet().size()));
-            aut.removeTransition(sourceState, a, aut.getTransition(sourceState, a));
-            aut.addTransition(sourceState, a, state, b);
-        }
-
-        for (String a : source.getInputAlphabet()) {
-            String b = source.getInputAlphabet().getSymbol(RAND.nextInt(source.getInputAlphabet().size()));
-            aut.addTransition(state, a, RAND.nextInt(aut.size() - 1), b);
-        }
-
-        return aut;
-    }
-
-    public static CompactMealy<String, String> randomRemoveStateMutation(CompactMealy<String, String> source) {
-        CompactMealy<String, String> aut = new CompactMealy<>(source);
-
-        Integer state = aut.getInitialState();
-        while (Objects.equals(state, aut.getInitialState())) {
-            state = RAND.nextInt(aut.size() - 1);
-        }
-
-        Set<Pair<Pair<Integer, Integer>, Pair<String, String>>> transitions = new HashSet<>();
-        for (Integer sourceState : aut.getStates()) {
-            for (String a : aut.getInputAlphabet()) {
-                Integer targetState = aut.getSuccessor(sourceState, a);
-                String b = aut.getOutput(sourceState, a);
-                assert targetState != null;
-                if (targetState.equals(state)) {
-                    transitions.add(Pair.of(Pair.of(sourceState, targetState), Pair.of(a, b)));
-                }
-            }
-        }
-
-        for (Pair<Pair<Integer, Integer>, Pair<String, String>> t : transitions) {
-            Integer newTarget = state;
-            while (newTarget.equals(state)) {
-                newTarget = RAND.nextInt(aut.size() - 1);
-            }
-
-            aut.removeTransition(t.getFirst().getFirst(), t.getSecond().getFirst(),
-                    aut.getTransition(t.getFirst().getFirst(), t.getSecond().getFirst()));
-            aut.addTransition(t.getFirst().getFirst(), t.getSecond().getFirst(), newTarget, t.getSecond().getSecond());
-        }
-
-        return aut;
-    }
-
-    public static CompactMealy<String, String> randomAddFeature(CompactMealy<String, String> source, int featureSize) {
-        CompactMealy<String, String> aut = new CompactMealy<>(source);
-        CompactMealy<String, String> feature = randomAutomatonGen(featureSize);
-
-        Set<Pair<Pair<Integer, Integer>, Pair<String, String>>> sourceTransitions = new HashSet<>();
-        for (int i = 0; i < featureSize; i++) {
-            for (String a : aut.getInputAlphabet()) {
-                Integer sourceState = RAND.nextInt(aut.size() - 1);
-                Integer targetState = aut.getSuccessor(sourceState, a);
-                sourceTransitions
-                        .add(Pair.of(Pair.of(sourceState, targetState), Pair.of(a, aut.getOutput(sourceState, a))));
-            }
-        }
-
-        Map<Integer, Integer> oldToNew = new HashMap<>();
-        for (Integer oldState : feature.getStates()) {
-            Integer newState = aut.addState();
-            oldToNew.put(oldState, newState);
-        }
-
-        for (Integer oldState : feature.getStates()) {
-            for (String a : feature.getInputAlphabet()) {
-                aut.addTransition(oldToNew.get(oldState), a, oldToNew.get(feature.getSuccessor(oldState, a)),
-                        feature.getOutput(oldState, a));
-            }
-        }
-
-        for (Pair<Pair<Integer, Integer>, Pair<String, String>> t : sourceTransitions) {
-            aut.removeTransition(t.getFirst().getFirst(), t.getSecond().getFirst(),
-                    aut.getTransition(t.getFirst().getFirst(), t.getSecond().getFirst()));
-            aut.addTransition(t.getFirst().getFirst(), t.getSecond().getFirst(),
-                    oldToNew.get(feature.getInitialState()), t.getSecond().getSecond());
-        }
-
-        return aut;
-    }
 
     public static void benchmark(MealyMachine<?, String, ?, String> base, MealyMachine<?, String, ?, String> target) {
         List<MealyMachine<?, String, ?, String>> targets = new ArrayList<>(2);
@@ -328,48 +304,56 @@ public class LearningBenchmark {
         // runContinuousNoise(targets.get(0));
     }
 
-    public static void benchmarkMutation(int size) {
-        CompactMealy<String, String> base = randomAutomatonGen(size);
-        CompactMealy<String, String> mutateTrans = randomTransMutation(base);
-        CompactMealy<String, String> mutateAddState = randomAddStateMutation(mutateTrans);
-        CompactMealy<String, String> mutation = randomRemoveStateMutation(mutateAddState);
-
-        benchmark(base, mutation);
-    }
-
-    public static void benchmarkFeature(int size) {
-        CompactMealy<String, String> base = randomAutomatonGen(size);
-        CompactMealy<String, String> baseWithFeature = randomAddFeature(base, 3);
-
-        benchmark(base, baseWithFeature);
-    }
-
     public static void main(String[] args) {
-        // for (int i = 0; i < 10_000; i++) {
-        // System.out.println("# RUN: " + i);
-        long seed = System.nanoTime();
-        RAND.setSeed(seed);
-        System.out.println("# SEED: " + seed);
+        Options options = new Options();
 
-        int baseSize = Integer.parseInt(args[0]);
+        options.addOption("f", "framework", true, null);
+        options.addOption("a", "algorithm", true, null);
+        options.addOption("n", "noise", true, null);
+        options.addOption("nl", "noiseLevel", true, null);
+        options.addOption("rr", "revisionRatio", true, null);
+        options.addOption("lf", "lengthFactor", true, null);
+        options.addOption("c", "caching", true, null);
+        options.addOption("min", "minRepeats", true, null);
+        options.addOption("max", "maxRepeats", true, null);
+        options.addOption("pa", "percentAccuracy", true, null);
+        options.addOption("ql", "queryLimit", true, null);
+        options.addOption("t", "target", true, null);
+        options.addOption("r", "random", true, null);
 
-        ALGO = args[1];
-        LIMIT = Integer.parseInt(args[3]);
-        REVISION_RATIO = Double.parseDouble(args[4]);
-        LENGTH_FACTOR = Double.parseDouble(args[5]);
-        CACHING = Boolean.parseBoolean(args[6]);
-        PD.isBinary = true;
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd = null;
 
-        switch (args[2]) {
-        case "MUT":
-            benchmarkMutation(baseSize);
-            break;
-        case "FEAT":
-            benchmarkFeature(baseSize);
-            break;
-        default:
-            break;
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("Learning Benchmark", options);
+            System.exit(1);
         }
-        // }
+
+        // show help menu
+        if (cmd.hasOption("help")) {
+            formatter.printHelp("Learning Benchmark", options);
+            System.exit(1);
+        }
+
+        // check config
+        LearningBenchmark benchmark = null;
+        try {
+            benchmark = new LearningBenchmark(cmd);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("Learning Benchmark", options);
+            System.exit(1);
+        }
+
+        // execute
+        try {
+            benchmark.run();
+        } catch (Exception e) {
+            throw e;
+        }
 }
 }

@@ -24,7 +24,7 @@
         "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED"
       ],
       "args": [
-        "160",
+        "20",
         "LSTAR",
         "FEAT",
         "20000",
