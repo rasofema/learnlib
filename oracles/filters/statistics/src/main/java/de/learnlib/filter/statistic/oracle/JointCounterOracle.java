@@ -16,7 +16,6 @@
 package de.learnlib.filter.statistic.oracle;
 
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicLong;
 
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.oracle.MembershipOracle.DFAMembershipOracle;
@@ -27,6 +26,7 @@ import de.learnlib.buildtool.refinement.annotation.GenerateRefinement;
 import de.learnlib.buildtool.refinement.annotation.Generic;
 import de.learnlib.buildtool.refinement.annotation.Interface;
 import de.learnlib.buildtool.refinement.annotation.Map;
+import de.learnlib.filter.statistic.Counter;
 import net.automatalib.words.Word;
 
 /**
@@ -64,8 +64,8 @@ import net.automatalib.words.Word;
 public class JointCounterOracle<I, D> implements MembershipOracle<I, D> {
 
     private final MembershipOracle<I, D> delegate;
-    private final AtomicLong queryCounter = new AtomicLong();
-    private final AtomicLong symbolCounter = new AtomicLong();
+    private final Counter queryCounter = new Counter("Number of Queries", "queries");
+    private final Counter symbolCounter = new Counter("Number of Symbols", "symbols");
 
     public JointCounterOracle(MembershipOracle<I, D> delegate) {
         this.delegate = delegate;
@@ -73,9 +73,9 @@ public class JointCounterOracle<I, D> implements MembershipOracle<I, D> {
 
     @Override
     public void processQueries(Collection<? extends Query<I, D>> queries) {
-        queryCounter.addAndGet(queries.size());
+        queryCounter.increment(queries.size());
         for (Query<I, D> qry : queries) {
-            symbolCounter.addAndGet(qry.getInput().length());
+            symbolCounter.increment(qry.getInput().length());
         }
         delegate.processQueries(queries);
     }
@@ -86,7 +86,7 @@ public class JointCounterOracle<I, D> implements MembershipOracle<I, D> {
      * @return the number of queries
      */
     public long getQueryCount() {
-        return queryCounter.get();
+        return queryCounter.getCount();
     }
 
     /**
@@ -95,6 +95,14 @@ public class JointCounterOracle<I, D> implements MembershipOracle<I, D> {
      * @return the number of symbols
      */
     public long getSymbolCount() {
-        return symbolCounter.get();
+        return symbolCounter.getCount();
+    }
+
+    public Counter getQueryCounter() {
+        return queryCounter;
+    }
+
+    public Counter getSymbolCounter() {
+        return symbolCounter;
     }
 }

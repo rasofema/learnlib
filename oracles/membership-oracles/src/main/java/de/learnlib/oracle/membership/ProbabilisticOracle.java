@@ -11,12 +11,12 @@ import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.Query;
 import net.automatalib.words.Word;
 
-public class ProbabilisticOracle<I, O> implements MembershipOracle.MealyMembershipOracle<I, O> {
-    private final MembershipOracle.MealyMembershipOracle<I, O> oracle;
+public class ProbabilisticOracle<I, O> implements MembershipOracle<I, Word<O>> {
+    private final MembershipOracle<I, Word<O>> oracle;
     private final int minimumAttempts, maximumAttempts;
     private final double minimumFraction;
 
-    public ProbabilisticOracle(MembershipOracle.MealyMembershipOracle<I, O> oracle, int minimumAttempts,
+    public ProbabilisticOracle(MembershipOracle<I, Word<O>> oracle, int minimumAttempts,
             double minimumFraction, int maximumAttempts) {
         this.oracle = oracle;
         if (minimumAttempts > maximumAttempts) {

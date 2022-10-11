@@ -23,20 +23,32 @@ import java.util.Random;
 
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.Query;
+import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import net.automatalib.util.automata.random.RandomAutomata;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
-import net.automatalib.words.WordBuilder;
 
 public class NoiseOracle<I, O> implements MembershipOracle.MealyMembershipOracle<I, O> {
+    public enum NoiseType {
+        INPUT, OUTPUT, TRANSFORMATION
+    }
+
     private Random random;
+    private NoiseType noise;
     private MembershipOracle.MealyMembershipOracle<I, O> sulOracle;
     private Double probability;
+    private CompactMealy<I, O> transMealy = null;
 
-    public NoiseOracle(Alphabet<I> alphabet, MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Double probability,
+    public NoiseOracle(Alphabet<I> inputAlphabet, Alphabet<O> outputAlphabet,
+            MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Double probability, NoiseType noiseType,
             Random random) {
         this.sulOracle = sulOracle;
         this.random = random;
         this.probability = probability;
+        this.noise = noiseType;
+        if (noiseType == NoiseType.TRANSFORMATION) {
+            transMealy = RandomAutomata.randomMealy(random, 10, inputAlphabet, outputAlphabet);
+        }
     }
 
     @Override
@@ -47,19 +59,40 @@ public class NoiseOracle<I, O> implements MembershipOracle.MealyMembershipOracle
                 continue;
             }
 
-            Word<O> realOut = sulOracle.answerQuery(query.getInput());
-            List<O> localOutputAlphabet = new LinkedList<>(realOut.asList());
+            Word<I> input = Word.fromWords(query.getInput());
+            List<I> localInputAlphabet = new LinkedList<>(input.asList());
 
-            WordBuilder<O> newOut = new WordBuilder<>();
-            // Save all but last symbol of suffix.
-            for (O symbol : realOut.suffix(query.getSuffix().size()).prefix(query.getSuffix().size() - 1)) {
-                newOut.add(symbol);
+            if (noise == NoiseType.INPUT) {
+                Word<I> newInput = Word.epsilon();
+                for (int i = 0; i < input.length(); i++) {
+                    if (random.nextDouble() < probability) {
+                        Collections.shuffle(localInputAlphabet, random);
+                        newInput = newInput.append(localInputAlphabet.get(0));
+                    } else {
+                        newInput = newInput.append(input.getSymbol(i));
+                    }
+                }
+                input = newInput;
             }
 
-            Collections.shuffle(localOutputAlphabet, random);
-            newOut.add(random.nextFloat() < probability ? localOutputAlphabet.get(0) : realOut.lastSymbol());
+            Word<O> output = noise == NoiseType.TRANSFORMATION ? transMealy.computeOutput(input)
+                    : sulOracle.answerQuery(input);
+            List<O> localOutputAlphabet = new LinkedList<>(output.asList());
 
-            query.answer(newOut.toWord());
+            if (noise == NoiseType.OUTPUT) {
+                Word<O> newOutput = Word.epsilon();
+                for (int i = 0; i < output.length(); i++) {
+                    if (random.nextDouble() < probability) {
+                        Collections.shuffle(localOutputAlphabet, random);
+                        newOutput = newOutput.append(localOutputAlphabet.get(0));
+                    } else {
+                        newOutput = newOutput.append(output.getSymbol(i));
+                    }
+                }
+                output = newOutput;
+            }
+
+            query.answer(output);
         }
     }
 

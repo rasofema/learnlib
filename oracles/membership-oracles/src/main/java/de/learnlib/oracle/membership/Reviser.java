@@ -36,9 +36,9 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
 public class Reviser<S, I, T, O>
-        implements MembershipOracle.MealyMembershipOracle<I, O>, EquivalenceOracle.MealyEquivalenceOracle<I, O> {
+        implements MembershipOracle<I, Word<O>>, EquivalenceOracle.MealyEquivalenceOracle<I, O> {
     private final AdaptiveMealyTreeBuilder<I, O> cache;
-    private final MembershipOracle.MealyMembershipOracle<I, O> sulOracle;
+    private final MembershipOracle<I, Word<O>> sulOracle;
     private Counter counter;
     private Random random;
     private Integer limit;
@@ -46,7 +46,7 @@ public class Reviser<S, I, T, O>
     private Double lengthFactor;
     private Boolean caching;
 
-    public Reviser(Alphabet<I> alphabet, MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Counter counter,
+    public Reviser(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> sulOracle, Counter counter,
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Boolean caching, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.sulOracle = sulOracle;
