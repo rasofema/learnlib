@@ -24,13 +24,22 @@
         "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED"
       ],
       "args": [
-        "20",
-        "LSTAR",
-        "FEAT",
-        "20000",
+        "-f",
+        "PAR",
+        "-a",
+        "KV",
+        "-min",
+        "1",
+        "-max",
+        "1",
+        "-lf",
         "0.99",
-        "0.99",
-        "true"
+        "-rr",
+        "0.0",
+        "-t",
+        "/Users/tiferrei/Downloads/Mealy/principle/BenchmarkQUICprotocol/QUICprotocolwithout0RTT.dot",
+        "-r",
+        "73301000734625"
       ]
     }
   ]

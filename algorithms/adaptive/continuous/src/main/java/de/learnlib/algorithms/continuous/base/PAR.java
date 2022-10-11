@@ -31,28 +31,34 @@ import de.learnlib.filter.statistic.Counter;
 import de.learnlib.oracle.membership.Reviser;
 import net.automatalib.automata.base.compact.CompactTransition;
 import net.automatalib.automata.transducers.MealyMachine;
+import net.automatalib.automata.transducers.impl.compact.CompactMealy;
 import net.automatalib.commons.util.Pair;
+import net.automatalib.commons.util.Triple;
 import net.automatalib.incremental.ConflictException;
+import net.automatalib.util.automata.equivalence.DeterministicEquivalenceTest;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
 // The Practically Adequate Reviser framework.
 public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
-    private final Reviser<Integer, I, CompactTransition<String>, O> oracle;
-    private final Function<MembershipOracle.MealyMembershipOracle<I, O>, LearningAlgorithm.MealyLearner<I, O>> constructor;
+    public final Reviser<Integer, I, CompactTransition<String>, O> oracle;
+    private final Function<MembershipOracle<I, Word<O>>, LearningAlgorithm.MealyLearner<I, O>> constructor;
     private LearningAlgorithm.MealyLearner<I, O> algorithm;
     private final Alphabet<I> alphabet;
-    private final List<Pair<Integer, MealyMachine<?, I, ?, O>>> hypotheses;
-    public Counter counter;
+    private final List<Triple<Integer, Integer, MealyMachine<?, I, ?, O>>> hypotheses;
+    public Counter queryCounter;
+    public Counter symbolCounter;
     private List<Integer> conflictIndexes;
 
     public PAR(
-            Function<MembershipOracle.MealyMembershipOracle<I, O>, LearningAlgorithm.MealyLearner<I, O>> constructor,
-            MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Alphabet<I> alphabet,
+            Function<MembershipOracle<I, Word<O>>, LearningAlgorithm.MealyLearner<I, O>> constructor,
+            MembershipOracle<I, Word<O>> sulOracle, Alphabet<I> alphabet,
             Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Boolean caching, Random random,
-            Counter counter) {
-        this.counter = counter;
-        this.oracle = new Reviser<>(alphabet, sulOracle, counter, cexSearchLimit, revisionRatio, lengthFactor, caching,
+            Counter queryCounter, Counter symbolCounter) {
+        this.queryCounter = queryCounter;
+        this.symbolCounter = symbolCounter;
+        this.oracle = new Reviser<>(alphabet, sulOracle, queryCounter, cexSearchLimit, revisionRatio, lengthFactor,
+                caching,
                 random);
         this.constructor = constructor;
         this.hypotheses = new LinkedList<>();
@@ -67,7 +73,7 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
             algorithm.startLearning();
             saveHypothesis();
         } catch (ConflictException e) {
-            conflictIndexes.add((int) (long) counter.getCount());
+            conflictIndexes.add((int) (long) queryCounter.getCount());
             startLearning();
         } catch (LimitException e) {
             return;
@@ -76,16 +82,17 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
 
     private void saveHypothesis() {
         Cloner cloner = new Cloner();
-        hypotheses.add(Pair.of((int) (long) counter.getCount(), cloner.deepClone(algorithm.getHypothesisModel())));
+        hypotheses.add(Triple.of((int) (long) queryCounter.getCount(), (int) (long) symbolCounter.getCount(),
+                cloner.deepClone(algorithm.getHypothesisModel())));
     }
 
-    public List<Pair<Integer, MealyMachine<?, I, ?, O>>> run() {
+    public List<Triple<Integer, Integer, MealyMachine<?, I, ?, O>>> run() {
         startLearning();
         DefaultQuery<I, Word<O>> cex;
         try {
             cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
         } catch (ConflictException e) {
-            conflictIndexes.add((int) (long) counter.getCount());
+            conflictIndexes.add((int) (long) queryCounter.getCount());
             startLearning();
             cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
         } catch (LimitException e) {
@@ -97,7 +104,7 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
                 this.refineHypothesis(cex);
                 cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
             } catch (ConflictException e) {
-                conflictIndexes.add((int) (long) counter.getCount());
+                conflictIndexes.add((int) (long) queryCounter.getCount());
                 startLearning();
                 cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
             } catch (LimitException e) {
@@ -122,7 +129,7 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
 
     @Override
     public MealyMachine<?, I, ?, O> getHypothesisModel() {
-        return hypotheses.get(hypotheses.size() - 1).getSecond();
+        return hypotheses.get(hypotheses.size() - 1).getThird();
     }
 
 }
