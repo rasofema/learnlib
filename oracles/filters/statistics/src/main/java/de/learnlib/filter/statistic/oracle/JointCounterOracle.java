@@ -16,6 +16,8 @@
 package de.learnlib.filter.statistic.oracle;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.oracle.MembershipOracle.DFAMembershipOracle;
@@ -66,6 +68,7 @@ public class JointCounterOracle<I, D> implements MembershipOracle<I, D> {
     private final MembershipOracle<I, D> delegate;
     private final Counter queryCounter = new Counter("Number of Queries", "queries");
     private final Counter symbolCounter = new Counter("Number of Symbols", "symbols");
+    private final List<Long> symbolsByQuery = new LinkedList<>();
 
     public JointCounterOracle(MembershipOracle<I, D> delegate) {
         this.delegate = delegate;
@@ -76,6 +79,7 @@ public class JointCounterOracle<I, D> implements MembershipOracle<I, D> {
         queryCounter.increment(queries.size());
         for (Query<I, D> qry : queries) {
             symbolCounter.increment(qry.getInput().length());
+            symbolsByQuery.add(symbolCounter.getCount());
         }
         delegate.processQueries(queries);
     }
@@ -104,5 +108,9 @@ public class JointCounterOracle<I, D> implements MembershipOracle<I, D> {
 
     public Counter getSymbolCounter() {
         return symbolCounter;
+    }
+
+    public List<Long> getSymbolsByQuery() {
+        return symbolsByQuery;
     }
 }
