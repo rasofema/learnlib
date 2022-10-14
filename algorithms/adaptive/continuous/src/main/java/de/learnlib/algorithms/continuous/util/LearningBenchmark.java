@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.apache.commons.cli.*;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.base.PAR;
@@ -35,6 +36,7 @@ import de.learnlib.algorithms.lstar.mealy.ExtensibleLStarMealy;
 import de.learnlib.algorithms.ttt.mealy.TTTLearnerMealy;
 import de.learnlib.api.algorithm.LearningAlgorithm;
 import de.learnlib.api.oracle.MembershipOracle;
+import de.learnlib.api.oracle.EquivalenceOracle.MealyEquivalenceOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.filter.cache.mealy.MealyCacheOracle;
 import de.learnlib.filter.cache.mealy.MealyCaches;
@@ -118,27 +120,35 @@ class Config {
 
 public class LearningBenchmark {
     private final Config config;
-    private static final Random RAND = new Random();
 
     public LearningBenchmark(CommandLine cmd) throws Exception {
         this.config = new Config(cmd);
     }
 
     private Word<String> sampleWord() {
-        if (RAND.nextFloat() < config.lengthFactor) {
+        if (config.random.nextFloat() < config.lengthFactor) {
             List<String> alphas = new LinkedList<>(config.target.getInputAlphabet());
-            Collections.shuffle(alphas, RAND);
+            Collections.shuffle(alphas, config.random);
             return Word.fromSymbols(alphas.get(0)).concat(sampleWord());
         }
         return Word.epsilon();
     }
 
     private DefaultQuery<String, Word<String>> findCex(MealyMachine<?, String, ?, String> hyp,
-            MembershipOracle<String, Word<String>> oracle) {
+            MembershipOracle<String, Word<String>> oracle, MealyEquivalenceOracle<String, String> cacheTest) {
 
         if (DeterministicEquivalenceTest.findSeparatingWord(config.target, hyp,
                 config.target.getInputAlphabet()) == null) {
             return null;
+        }
+
+        if (cacheTest != null) {
+            @Nullable
+            DefaultQuery<String, Word<String>> cacheCex = cacheTest.findCounterExample(hyp,
+                    config.target.getInputAlphabet());
+            if (cacheCex != null) {
+                return cacheCex;
+            }
         }
 
         Word<String> input = sampleWord();
@@ -151,7 +161,8 @@ public class LearningBenchmark {
     }
 
     private Triple<Long, Long, CompactMealy<String, String>> runMAT(MembershipOracle<String, Word<String>> oracle,
-            JointCounterOracle<String, Word<String>> statisticOracle) {
+            JointCounterOracle<String, Word<String>> statisticOracle,
+            MealyEquivalenceOracle<String, String> cacheTest) {
         LearningAlgorithm.MealyLearner<String, String> learner = null;
         switch (config.algorithm) {
         case LSTAR:
@@ -161,8 +172,10 @@ public class LearningBenchmark {
         case KV:
             learner = new KearnsVaziraniMealy<>(config.target.getInputAlphabet(), oracle, true,
                     AcexAnalyzers.BINARY_SEARCH_BWD);
+            break;
         case TTT:
             learner = new TTTLearnerMealy<>(config.target.getInputAlphabet(), oracle, AcexAnalyzers.BINARY_SEARCH_BWD);
+            break;
         case LSHARP:
         default:
             learner = new ExtensibleLStarMealy<>(config.target.getInputAlphabet(), oracle, Collections.emptyList(),
@@ -172,14 +185,15 @@ public class LearningBenchmark {
 
         learner.startLearning();
 
-        DefaultQuery<String, Word<String>> cex = findCex(learner.getHypothesisModel(), oracle);
+        DefaultQuery<String, Word<String>> cex = findCex(learner.getHypothesisModel(), oracle, cacheTest);
 
         while (cex != null) {
             learner.refineHypothesis(cex);
-            cex = findCex(learner.getHypothesisModel(), oracle);
+            cex = findCex(learner.getHypothesisModel(), oracle, cacheTest);
         }
 
-        return Triple.of(statisticOracle.getQueryCount(), statisticOracle.getSymbolCount(),
+        return Triple.of(statisticOracle.getQueryCount(),
+                statisticOracle.getSymbolsByQuery().get((int) statisticOracle.getQueryCount() - 1),
                 (CompactMealy<String, String>) learner.getHypothesisModel());
     }
 
@@ -344,12 +358,16 @@ public class LearningBenchmark {
                 config.percentAccuracy, config.maxRepeats);
 
         // Give MAT all the benefits, including caching whenver possible.
+        MealyEquivalenceOracle<String, String> cacheTest = null;
         if (config.framework == Framework.MAT && config.noiseLevel == 0.0) {
-            oracle = MealyCaches.createCache(config.target.getInputAlphabet(), oracle);
+            MealyCacheOracle<String, String> cacheOracle = MealyCaches.createCache(config.target.getInputAlphabet(),
+                    oracle);
+            cacheTest = cacheOracle.createCacheConsistencyTest();
+            oracle = cacheOracle;
         }
 
         Triple<Long, Long, CompactMealy<String, String>> result = config.framework == Framework.MAT
-                ? runMAT(oracle, statisticOracle)
+                ? runMAT(oracle, statisticOracle, cacheTest)
                 : runPAR(oracle, statisticOracle);
 
         Boolean isCorrect = DeterministicEquivalenceTest.findSeparatingWord(config.target, result.getThird(),
