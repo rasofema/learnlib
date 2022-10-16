@@ -377,12 +377,22 @@ public class LearningBenchmark {
             oracle = cacheOracle;
         }
 
-        Triple<Long, Long, CompactMealy<String, String>> result = config.framework == Framework.MAT
+        Triple<Long, Long, CompactMealy<String, String>> result = Triple.of(null, null, null);
+
+        try {
+            result = config.framework == Framework.MAT
                 ? runMAT(oracle, statisticOracle, cacheTest)
                 : runPAR(oracle, statisticOracle);
 
-        Boolean isCorrect = DeterministicEquivalenceTest.findSeparatingWord(config.target, result.getThird(),
+        } catch (Exception e) {
+        }
+
+        Boolean isCorrect = false;
+        if (result.getThird() != null) {
+            isCorrect = DeterministicEquivalenceTest.findSeparatingWord(config.target, result.getThird(),
                 config.target.getInputAlphabet()) == null;
+
+        }
 
         System.out.println("# ========== RESULTS ==========");
         System.out.println("# QUERY COUNT: " + result.getFirst());
