@@ -35,12 +35,14 @@ import de.learnlib.algorithms.lstar.closing.ClosingStrategies;
 import de.learnlib.algorithms.lstar.mealy.ExtensibleLStarMealy;
 import de.learnlib.algorithms.ttt.mealy.TTTLearnerMealy;
 import de.learnlib.api.algorithm.LearningAlgorithm;
+import de.learnlib.api.exception.LimitException;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.oracle.EquivalenceOracle.MealyEquivalenceOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.filter.cache.mealy.MealyCacheOracle;
 import de.learnlib.filter.cache.mealy.MealyCaches;
 import de.learnlib.filter.statistic.oracle.JointCounterOracle;
+import de.learnlib.oracle.membership.LimitOracle;
 import de.learnlib.oracle.membership.NoiseOracle;
 import de.learnlib.oracle.membership.ProbabilisticOracle;
 import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
@@ -183,13 +185,17 @@ public class LearningBenchmark {
             break;
         }
 
-        learner.startLearning();
+        try {
+            learner.startLearning();
 
-        DefaultQuery<String, Word<String>> cex = findCex(learner.getHypothesisModel(), oracle, cacheTest);
+            DefaultQuery<String, Word<String>> cex = findCex(learner.getHypothesisModel(), oracle, cacheTest);
 
-        while (cex != null) {
-            learner.refineHypothesis(cex);
-            cex = findCex(learner.getHypothesisModel(), oracle, cacheTest);
+            while (cex != null) {
+                learner.refineHypothesis(cex);
+                cex = findCex(learner.getHypothesisModel(), oracle, cacheTest);
+            }
+
+        } catch (LimitException e) {
         }
 
         return Triple.of(statisticOracle.getQueryCount(),
@@ -283,11 +289,13 @@ public class LearningBenchmark {
             List<Pair<Integer, MealyMachine<?, String, ?, String>>> hyps, Integer queryCount) {
         for (int i = 0; i <= queryCount; i++) {
             List<Pair<Integer, MealyMachine<?, String, ?, String>>> sublist = sublistQ(hyps, i);
-            Pair<Integer, MealyMachine<?, String, ?, String>> mf = mostFrequent(sublist, i);
+            if (!sublist.isEmpty()) {
+                Pair<Integer, MealyMachine<?, String, ?, String>> mf = mostFrequent(sublist, i);
 
-            if (DeterministicEquivalenceTest.findSeparatingWord(config.target, mf.getSecond(),
-                    config.target.getInputAlphabet()) == null) {
-                return Pair.of(i, sublist);
+                if (DeterministicEquivalenceTest.findSeparatingWord(config.target, mf.getSecond(),
+                        config.target.getInputAlphabet()) == null) {
+                    return Pair.of(i, sublist);
+                }
             }
         }
 
@@ -350,11 +358,14 @@ public class LearningBenchmark {
         System.out.println(config.toString());
 
         MealySimulatorOracle<String, String> sulOracle = new MealySimulatorOracle<>(config.target);
-        NoiseOracle<String, String> noiseOracle = new NoiseOracle<String, String>(config.target.getInputAlphabet(),
+        MembershipOracle<String, Word<String>> noiseOracle = new NoiseOracle<String, String>(
+                config.target.getInputAlphabet(),
                 getOutputAlphabet(config.target), sulOracle, config.noiseLevel, config.noise, config.random);
         JointCounterOracle<String, Word<String>> statisticOracle = new JointCounterOracle<>(noiseOracle);
+        LimitOracle<String, Word<String>> limitOracle = new LimitOracle<>(Long.valueOf(config.queryLimit),
+                statisticOracle);
         MembershipOracle<String, Word<String>> oracle = new ProbabilisticOracle<String, String>(
-                statisticOracle.asOracle(), config.minRepeats,
+                limitOracle.asOracle(), config.minRepeats,
                 config.percentAccuracy, config.maxRepeats);
 
         // Give MAT all the benefits, including caching whenver possible.
