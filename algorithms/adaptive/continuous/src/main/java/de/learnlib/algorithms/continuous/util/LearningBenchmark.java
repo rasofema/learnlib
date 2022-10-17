@@ -16,6 +16,7 @@
 package de.learnlib.algorithms.continuous.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -26,6 +27,15 @@ import java.util.function.Function;
 
 import org.apache.commons.cli.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 import de.learnlib.acex.analyzers.AcexAnalyzers;
 import de.learnlib.algorithms.continuous.base.PAR;
@@ -65,6 +75,67 @@ enum Algorithm {
     LSTAR, KV, TTT, LSHARP
 }
 
+class Output {
+    Config config;
+    Result result;
+
+    public Output(Config config, Result result) {
+        this.config = config;
+        this.result = result;
+    }
+}
+
+class OutputSerializer extends StdSerializer<Output> {
+
+    public OutputSerializer() {
+        this(null);
+    }
+
+    public OutputSerializer(Class<Output> t) {
+        super(t);
+    }
+
+    @Override
+    public void serialize(Output output, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeStartObject();
+        gen.writeObjectField("config", output.config);
+        gen.writeObjectField("result", output.result);
+        gen.writeEndObject();
+    }
+}
+
+class Result {
+    Boolean success;
+    Long queryCount;
+    Long symbolCount;
+
+    public Result(Boolean success, Long queryCount, Long symbolCount) {
+        this.success = success;
+        this.queryCount = queryCount;
+        this.symbolCount = symbolCount;
+    }
+}
+
+class ResultSerializer extends StdSerializer<Result> {
+
+    public ResultSerializer() {
+        this(null);
+    }
+
+    public ResultSerializer(Class<Result> t) {
+        super(t);
+    }
+
+    @Override
+    public void serialize(Result result, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeStartObject();
+        gen.writeBooleanField("success", result.success);
+        gen.writeNumberField("queryCount", result.queryCount);
+        gen.writeNumberField("symbolCount", result.symbolCount);
+        gen.writeEndObject();
+    }
+}
+
 class Config {
     public Framework framework;
     public Algorithm algorithm;
@@ -77,6 +148,7 @@ class Config {
     public Integer maxRepeats;
     public Double percentAccuracy;
     public Integer queryLimit;
+    public String targetPath;
     public CompactMealy<String, String> target;
     public Long randomSeed;
     public Random random;
@@ -93,9 +165,10 @@ class Config {
         this.maxRepeats = Integer.parseInt(cmd.getOptionValue("maxRepeats", "2"));
         this.percentAccuracy = Double.parseDouble(cmd.getOptionValue("percentAccuracy", "0.7"));
         this.queryLimit = Integer.parseInt(cmd.getOptionValue("queryLimit", "20000"));
+        this.targetPath = cmd.getOptionValue("target");
         InputModelDeserializer<String, CompactMealy<String, String>> parser = DOTParsers
                 .mealy(new CompactMealy.Creator<String, String>(), DOTParsers.DEFAULT_MEALY_EDGE_PARSER);
-        this.target = parser.readModel(new File(cmd.getOptionValue("target"))).model;
+        this.target = parser.readModel(new File(this.targetPath)).model;
         this.random = new Random();
         randomSeed = Long.parseLong(cmd.getOptionValue("random", System.nanoTime() + ""));
         this.random.setSeed(randomSeed);
@@ -113,10 +186,42 @@ class Config {
         builder.append("# MIN REPEATS: " + minRepeats.toString() + '\n');
         builder.append("# MAX REPEATS: " + maxRepeats.toString() + '\n');
         builder.append("# PERCENT ACCURACY: " + percentAccuracy.toString() + '\n');
+        builder.append("# TARGET PATH: " + targetPath.toString() + '\n');
         builder.append("# QUERY LIMIT: " + queryLimit.toString() + '\n');
         builder.append("# RANDOM: " + randomSeed.toString());
 
         return builder.toString();
+    }
+}
+
+class ConfigSerializer extends StdSerializer<Config> {
+
+    public ConfigSerializer() {
+        this(null);
+    }
+
+    public ConfigSerializer(Class<Config> t) {
+        super(t);
+    }
+
+    @Override
+    public void serialize(Config config, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeStartObject();
+        gen.writeStringField("framework", config.framework.toString());
+        gen.writeStringField("algorithm", config.algorithm.toString());
+        gen.writeStringField("noise", config.noise.toString());
+        gen.writeNumberField("noiseLevel", config.noiseLevel);
+        gen.writeNumberField("revisionRatio", config.revisionRatio);
+        gen.writeNumberField("lengthFactor", config.lengthFactor);
+        gen.writeBooleanField("caching", config.caching);
+        gen.writeNumberField("minRepeats", config.minRepeats);
+        gen.writeNumberField("maxRepeats", config.maxRepeats);
+        gen.writeNumberField("percentAccuracy", config.percentAccuracy);
+        gen.writeStringField("targetPath", config.targetPath);
+        gen.writeNumberField("queryLimit", config.queryLimit);
+        gen.writeNumberField("randomSeed", config.randomSeed);
+        gen.writeEndObject();
+
     }
 }
 
@@ -162,7 +267,7 @@ public class LearningBenchmark {
         return new DefaultQuery<>(Word.epsilon(), input, output);
     }
 
-    private Triple<Long, Long, CompactMealy<String, String>> runMAT(MembershipOracle<String, Word<String>> oracle,
+    private Triple<Long, Long, MealyMachine<?, String, ?, String>> runMAT(MembershipOracle<String, Word<String>> oracle,
             JointCounterOracle<String, Word<String>> statisticOracle,
             MealyEquivalenceOracle<String, String> cacheTest) {
         LearningAlgorithm.MealyLearner<String, String> learner = null;
@@ -200,7 +305,7 @@ public class LearningBenchmark {
 
         return Triple.of(statisticOracle.getQueryCount(),
                 statisticOracle.getSymbolsByQuery().get((int) statisticOracle.getQueryCount() - 1),
-                (CompactMealy<String, String>) learner.getHypothesisModel());
+                learner.getHypothesisModel());
     }
 
     public Pair<Integer, MealyMachine<?, String, ?, String>> mostFrequent(
@@ -302,7 +407,7 @@ public class LearningBenchmark {
         return Pair.of(queryCount, hyps);
     }
 
-    private Triple<Long, Long, CompactMealy<String, String>> runPAR(MembershipOracle<String, Word<String>> oracle,
+    private Triple<Long, Long, MealyMachine<?, String, ?, String>> runPAR(MembershipOracle<String, Word<String>> oracle,
             JointCounterOracle<String, Word<String>> statisticOracle) {
         Function<MembershipOracle<String, Word<String>>, LearningAlgorithm.MealyLearner<String, String>> constructor;
         if (config.algorithm == Algorithm.LSTAR) {
@@ -339,7 +444,7 @@ public class LearningBenchmark {
         }
 
         return Triple.of(Long.valueOf(min.getFirst()), statisticOracle.getSymbolsByQuery().get(min.getFirst() - 1),
-                (CompactMealy<String, String>) mf.getSecond());
+                mf.getSecond());
     }
 
     private Alphabet<String> getOutputAlphabet(CompactMealy<String, String> mealy) {
@@ -353,10 +458,7 @@ public class LearningBenchmark {
         return new ListAlphabet<>(new LinkedList<>(symbols));
     }
 
-    public void run() {
-        System.out.println("# ========== CONFIG ==========");
-        System.out.println(config.toString());
-
+    public void run() throws JsonProcessingException {
         MealySimulatorOracle<String, String> sulOracle = new MealySimulatorOracle<>(config.target);
         MembershipOracle<String, Word<String>> noiseOracle = new NoiseOracle<String, String>(
                 config.target.getInputAlphabet(),
@@ -377,7 +479,7 @@ public class LearningBenchmark {
             oracle = cacheOracle;
         }
 
-        Triple<Long, Long, CompactMealy<String, String>> result = Triple.of(null, null, null);
+        Triple<Long, Long, MealyMachine<?, String, ?, String>> result = Triple.of(null, null, null);
 
         try {
             result = config.framework == Framework.MAT
@@ -385,22 +487,29 @@ public class LearningBenchmark {
                 : runPAR(oracle, statisticOracle);
 
         } catch (Exception e) {
+            System.out.println(e);
         }
 
         Boolean isCorrect = false;
         if (result.getThird() != null) {
             isCorrect = DeterministicEquivalenceTest.findSeparatingWord(config.target, result.getThird(),
-                config.target.getInputAlphabet()) == null;
+                    config.target.getInputAlphabet()) == null;
 
         }
 
-        System.out.println("# ========== RESULTS ==========");
-        System.out.println("# QUERY COUNT: " + result.getFirst());
-        System.out.println("# SYMBOL COUNT: " + result.getSecond());
-        System.out.println("# SUCCESS: " + isCorrect.toString());
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule("LearningSerializer", new Version(1, 0, 0, null, null, null));
+        module.addSerializer(Config.class, new ConfigSerializer());
+        module.addSerializer(Output.class, new OutputSerializer());
+        module.addSerializer(Result.class, new ResultSerializer());
+        mapper.registerModule(module);
+
+        String json = mapper
+                .writeValueAsString(new Output(config, new Result(isCorrect, result.getFirst(), result.getSecond())));
+        System.out.print(json);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws JsonProcessingException {
         Options options = new Options();
 
         options.addOption("f", "framework", true, null);
