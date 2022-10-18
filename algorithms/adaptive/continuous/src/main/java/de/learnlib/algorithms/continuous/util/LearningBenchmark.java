@@ -152,6 +152,7 @@ class Config {
     public CompactMealy<String, String> target;
     public Long randomSeed;
     public Random random;
+    public String output;
 
     public Config(CommandLine cmd) throws Exception {
         this.framework = Framework.valueOf(cmd.getOptionValue("framework", "PAR"));
@@ -172,6 +173,7 @@ class Config {
         this.random = new Random();
         randomSeed = Long.parseLong(cmd.getOptionValue("random", System.nanoTime() + ""));
         this.random.setSeed(randomSeed);
+        this.output = cmd.getOptionValue("output", "PRETTY");
     }
 
     public String toString() {
@@ -188,7 +190,8 @@ class Config {
         builder.append("# PERCENT ACCURACY: " + percentAccuracy.toString() + '\n');
         builder.append("# TARGET PATH: " + targetPath.toString() + '\n');
         builder.append("# QUERY LIMIT: " + queryLimit.toString() + '\n');
-        builder.append("# RANDOM: " + randomSeed.toString());
+        builder.append("# RANDOM: " + randomSeed.toString() + '\n');
+        builder.append("# OUTPUT: " + output.toString());
 
         return builder.toString();
     }
@@ -220,6 +223,7 @@ class ConfigSerializer extends StdSerializer<Config> {
         gen.writeStringField("targetPath", config.targetPath);
         gen.writeNumberField("queryLimit", config.queryLimit);
         gen.writeNumberField("randomSeed", config.randomSeed);
+        gen.writeStringField("output", config.output);
         gen.writeEndObject();
 
     }
@@ -497,16 +501,25 @@ public class LearningBenchmark {
 
         }
 
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule("LearningSerializer", new Version(1, 0, 0, null, null, null));
-        module.addSerializer(Config.class, new ConfigSerializer());
-        module.addSerializer(Output.class, new OutputSerializer());
-        module.addSerializer(Result.class, new ResultSerializer());
-        mapper.registerModule(module);
+        if (config.output == "PRETTY") {
+            System.out.println("========= CONFIG =========");
+            System.out.println(config.toString());
+            System.out.println("========= RESULT =========");
+            System.out.println("# QUERY COUNT: " + result.getFirst());
+            System.out.println("# SYMBOL COUNT: " + result.getSecond());
+            System.out.println("# SUCCESS: " + isCorrect.toString());
+        } else {
+            ObjectMapper mapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule("LearningSerializer", new Version(1, 0, 0, null, null, null));
+            module.addSerializer(Config.class, new ConfigSerializer());
+            module.addSerializer(Output.class, new OutputSerializer());
+            module.addSerializer(Result.class, new ResultSerializer());
+            mapper.registerModule(module);
 
-        String json = mapper
-                .writeValueAsString(new Output(config, new Result(isCorrect, result.getFirst(), result.getSecond())));
-        System.out.print(json);
+            String json = mapper.writeValueAsString(
+                    new Output(config, new Result(isCorrect, result.getFirst(), result.getSecond())));
+            System.out.print(json);
+        }
     }
 
     public static void main(String[] args) throws JsonProcessingException {
@@ -525,6 +538,7 @@ public class LearningBenchmark {
         options.addOption("ql", "queryLimit", true, null);
         options.addOption("t", "target", true, null);
         options.addOption("r", "random", true, null);
+        options.addOption("o", "output", true, null);
 
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();

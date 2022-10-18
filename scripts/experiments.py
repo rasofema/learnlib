@@ -43,18 +43,19 @@ def run(framework, noise, noiseLevel, minmax, target):
         results.append(subprocess.run(command, stdout=subprocess.PIPE))
         bar()
 
-    outInstance = json.loads(results[0].stdout.decode('utf-8'))
-    outInstance["random"] = []
-    outInstance["success"] = []
-    outInstance["queryCount"] = []
-    outInstance["symbolCount"] = []
+    outInstance = json.loads(
+        results[0].stdout.decode('utf-8').splitlines()[-1])
+    outInstance.config.random = []
+    outInstance.result.success = []
+    outInstance.result.queryCount = []
+    outInstance.result.symbolCount = []
 
     for result in results:
-        instance = json.loads(result.stdout.decode('utf-8'))
-        outInstance["random"].append(instance["random"])
-        outInstance["success"].append(instance["success"])
-        outInstance["queryCount"].append(instance["queryCount"])
-        outInstance["symbolCount"].append(instance["symbolCount"])
+        instance = json.loads(result.stdout.decode('utf-8').splitlines()[-1])
+        outInstance.config.random.append(instance.config.random)
+        outInstance.result.success.append(instance.result.success)
+        outInstance.result.queryCount.append(instance.result.queryCount)
+        outInstance.result.symbolCount].append(instance.result.symbolCount)
 
     return outInstance
 

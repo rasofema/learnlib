@@ -40,7 +40,9 @@
         // "/Users/tiferrei/Downloads/Mealy/principle/BenchmarkQUICprotocol/QUICprotocolwithout0RTT.dot",
         "/Users/tiferrei/Downloads/Mealy/principle/BenchmarkTCP/TCP_Linux_Server.dot",
         "-r",
-        "73301000734625"
+        "73301000734625",
+        "-o",
+        "JSON"
       ]
     }
   ]
