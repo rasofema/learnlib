@@ -75,7 +75,8 @@ public class NoiseOracle<I, O> implements MembershipOracle.MealyMembershipOracle
                 input = newInput;
             }
 
-            Word<O> output = noise == NoiseType.TRANSFORMATION ? transMealy.computeOutput(input)
+            Word<O> output = (noise == NoiseType.TRANSFORMATION && random.nextDouble() < probability)
+                    ? transMealy.computeOutput(input)
                     : sulOracle.answerQuery(input);
             List<O> localOutputAlphabet = new LinkedList<>(output.asList());
 
