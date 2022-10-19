@@ -4,46 +4,6 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-    {
-      "type": "java",
-      "name": "Launch LearningBenchmarkMealy",
-      "request": "launch",
-      "mainClass": "de.learnlib.algorithms.continuous.util.LearningBenchmark",
-      "projectName": "learnlib-continuous",
-      "vmArgs": [
-        "-ea",
-        "-Xms4g",
-        "-Xmx8g",
-        "--add-opens=java.base/java.util=ALL-UNNAMED",
-        "--add-opens=java.base/java.util.reflect=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang=ALL-UNNAMED",
-        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED"
-      ],
-      "args": [
-        "-f",
-        "PAR",
-        "-a",
-        "TTT",
-        "-min",
-        "1",
-        "-max",
-        "1",
-        "-lf",
-        "0.99",
-        "-rr",
-        "0.0",
-        "-nl",
-        "0.0",
-        "-ql",
-        "1000",
-        "-t",
-        // "/Users/tiferrei/Downloads/Mealy/principle/BenchmarkQUICprotocol/QUICprotocolwithout0RTT.dot",
-        "/Users/tiferrei/Downloads/Mealy/principle/BenchmarkTCP/TCP_Linux_Server.dot",
-        "-r",
-        "73301000734625",
-        "-o",
-        "JSON"
-      ]
-    }
+  
   ]
 }

@@ -22,13 +22,13 @@ import java.util.function.Function;
 
 import com.rits.cloning.Cloner;
 
+import de.learnlib.algorithms.Reviser;
 import de.learnlib.api.algorithm.LearningAlgorithm;
 import de.learnlib.api.exception.LimitException;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 
 import de.learnlib.filter.statistic.Counter;
-import de.learnlib.oracle.membership.Reviser;
 import net.automatalib.automata.base.compact.CompactTransition;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.commons.util.Pair;
@@ -49,12 +49,10 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
     public PAR(
             Function<MembershipOracle<I, Word<O>>, LearningAlgorithm.MealyLearner<I, O>> constructor,
             MembershipOracle<I, Word<O>> sulOracle, Alphabet<I> alphabet,
-            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Boolean caching, Random random,
+            Integer cexSearchLimit, Double revisionRatio, Boolean caching, Random random,
             Counter queryCounter) {
         this.queryCounter = queryCounter;
-        this.oracle = new Reviser<>(alphabet, sulOracle, queryCounter, cexSearchLimit, revisionRatio, lengthFactor,
-                caching,
-                random);
+        this.oracle = new Reviser<>(alphabet, sulOracle, queryCounter, cexSearchLimit, revisionRatio, caching, random);
         this.constructor = constructor;
         this.hypotheses = new LinkedList<>();
         this.alphabet = alphabet;

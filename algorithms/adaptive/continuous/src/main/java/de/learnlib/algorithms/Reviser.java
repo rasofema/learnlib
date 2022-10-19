@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.oracle.membership;
+package de.learnlib.algorithms;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Random;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -32,6 +29,7 @@ import de.learnlib.filter.statistic.Counter;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.incremental.ConflictException;
 import net.automatalib.incremental.mealy.tree.AdaptiveMealyTreeBuilder;
+import net.automatalib.util.automata.conformance.WpMethodTestsIterator;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
@@ -43,18 +41,16 @@ public class Reviser<S, I, T, O>
     private Random random;
     private Integer limit;
     private Double revisionRatio;
-    private Double lengthFactor;
     private Boolean caching;
 
     public Reviser(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> sulOracle, Counter counter,
-            Integer cexSearchLimit, Double revisionRatio, Double lengthFactor, Boolean caching, Random random) {
+            Integer cexSearchLimit, Double revisionRatio, Boolean caching, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.sulOracle = sulOracle;
         this.counter = counter;
         this.random = random;
         this.limit = cexSearchLimit;
         this.revisionRatio = revisionRatio;
-        this.lengthFactor = lengthFactor;
         this.caching = caching;
     }
 
@@ -92,15 +88,6 @@ public class Reviser<S, I, T, O>
         }
     }
 
-    private Word<I> sampleWord() {
-        if (random.nextFloat() < lengthFactor) {
-            List<I> alphas = new LinkedList<>(cache.getInputAlphabet());
-            Collections.shuffle(alphas, random);
-            return Word.fromSymbols(alphas.get(0)).concat(sampleWord());
-        }
-        return Word.epsilon();
-    }
-
     @Override
     public @Nullable DefaultQuery<I, Word<O>> findCounterExample(MealyMachine<?, I, ?, O> hypothesis,
             Collection<? extends I> inputs) throws ConflictException, LimitException {
@@ -115,9 +102,16 @@ public class Reviser<S, I, T, O>
             sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         }
 
+        WpMethodTestsIterator<I> iter = new WpMethodTestsIterator<>(hypothesis, cache.getInputAlphabet(),
+                Math.max(10, 60 - hypothesis.size()));
+
         while (counter.getCount() < limit) {
+            if (!iter.hasNext()) {
+                iter = new WpMethodTestsIterator<>(hypothesis, cache.getInputAlphabet(),
+                        Math.max(10, 60 - hypothesis.size()));
+            }
             DefaultQuery<I, Word<O>> query = new DefaultQuery<>(
-                    random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestInput() : sampleWord());
+                    random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestInput() : iter.next());
             Word<O> out = internalProcessQuery(query);
 
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
