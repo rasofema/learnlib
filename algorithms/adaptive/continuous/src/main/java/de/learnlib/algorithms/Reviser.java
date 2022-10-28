@@ -16,6 +16,7 @@
 package de.learnlib.algorithms;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Random;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -26,10 +27,10 @@ import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.api.query.Query;
 import de.learnlib.filter.statistic.Counter;
+import de.learnlib.oracle.equivalence.MealyRandomWpMethodEQOracle;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.incremental.ConflictException;
 import net.automatalib.incremental.mealy.tree.AdaptiveMealyTreeBuilder;
-import net.automatalib.util.automata.conformance.WpMethodTestsIterator;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
@@ -42,6 +43,7 @@ public class Reviser<S, I, T, O>
     private Integer limit;
     private Double revisionRatio;
     private Boolean caching;
+    private MealyRandomWpMethodEQOracle<I, O> eqOracle;
 
     public Reviser(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> sulOracle, Counter counter,
             Integer cexSearchLimit, Double revisionRatio, Boolean caching, Random random) {
@@ -52,6 +54,7 @@ public class Reviser<S, I, T, O>
         this.limit = cexSearchLimit;
         this.revisionRatio = revisionRatio;
         this.caching = caching;
+        this.eqOracle = new MealyRandomWpMethodEQOracle<I, O>(null, 10, 100, 100, random, 100);
     }
 
     private Word<O> internalProcessQuery(Query<I, Word<O>> query) throws ConflictException, LimitException {
@@ -102,13 +105,11 @@ public class Reviser<S, I, T, O>
             sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         }
 
-        WpMethodTestsIterator<I> iter = new WpMethodTestsIterator<>(hypothesis, cache.getInputAlphabet(),
-                Math.max(10, 60 - hypothesis.size()));
+        Iterator<Word<I>> iter = eqOracle.generateTestWords(hypothesis, inputs).iterator();
 
         while (counter.getCount() < limit) {
             if (!iter.hasNext()) {
-                iter = new WpMethodTestsIterator<>(hypothesis, cache.getInputAlphabet(),
-                        Math.max(10, 60 - hypothesis.size()));
+                iter = eqOracle.generateTestWords(hypothesis, inputs).iterator();
             }
             DefaultQuery<I, Word<O>> query = new DefaultQuery<>(
                     random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestInput() : iter.next());
