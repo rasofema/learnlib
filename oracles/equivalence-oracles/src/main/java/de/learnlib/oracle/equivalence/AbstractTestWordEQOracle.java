@@ -98,7 +98,7 @@ public abstract class AbstractTestWordEQOracle<A extends Output<I, D>, I, D> imp
      *
      * @see EquivalenceOracle#findCounterExample(Object, Collection)
      */
-    protected abstract Stream<Word<I>> generateTestWords(A hypothesis, Collection<? extends I> inputs);
+    public abstract Stream<Word<I>> generateTestWords(A hypothesis, Collection<? extends I> inputs);
 
     private Stream<DefaultQuery<I, D>> answerQueries(final Stream<DefaultQuery<I, D>> stream) {
         if (isBatched()) {

@@ -95,7 +95,7 @@ public class WMethodSPAEQOracle<I> extends AbstractTestWordEQOracle<SPA<?, I>, I
     }
 
     @Override
-    protected Stream<Word<I>> generateTestWords(SPA<?, I> hypothesis, Collection<? extends I> inputs) {
+    public Stream<Word<I>> generateTestWords(SPA<?, I> hypothesis, Collection<? extends I> inputs) {
         if (!(inputs instanceof SPAAlphabet)) {
             throw new IllegalArgumentException("Inputs are not an SPA alphabet");
         }

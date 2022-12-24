@@ -26,7 +26,6 @@ import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.api.query.Query;
-import de.learnlib.filter.statistic.Counter;
 import de.learnlib.oracle.equivalence.MealyRandomWpMethodEQOracle;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.incremental.ConflictException;
@@ -37,37 +36,32 @@ import net.automatalib.words.Word;
 public class Reviser<S, I, T, O>
         implements MembershipOracle<I, Word<O>>, EquivalenceOracle.MealyEquivalenceOracle<I, O> {
     private final AdaptiveMealyTreeBuilder<I, O> cache;
-    private final MembershipOracle<I, Word<O>> sulOracle;
-    private Counter counter;
+    private final MembershipOracle<I, Word<O>> memOracle;
+    private final MembershipOracle<I, Word<O>> eqOracle;
     private Random random;
-    private Integer limit;
     private Double revisionRatio;
     private Boolean caching;
-    private MealyRandomWpMethodEQOracle<I, O> eqOracle;
+    private MealyRandomWpMethodEQOracle<I, O> testOracle;
 
-    public Reviser(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> sulOracle, Counter counter,
-            Integer cexSearchLimit, Double revisionRatio, Boolean caching, Random random) {
+    public Reviser(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> memOracle, MembershipOracle<I, Word<O>> eqOracle,
+            Double revisionRatio, Boolean caching, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
-        this.sulOracle = sulOracle;
-        this.counter = counter;
+        this.memOracle = memOracle;
+        this.eqOracle = eqOracle;
         this.random = random;
-        this.limit = cexSearchLimit;
         this.revisionRatio = revisionRatio;
         this.caching = caching;
-        this.eqOracle = new MealyRandomWpMethodEQOracle<I, O>(null, 10, 100, 100, random, 100);
+        this.testOracle = new MealyRandomWpMethodEQOracle<I, O>(null, 10, 100, 0, random, 100);
     }
 
-    private Word<O> internalProcessQuery(Query<I, Word<O>> query) throws ConflictException, LimitException {
-        Word<O> answer = sulOracle.answerQuery(query.getInput());
+    private Word<O> internalProcessQuery(Query<I, Word<O>> query, Boolean isMemQuery)
+            throws ConflictException, LimitException {
+        Word<O> answer = (isMemQuery ? memOracle : eqOracle).answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
 
         // Conflict detected
         if (cache.insert(query.getInput(), answer)) {
             throw new ConflictException("Input: " + query.getInput());
-        }
-
-        if (counter.getCount() >= limit) {
-            throw new LimitException("Reached query limit.");
         }
 
         return answer;
@@ -87,7 +81,7 @@ public class Reviser<S, I, T, O>
             }
 
             // B: Ask the SUL Oracle.
-            internalProcessQuery(query);
+            internalProcessQuery(query, true);
         }
     }
 
@@ -98,28 +92,26 @@ public class Reviser<S, I, T, O>
         Word<I> sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         while (sepInput != null) {
             DefaultQuery<I, Word<O>> query = new DefaultQuery<>(sepInput);
-            Word<O> out = internalProcessQuery(query);
+            Word<O> out = internalProcessQuery(query, false);
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
                 return new DefaultQuery<>(query.getInput(), out);
             }
             sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         }
 
-        Iterator<Word<I>> iter = eqOracle.generateTestWords(hypothesis, inputs).iterator();
+        Iterator<Word<I>> iter = testOracle.generateTestWords(hypothesis, inputs).iterator();
 
-        while (counter.getCount() < limit) {
+        while (true) {
             if (!iter.hasNext()) {
-                iter = eqOracle.generateTestWords(hypothesis, inputs).iterator();
+                iter = testOracle.generateTestWords(hypothesis, inputs).iterator();
             }
             DefaultQuery<I, Word<O>> query = new DefaultQuery<>(
                     random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestInput() : iter.next());
-            Word<O> out = internalProcessQuery(query);
+            Word<O> out = internalProcessQuery(query, false);
 
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
                 return new DefaultQuery<>(query.getInput(), out);
             }
         }
-
-        return null;
     }
 }

@@ -137,7 +137,7 @@ public class WMethodEQOracle<A extends UniversalDeterministicAutomaton<?, I, ?, 
     }
 
     @Override
-    protected Stream<Word<I>> generateTestWords(A hypothesis, Collection<? extends I> inputs) {
+    public Stream<Word<I>> generateTestWords(A hypothesis, Collection<? extends I> inputs) {
         return Streams.stream(new WMethodTestsIterator<>(hypothesis,
                                                          inputs,
                                                          Math.max(lookahead, expectedSize - hypothesis.size())));

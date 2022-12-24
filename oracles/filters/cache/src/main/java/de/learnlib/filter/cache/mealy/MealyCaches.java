@@ -64,8 +64,26 @@ public final class MealyCaches {
      * @see IncrementalMealyDAGBuilder
      */
     public static <I, O> MealyCacheOracle<I, O> createDAGCache(Alphabet<I> alphabet,
-                                                               MembershipOracle<I, Word<O>> mqOracle) {
-        return new MealyCacheOracle<>(new IncrementalMealyDAGBuilder<>(alphabet), null, mqOracle, alphabet);
+            MembershipOracle<I, Word<O>> mqOracle) {
+        return createDAGCache(alphabet, mqOracle, new IncrementalMealyDAGBuilder<>(alphabet));
+    }
+
+    /**
+     * Creates a cache oracle for a Mealy machine learning setup, using a DAG for
+     * internal cache organization.
+     *
+     * @param alphabet     the input alphabet
+     * @param mqOracle     the membership oracle
+     * @param cacheBuilder the IncrementalMealyDAGBuilder<I, O> to be used by the
+     *                     cache oracle.
+     *
+     * @return a Mealy learning cache with a DAG-based implementation
+     *
+     * @see IncrementalMealyDAGBuilder
+     */
+    public static <I, O> MealyCacheOracle<I, O> createDAGCache(Alphabet<I> alphabet,
+            MembershipOracle<I, Word<O>> mqOracle, IncrementalMealyDAGBuilder<I, O> cacheBuilder) {
+        return new MealyCacheOracle<>(cacheBuilder, null, mqOracle, alphabet);
     }
 
     /**
