@@ -79,25 +79,15 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
 
         if (finalHyp != null) {
             this.finalHyp = finalHyp;
-            throw new LimitException();
+            throw new LearningFinishedException();
         }
     }
 
     public Pair<Integer, MealyMachine<?, I, ?, O>> run() {
-        startLearning();
-        DefaultQuery<I, Word<O>> cex;
         try {
-            cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
-        } catch (ConflictException e) {
             startLearning();
-            cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
-        } catch (LimitException e) {
-            return finalHyp;
-        }
-
-        while (cex != null) {
+            DefaultQuery<I, Word<O>> cex;
             try {
-                this.refineHypothesis(cex);
                 cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
             } catch (ConflictException e) {
                 startLearning();
@@ -105,6 +95,19 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
             } catch (LimitException e) {
                 return finalHyp;
             }
+
+            while (cex != null) {
+                try {
+                    this.refineHypothesis(cex);
+                    cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+                } catch (ConflictException e) {
+                    startLearning();
+                    cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+                } catch (LimitException e) {
+                    return finalHyp;
+                }
+            }
+        } catch (LearningFinishedException e) {
         }
 
         return finalHyp;
