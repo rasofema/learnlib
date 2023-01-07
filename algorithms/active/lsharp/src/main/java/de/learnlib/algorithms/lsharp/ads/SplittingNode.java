@@ -4,27 +4,27 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.learnlib.algorithms.lsharp.ads.SepSeq.Status;
 import net.automatalib.automata.transducers.MealyMachine;
-
-enum SplittingType {
-    SEP_INJ, SEP_NON_INJ, XFER_INJ, XFER_NON_INJ, USELESS;
-}
+import net.automatalib.commons.util.Pair;
+import net.automatalib.words.Alphabet;
 
 public class SplittingNode<S, I, O> {
     public List<S> label;
     public HashMap<O, Integer> children = new HashMap<>();
     public HashMap<I, List<S>> successors = new HashMap<>();
     public SepSeq<I> sepSeq = new SepSeq<>(null, new LinkedList<>());
-    public HashMap<I, SplittingType> splitMap = new HashMap<>();
+    public HashMap<I, PartitionInfo.Type> splitMap = new HashMap<>();
 
     public SplittingNode(List<S> block) {
         this.label = new LinkedList<>(new HashSet<>(block));
     }
 
-    public List<I> inputsOfType(SplittingType type) {
+    public List<I> inputsOfType(PartitionInfo.Type type) {
         return this.splitMap.entrySet().stream().filter(e -> e.getValue().equals(type)).map(e -> e.getKey())
                 .collect(Collectors.toList());
     }
@@ -41,8 +41,25 @@ public class SplittingNode<S, I, O> {
         return this.label.size();
     }
 
-    public Void analyse(MealyMachine<S, I, ?, O> mealy) {
-        // TODO: analyse function.
+    public void analyse(MealyMachine<S, I, ?, O> mealy, Alphabet<I> inputAlphabet) {
+        List<S> rBlock = this.label;
+        List<Pair<I, PartitionInfo<S, I, O>>> infos = inputAlphabet.parallelStream()
+                .map(i -> Pair.of(i, new PartitionInfo<>(mealy, i, rBlock)))
+                .filter(p -> p.getSecond().iType() != PartitionInfo.Type.USELESS).collect(Collectors.toList());
+
+        Optional<I> injSepInput = infos.stream().filter(p -> p.getSecond().iType() == PartitionInfo.Type.SEP_INJ)
+                .map(p -> p.getFirst()).findAny();
+
+        if (injSepInput.isPresent()) {
+            List<I> sepSeq = new LinkedList<>();
+            sepSeq.add(injSepInput.get());
+            this.sepSeq = new SepSeq<I>(Status.INJ, sepSeq);
+        }
+
+        for (Pair<I, PartitionInfo<S, I, O>> pair : infos) {
+            this.successors.put(pair.getFirst(), pair.getSecond().allDests());
+            this.splitMap.put(pair.getFirst(), pair.getSecond().iType());
+        }
     }
 
     @Override

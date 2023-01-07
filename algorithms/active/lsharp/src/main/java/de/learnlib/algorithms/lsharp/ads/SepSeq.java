@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-enum Status {
-    INJ, NONINJ;
-}
-
 public class SepSeq<T> {
+    enum Status {
+        INJ, NONINJ;
+    }
+
     public List<T> seq;
     public @Nullable Status status;
 
