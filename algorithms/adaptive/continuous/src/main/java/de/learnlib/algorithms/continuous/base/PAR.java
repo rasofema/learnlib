@@ -15,8 +15,6 @@
  */
 package de.learnlib.algorithms.continuous.base;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
@@ -42,17 +40,20 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
     private final Function<MembershipOracle<I, Word<O>>, LearningAlgorithm.MealyLearner<I, O>> constructor;
     private LearningAlgorithm.MealyLearner<I, O> algorithm;
     private final Alphabet<I> alphabet;
-    private final List<Pair<Integer, MealyMachine<?, I, ?, O>>> hypotheses;
+    private Pair<Integer, MealyMachine<?, I, ?, O>> currentHyp;
+    private Pair<Integer, MealyMachine<?, I, ?, O>> finalHyp;
+    private final HypEventable<I, O> newHypEvent;
     public Counter queryCounter;
 
     public PAR(
             Function<MembershipOracle<I, Word<O>>, LearningAlgorithm.MealyLearner<I, O>> constructor,
             MembershipOracle<I, Word<O>> memOracle, MembershipOracle<I, Word<O>> eqOracle, Alphabet<I> alphabet,
-            Double revisionRatio, Boolean caching, Random random, Counter queryCounter) {
+            Double revisionRatio, Boolean caching, Random random, Counter queryCounter,
+            HypEventable<I, O> newHypEvent) {
         this.oracle = new Reviser<>(alphabet, memOracle, eqOracle, revisionRatio, caching, random);
         this.constructor = constructor;
-        this.hypotheses = new LinkedList<>();
         this.alphabet = alphabet;
+        this.newHypEvent = newHypEvent;
         this.queryCounter = queryCounter;
     }
 
@@ -71,35 +72,45 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
 
     private void saveHypothesis() {
         Cloner cloner = new Cloner();
-        hypotheses.add(Pair.of((int) (long) queryCounter.getCount(),
-                cloner.deepClone(algorithm.getHypothesisModel())));
+        Pair<Integer, MealyMachine<?, I, ?, O>> newHyp = Pair.of((int) (long) queryCounter.getCount(),
+                cloner.deepClone(algorithm.getHypothesisModel()));
+        currentHyp = newHyp;
+        Pair<Integer, MealyMachine<?, I, ?, O>> finalHyp = newHypEvent.apply(newHyp);
+
+        if (finalHyp != null) {
+            this.finalHyp = finalHyp;
+            throw new LearningFinishedException();
+        }
     }
 
-    public List<Pair<Integer, MealyMachine<?, I, ?, O>>> run() {
-        startLearning();
-        DefaultQuery<I, Word<O>> cex;
+    public Pair<Integer, MealyMachine<?, I, ?, O>> run() {
         try {
-            cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
-        } catch (ConflictException e) {
             startLearning();
-            cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
-        } catch (LimitException e) {
-            return hypotheses;
-        }
-
-        while (cex != null) {
+            DefaultQuery<I, Word<O>> cex;
             try {
-                this.refineHypothesis(cex);
                 cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
             } catch (ConflictException e) {
                 startLearning();
                 cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
             } catch (LimitException e) {
-                return hypotheses;
+                return finalHyp;
             }
+
+            while (cex != null) {
+                try {
+                    this.refineHypothesis(cex);
+                    cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+                } catch (ConflictException e) {
+                    startLearning();
+                    cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+                } catch (LimitException e) {
+                    return finalHyp;
+                }
+            }
+        } catch (LearningFinishedException e) {
         }
 
-        return hypotheses;
+        return finalHyp;
     }
 
     @Override
@@ -116,7 +127,7 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
 
     @Override
     public MealyMachine<?, I, ?, O> getHypothesisModel() {
-        return hypotheses.get(hypotheses.size() - 1).getSecond();
+        return currentHyp.getSecond();
     }
 
 }
