@@ -26,7 +26,8 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
         this.analysed.addAll(helpers.analysedIndices);
     }
 
-    public void construct(MealyMachine<S, I, ?, O> fsm, Alphabet<I> inputAlphabet, List<S> initialLabel, Helpers<I> helpers) {
+    public void construct(MealyMachine<S, I, ?, O> fsm, Alphabet<I> inputAlphabet, List<S> initialLabel,
+            Helpers<I> helpers) {
         helpers.analysedIndices.addAll(this.analysed);
         SplittingNode<S, I, O> rootNode = new SplittingNode<>(initialLabel);
         Integer rootIndex = this.tree.node(rootNode);
@@ -34,7 +35,6 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
         Integer originalBlockSize = initialLabel.size();
         helpers.partition.add(Pair.of(rootIndex, originalBlockSize));
 
-        
         while (!helpers.partition.isEmpty()) {
             Pair<Integer, Integer> el = helpers.partition.poll();
             Integer rIndex = el.getFirst();
@@ -115,6 +115,23 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
                 this.sepLCA.insert(triple.getFirst(), triple.getSecond(), triple.getThird());
             }
         }
+    }
+
+    public Word<I> separatingSequence(List<S> block) {
+        Integer lca = getLCA(block);
+        return lca != null ? Word.fromList(tree.get(lca).sepSeq.seq) : null;
+    }
+
+    public Integer getLCA(List<S> blockIn) {
+        LinkedList<S> block = new LinkedList<>(blockIn);
+        S pivot = block.getFirst();
+        List<S> rem = block.subList(1, block.size());
+
+        return rem.stream().map(x -> this.sepLCA.checkPair(x, pivot)).filter(x -> x != null).max((x, y) -> {
+            Integer xSize = tree.apply(x, SplittingNode::size);
+            Integer ySize = tree.apply(y, SplittingNode::size);
+            return xSize.compareTo(ySize);
+        }).orElse(null);
     }
 
     public void scoreAndUpdate(Integer r, I input, Integer rx, MealyMachine<S, I, ?, O> fsm, BestNode<I> bestR) {
