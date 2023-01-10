@@ -34,7 +34,7 @@ public class Scoring {
         for (S s : r.label) {
             Word<O> o = fsm.computeStateOutput(s, w);
             S d = fsm.getSuccessor(s, w);
-            outputdestMap.getOrDefault(o, new HashMap<>()).getOrDefault(d, new HashSet<>()).add(s);
+            outputdestMap.computeIfAbsent(o, k -> new HashMap<>()).computeIfAbsent(d, k -> new HashSet<>()).add(s);
         }
 
         if (outputdestMap.size() == 1) {

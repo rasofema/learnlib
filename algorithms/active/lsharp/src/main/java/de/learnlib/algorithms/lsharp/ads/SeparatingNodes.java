@@ -9,6 +9,10 @@ import net.automatalib.commons.util.Pair;
 public class SeparatingNodes<K extends Comparable<K>, V> {
     public HashMap<Pair<K, K>, V> inner;
 
+    public SeparatingNodes() {
+        this.inner = new HashMap<>();
+    }
+
     public Pair<K, K> makeKey(K x, K y) {
         return x.compareTo(y) < 0 ? Pair.of(x, y) : Pair.of(y, x);
     }
@@ -20,6 +24,6 @@ public class SeparatingNodes<K extends Comparable<K>, V> {
 
     public @Nullable V checkPair(K s1, K s2) {
         Pair<K, K> key = this.makeKey(s1, s2);
-        return this.inner.getOrDefault(key, null);
+        return this.inner.computeIfAbsent(key, k -> null);
     }
 }

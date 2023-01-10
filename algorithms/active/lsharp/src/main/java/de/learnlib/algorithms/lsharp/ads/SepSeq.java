@@ -18,6 +18,10 @@ public class SepSeq<T> {
     }
 
     public Boolean isInjective() {
+        if (this.status == null) {
+            return false;
+        }
+
         return this.status.compareTo(Status.INJ) == 0;
     }
 

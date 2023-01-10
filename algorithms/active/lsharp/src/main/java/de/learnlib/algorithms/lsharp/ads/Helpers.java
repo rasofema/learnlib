@@ -30,7 +30,7 @@ public class Helpers<I> {
     }
 
     public void addTransitionFromToVia(Integer src, Integer dst, I via) {
-        this.transitionsTo.getOrDefault(dst, new HashSet<>()).add(Pair.of(src, via));
+        this.transitionsTo.computeIfAbsent(dst, k -> new HashSet<>()).add(Pair.of(src, via));
     }
 
     public Integer scoreOf(Integer r) {

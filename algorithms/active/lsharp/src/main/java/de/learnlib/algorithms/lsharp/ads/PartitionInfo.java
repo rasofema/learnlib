@@ -20,13 +20,13 @@ public class PartitionInfo<S, I, O> {
 
     public PartitionInfo(MealyMachine<S, I, ?, O> fsm, I i, List<S> block) {
         block.stream().map(s -> Triple.of(s, fsm.getOutput(s, i), fsm.getSuccessor(s, i))).forEach(triple -> {
-            this.splitMap.getOrDefault(triple.getSecond(), new HashMap<>())
-                    .getOrDefault(triple.getThird(), new HashSet<>()).add(triple.getFirst());
+            this.splitMap.computeIfAbsent(triple.getSecond(), k -> new HashMap<>())
+                    .computeIfAbsent(triple.getThird(), k -> new HashSet<>()).add(triple.getFirst());
         });
     }
 
     public boolean isInjective() {
-        return this.splitMap.values().stream().allMatch(srcs -> srcs.size() < 2);
+        return this.splitMap.values().stream().flatMap(x -> x.values().stream()).allMatch(srcs -> srcs.size() < 2);
     }
 
     public boolean isSeparating() {

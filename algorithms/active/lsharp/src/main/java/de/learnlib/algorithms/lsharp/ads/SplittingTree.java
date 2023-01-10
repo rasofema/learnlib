@@ -16,9 +16,9 @@ import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
 public class SplittingTree<S extends Comparable<S>, I, O> {
-    public ArenaTree<SplittingNode<S, I, O>, Void> tree;
-    public SeparatingNodes<S, Integer> sepLCA;
-    public HashSet<Integer> analysed;
+    public ArenaTree<SplittingNode<S, I, O>, Void> tree = new ArenaTree<>();
+    public SeparatingNodes<S, Integer> sepLCA = new SeparatingNodes<>();
+    public HashSet<Integer> analysed = new HashSet<>();
 
     public SplittingTree(MealyMachine<S, I, ?, O> fsm, Alphabet<I> inputAlphabet, List<S> rootLabel) {
         Helpers<I> helpers = new Helpers<>();
@@ -52,8 +52,13 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
                 helpers.dependent.add(rIndex);
             }
 
+            Integer maximal = 0;
+            if (!helpers.partition.isEmpty()) {
+                maximal = helpers.partition.peek().getSecond();
+            }
+
             Integer currBlockSize = this.get(rIndex).size();
-            if (!helpers.dependent.isEmpty() && helpers.partition.peek().getSecond() <= currBlockSize) {
+            if (!helpers.dependent.isEmpty() && maximal <= currBlockSize) {
                 HashSet<Integer> nodesSeen = new HashSet<>();
                 boolean stable = false;
                 while (!stable) {
@@ -144,7 +149,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
     public boolean initTransOnInjInputs(MealyMachine<S, I, ?, O> fsm, Alphabet<I> inputAlphabet, Integer r,
             Helpers<I> helpers) {
         boolean stable = true;
-        BestNode<I> bestR = helpers.bestNode.getOrDefault(r, new BestNode<>());
+        BestNode<I> bestR = helpers.bestNode.computeIfAbsent(r, k -> new BestNode<>());
         List<I> injectiveXferInputs = get(r).inputsOfType(Type.XFER_INJ);
 
         for (I input : injectiveXferInputs) {
@@ -226,7 +231,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
             this.tree.arena.get(r).value.sepSeq = sepSeq;
             this.separate(r, fsm, helpers);
 
-            HashSet<Pair<Integer, I>> transToR = helpers.transitionsTo.getOrDefault(r, null);
+            HashSet<Pair<Integer, I>> transToR = helpers.transitionsTo.computeIfAbsent(r, k -> null);
             if (transToR != null) {
                 for (Pair<Integer, I> pair : transToR) {
                     if (get(pair.getFirst()).sepSeq.isSet()) {
@@ -253,7 +258,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
     public boolean initTransOnNonInjInputs(MealyMachine<S, I, ?, O> fsm, Alphabet<I> inpuAlphabet, Integer r,
             Helpers<I> helpers) {
         boolean stable = true;
-        BestNode<I> bestR = helpers.bestNode.getOrDefault(r, new BestNode<>());
+        BestNode<I> bestR = helpers.bestNode.computeIfAbsent(r, k -> new BestNode<>());
         Pair<I, Integer> bestNonInjSepInput = inpuAlphabet.stream()
                 .filter(x -> inputNonInjSeparating(fsm, x, get(r).label))
                 .map(x -> Pair.of(x, Scoring.scoreSep(get(r), x, fsm))).filter(p -> p.getSecond() < bestR.score)
@@ -296,7 +301,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
                             bestR.update(input, rx, score);
                         }
                     }
-                    helpers.transitionsTo.getOrDefault(rx, new HashSet<>()).add(Pair.of(r, input));
+                    helpers.transitionsTo.computeIfAbsent(rx, k -> new HashSet<>()).add(Pair.of(r, input));
                 }
                 if (!get(rx).sepSeq.isSet()) {
                     stable = !helpers.dependent.add(rx);
@@ -391,6 +396,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
     public void analyse(Integer rIndex, MealyMachine<S, I, ?, O> fsm, Alphabet<I> inputAlphabet,
             HashSet<Integer> analysed) {
         this.tree.arena.get(rIndex).value.analyse(fsm, inputAlphabet);
+        analysed.add(rIndex);
     }
 
     public void separate(Integer rIndex, MealyMachine<S, I, ?, O> fsm, Helpers<I> helpers) {
@@ -403,7 +409,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
         HashMap<Word<O>, List<S>> outputSrcMap = new HashMap<>();
         for (S s : rNode.label) {
             Word<O> outs = fsm.computeStateOutput(s, seq);
-            outputSrcMap.getOrDefault(outs, new LinkedList<>()).add(s);
+            outputSrcMap.computeIfAbsent(outs, k -> new LinkedList<>()).add(s);
         }
 
         List<Integer> childIndeces = outputSrcMap.entrySet().stream().map(e -> {
