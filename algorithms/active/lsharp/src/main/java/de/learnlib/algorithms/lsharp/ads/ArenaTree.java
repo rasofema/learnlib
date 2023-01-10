@@ -22,7 +22,7 @@ public class ArenaTree<T, P> {
         return idx;
     }
 
-    public Integer nodeWithSize(T value, Integer pIndex, P input) {
+    public Integer nodeWithParent(T value, Integer pIndex, P input) {
         Integer idx = this.size();
         this.arena.push(new ArenaNode<T, P>(Pair.of(input, pIndex), value));
         return idx;
@@ -35,4 +35,5 @@ public class ArenaTree<T, P> {
     public <X> X apply(Integer index, Function<T, X> func) {
         return func.apply(this.get(index));
     }
+
 }
