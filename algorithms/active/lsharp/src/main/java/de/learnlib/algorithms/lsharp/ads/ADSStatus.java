@@ -19,7 +19,7 @@
  public class ADSStatus extends RuntimeException {
     public enum Code {
         DONE,
-        UNKNOWN;
+        UNEXPECTED;
     }
 
     public ADSStatus(Code code) {

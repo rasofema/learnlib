@@ -1,28 +1,35 @@
 package de.learnlib.algorithms.lsharp.ads;
 
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class ADSNode<S, I, O> {
-    public List<S> initial;
-    public List<S> current;
-    public @Nullable I input;
-    public HashMap<O, Integer> children;
+public class ADSNode<I, O> {
+    private @Nullable I input;
+    private HashMap<O, ADSNode<I, O>> children;
+    private Integer score;
 
-    public ADSNode(List<S> initial, List<S> current) {
-        this.initial = initial;
-        this.current = current;
+    public ADSNode() {
+        this.input = null;
         this.children = new HashMap<>();
+        this.score = 0;
     }
 
-    public ADSNode(Stream<S> block) {
-        this.initial = block.collect(Collectors.toList());
-        this.current = new LinkedList<>(this.initial);
-        this.children = new HashMap<>();
+    public ADSNode(I input, HashMap<O, ADSNode<I, O>> children, Integer score) {
+        this.input = input;
+        this.children = children;
+        this.score = score;
+    }
+
+    public Integer getScore() {
+        return score;
+    }
+
+    public @Nullable I getInput() {
+        return input;
+    }
+
+    public @Nullable ADSNode<I, O> getChildNode(O lastOutput) {
+        return this.children.getOrDefault(lastOutput, null);
     }
 }
