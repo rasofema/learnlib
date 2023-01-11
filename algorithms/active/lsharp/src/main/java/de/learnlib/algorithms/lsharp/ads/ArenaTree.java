@@ -23,8 +23,8 @@ public class ArenaTree<T, P> {
     }
 
     public Integer nodeWithParent(T value, Integer pIndex, P input) {
-        Integer idx = this.size();
-        this.arena.push(new ArenaNode<T, P>(Pair.of(input, pIndex), value));
+        Integer idx = this.arena.size();
+        this.arena.add(new ArenaNode<T, P>(Pair.of(input, pIndex), value));
         return idx;
     }
 

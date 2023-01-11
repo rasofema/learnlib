@@ -1,26 +1,57 @@
 package de.learnlib.algorithms.lsharp;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import net.automatalib.automata.concepts.InputAlphabetHolder;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 
-public class LSMealyMachine<I, O> implements MealyMachine<LSState, I, Pair<LSState, I>, O> {
+public class LSMealyMachine<I, O> implements InputAlphabetHolder<I>, MealyMachine<LSState, I, Pair<LSState, I>, O> {
     private List<LSState> states;
     private LSState initialState;
     private Alphabet<I> inputAlphabet;
-    private Alphabet<O> outputAlphabet;
     private HashMap<Pair<LSState, I>, Pair<LSState, O>> transFunction;
+
+    public LSMealyMachine(Alphabet<I> inputAlphabet, List<LSState> states, LSState initialState,
+            HashMap<Pair<LSState, I>, Pair<LSState, O>> transFunction) {
+        this.states = states;
+        this.initialState = initialState;
+        this.inputAlphabet = inputAlphabet;
+        this.transFunction = transFunction;
+    }
+
+    public <S extends Comparable<S>> LSMealyMachine(Alphabet<I> inputAlphabet, MealyMachine<S, I, ?, O> mealy) {
+        this.inputAlphabet = inputAlphabet;
+        this.transFunction = new HashMap<>();
+
+        HashMap<S, LSState> toState = new HashMap<>();
+        toState.put(mealy.getInitialState(), new LSState(0));
+        mealy.getStates().stream().forEach(s -> toState.computeIfAbsent(s, k -> new LSState(toState.size())));
+        states = new LinkedList<>(toState.values());
+
+        for (S s : mealy.getStates()) {
+            for (I i : inputAlphabet) {
+                LSState p = toState.get(s);
+                O o = mealy.getOutput(s, i);
+                LSState q = toState.get(mealy.getSuccessor(s, i));
+                transFunction.put(Pair.of(p, i), Pair.of(q, o));
+            }
+        }
+
+        this.initialState = toState.get(mealy.getInitialState());
+    }
 
     @Override
     public Collection<Pair<LSState, I>> getTransitions(LSState state, I input) {
-        // TODO Auto-generated method stub
-        return null;
+        Pair<LSState, I> trans = getTransition(state, input);
+        return trans == null ? Collections.emptySet() : Collections.singleton(trans);
     }
 
     @Override
@@ -69,8 +100,17 @@ public class LSMealyMachine<I, O> implements MealyMachine<LSState, I, Pair<LSSta
     }
 
     @Override
+    public Alphabet<I> getInputAlphabet() {
+        return this.inputAlphabet;
+    }
+
+    @Override
     public O getTransitionOutput(Pair<LSState, I> transition) {
-        return this.getTransitionProperty(transition.getFirst(), transition.getSecond());
+        if (transFunction.containsKey(transition)) {
+            return transFunction.get(transition).getSecond();
+        }
+
+        return null;
     }
 
 }

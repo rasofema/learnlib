@@ -1,12 +1,9 @@
 package de.learnlib.algorithms.lsharp;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -54,10 +51,10 @@ public class NormalObservationTree<I, O> implements ObservationTree<LSState, I, 
 
     @Override
     public LSState insertObservation(@Nullable LSState s, Word<I> input, Word<O> output) {
-        LSState start = s == null ? new LSState(0) : s;
+        LSState start = s == null ? defaultState() : s;
         LSState curr = start;
 
-        int max = Math.min(input.length(), output.length()) - 1;
+        int max = Math.min(input.length(), output.length());
         for (int i = 0; i < max; i++) {
             curr = this.addTransitionGetDestination(curr, input.getSymbol(i), output.getSymbol(i));
         }
@@ -67,7 +64,7 @@ public class NormalObservationTree<I, O> implements ObservationTree<LSState, I, 
 
     @Override
     public Word<I> getAccessSeq(LSState state) {
-        return this.getTransferSeq(state, new LSState(0));
+        return this.getTransferSeq(state, defaultState());
     }
 
     @Override
@@ -97,7 +94,7 @@ public class NormalObservationTree<I, O> implements ObservationTree<LSState, I, 
 
     @Override
     public @Nullable Word<O> getObservation(@Nullable LSState start, Word<I> input) {
-        LSState s = start == null ? new LSState(0) : start;
+        LSState s = start == null ? defaultState() : start;
         WordBuilder<O> outWord = new WordBuilder<>();
         for (I i : input) {
             @Nullable
@@ -171,7 +168,7 @@ public class NormalObservationTree<I, O> implements ObservationTree<LSState, I, 
     @Override
     public boolean treeAndHypStatesApartSink(LSState st, LSState sh, MealyMachine<LSState, I, ?, O> fsm, O sinkOutput,
             Integer depth) {
-        return Apartness.treeAndHypStatesApartSunkBounded(st, sh, fsm, sinkOutput, depth);
+        return Apartness.treeAndHypStatesApartSunkBounded(this, st, sh, fsm, sinkOutput, depth);
     }
 
 }
