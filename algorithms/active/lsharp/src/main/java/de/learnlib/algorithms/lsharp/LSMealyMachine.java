@@ -3,8 +3,8 @@ package de.learnlib.algorithms.lsharp;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -14,14 +14,14 @@ import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Alphabet;
 
 public class LSMealyMachine<I, O> implements InputAlphabetHolder<I>, MealyMachine<LSState, I, Pair<LSState, I>, O> {
-    private List<LSState> states;
+    private Set<LSState> states;
     private LSState initialState;
     private Alphabet<I> inputAlphabet;
     private HashMap<Pair<LSState, I>, Pair<LSState, O>> transFunction;
 
-    public LSMealyMachine(Alphabet<I> inputAlphabet, List<LSState> states, LSState initialState,
+    public LSMealyMachine(Alphabet<I> inputAlphabet, Collection<LSState> states, LSState initialState,
             HashMap<Pair<LSState, I>, Pair<LSState, O>> transFunction) {
-        this.states = states;
+        this.states = new HashSet<>(states);
         this.initialState = initialState;
         this.inputAlphabet = inputAlphabet;
         this.transFunction = transFunction;
@@ -34,7 +34,7 @@ public class LSMealyMachine<I, O> implements InputAlphabetHolder<I>, MealyMachin
         HashMap<S, LSState> toState = new HashMap<>();
         toState.put(mealy.getInitialState(), new LSState(0));
         mealy.getStates().stream().forEach(s -> toState.computeIfAbsent(s, k -> new LSState(toState.size())));
-        states = new LinkedList<>(toState.values());
+        states = new HashSet<>(toState.values());
 
         for (S s : mealy.getStates()) {
             for (I i : inputAlphabet) {
