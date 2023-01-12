@@ -27,8 +27,6 @@ public class NormalObservationTreeTest {
     }
 
     private List<Pair<Word<String>, Word<String>>> tryGenInputs(LSMealyMachine<String, String> mealy, Integer count) {
-        Random rand = new Random();
-        rand.setSeed(42);
         MealyRandomWordsEQOracle<String, String> eqOracle = new MealyRandomWordsEQOracle<>(null, 0, 100, count, rand);
         return eqOracle.generateTestWords(mealy, mealy.getInputAlphabet()).map(i -> Pair.of(i, mealy.computeOutput(i)))
                 .collect(Collectors.toList());

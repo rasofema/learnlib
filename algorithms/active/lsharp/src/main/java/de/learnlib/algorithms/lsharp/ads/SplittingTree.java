@@ -340,7 +340,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
     }
 
     private Integer findChildWithState(SplittingNode<S, I, O> r, S s) {
-        return r.children.values().stream().filter(i -> get(i).hasState(s)).findAny().orElse(null);
+        return r.children.values().stream().filter(i -> get(i).hasState(s)).findFirst().orElse(null);
     }
 
     private Pair<Integer, Integer> findChildrenAtNode(SplittingNode<S, I, O> r, S s1, S s2) {
@@ -389,7 +389,7 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
 
     public Integer findNodeExact(List<S> block) {
         Integer out = IntStream.range(0, this.tree.size() + 1).filter(i -> block.size() == get(i).size())
-                .filter(i -> block.stream().allMatch(s -> get(i).hasState(s))).findAny().orElse(-1);
+                .filter(i -> block.stream().allMatch(s -> get(i).hasState(s))).findFirst().orElse(-1);
         return out == -1 ? null : out;
     }
 

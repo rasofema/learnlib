@@ -26,7 +26,7 @@ import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.api.query.Query;
-import de.learnlib.oracle.equivalence.MealyRandomWpMethodEQOracle;
+import de.learnlib.oracle.equivalence.AbstractTestWordEQOracle;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.incremental.ConflictException;
 import net.automatalib.incremental.mealy.tree.AdaptiveMealyTreeBuilder;
@@ -41,9 +41,10 @@ public class Reviser<S, I, T, O>
     private Random random;
     private Double revisionRatio;
     private Boolean caching;
-    private MealyRandomWpMethodEQOracle<I, O> testOracle;
+    private AbstractTestWordEQOracle<MealyMachine<?, I, ?, O>, I, Word<O>> testOracle;
 
     public Reviser(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> memOracle, MembershipOracle<I, Word<O>> eqOracle,
+            AbstractTestWordEQOracle<MealyMachine<?, I, ?, O>, I, Word<O>> testOracle,
             Double revisionRatio, Boolean caching, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.memOracle = memOracle;
@@ -51,7 +52,7 @@ public class Reviser<S, I, T, O>
         this.random = random;
         this.revisionRatio = revisionRatio;
         this.caching = caching;
-        this.testOracle = new MealyRandomWpMethodEQOracle<I, O>(null, 10, 100, 0, random, 100);
+        this.testOracle = testOracle;
     }
 
     private Word<O> internalProcessQuery(Query<I, Word<O>> query, Boolean isMemQuery)
