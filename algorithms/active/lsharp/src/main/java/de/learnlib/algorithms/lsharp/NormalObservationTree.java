@@ -100,7 +100,7 @@ public class NormalObservationTree<I, O> implements ObservationTree<LSState, I, 
             @Nullable
             Pair<O, LSState> pair = this.getOutSucc(s, i);
             if (pair == null) {
-                break;
+                return null;
             }
             outWord.add(pair.getFirst());
             s = pair.getSecond();

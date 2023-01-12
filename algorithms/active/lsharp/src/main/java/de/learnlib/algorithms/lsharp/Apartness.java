@@ -181,6 +181,7 @@ public class Apartness {
     public static <S extends Comparable<S>, I, O> @Nullable S showsStatesAreApart(ObservationTree<S, I, O> tree, S s1,
             S s2) {
         ArrayDeque<Pair<S, S>> workList = new ArrayDeque<>();
+        workList.add(Pair.of(s1, s2));
         while (!workList.isEmpty()) {
             Pair<S, S> pair = workList.pop();
             S fst = pair.getFirst();

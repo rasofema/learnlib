@@ -16,6 +16,7 @@ import com.rits.cloning.Cloner;
 
 import de.learnlib.api.algorithm.LearningAlgorithm.MealyLearner;
 import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.util.mealy.MealyUtil;
 import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.util.automata.equivalence.DeterministicEquivalenceTest;
@@ -50,8 +51,7 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
         Word<I> ceInput = cex.getInput();
         Word<O> ceOutput = cex.getOutput();
         oqOracle.addObservation(ceInput, ceOutput);
-        Word<O> hypOutput = mealy.computeOutput(ceInput);
-        Integer prefixIndex = getCEPrefixIndex(ceOutput, hypOutput);
+        Integer prefixIndex = MealyUtil.findMismatch(mealy, ceInput, ceOutput) + 1;
         this.processBinarySearch(ceInput.prefix(prefixIndex), ceOutput.prefix(prefixIndex), mealy);
     }
 
@@ -71,7 +71,8 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
         LSState qt = oTree.getSucc(oTree.defaultState(), accQT);
         Objects.requireNonNull(qt);
 
-        Integer x = ceInput.prefixes(true).stream().filter(seq -> frontierToBasisMap.containsKey(seq)).findFirst().get()
+        Integer x = ceInput.prefixes(false).stream().filter(seq -> seq.length() != 0)
+                .filter(seq -> frontierToBasisMap.containsKey(seq)).findFirst().get()
                 .length();
 
         Integer y = ceInput.size();
@@ -296,16 +297,6 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
     public Float getADSScore() {
         Integer zero = 0;
         return zero.floatValue();
-    }
-
-    public Integer getCEPrefixIndex(Word<O> ceOutput, Word<O> hypOutput) {
-        Integer max = Math.min(ceOutput.size(), hypOutput.size());
-        for (int i = 0; i < max; i++) {
-            if (ceOutput.getSymbol(i) != hypOutput.getSymbol(i)) {
-                return i;
-            }
-        }
-        throw new RuntimeException("SUL and HYP do not disagree on CE inputs.");
     }
 
     @Override

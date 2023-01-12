@@ -9,16 +9,16 @@ import java.util.stream.Collectors;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import de.learnlib.algorithms.lsharp.ads.ADSStatus;
 import de.learnlib.algorithms.lsharp.ads.ADSTree;
 import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
 import net.automatalib.commons.util.Pair;
 import net.automatalib.words.Word;
 import net.automatalib.words.WordBuilder;
 
 public class LSOracle<I, O> {
 
-    private MembershipOracle.MealyMembershipOracle<I, O> sul;
+    private MembershipOracle<I, Word<O>> sul;
     private NormalObservationTree<I, O> obsTree;
     private Rule2 rule2;
     private Rule3 rule3;
@@ -26,15 +26,15 @@ public class LSOracle<I, O> {
     private O sinkOutput;
     private Random random;
 
-    public LSOracle(MealyMembershipOracle<I, O> sul, NormalObservationTree<I, O> obsTree, Rule2 rule2, Rule3 rule3,
-            Word<I> sinkState, O sinkOutput, Long seed) {
+    public LSOracle(MembershipOracle<I, Word<O>> sul, NormalObservationTree<I, O> obsTree, Rule2 rule2, Rule3 rule3,
+            Word<I> sinkState, O sinkOutput, Random random) {
         this.sul = sul;
         this.obsTree = obsTree;
         this.rule2 = rule2;
         this.rule3 = rule3;
         this.sinkState = sinkState;
         this.sinkOutput = sinkOutput;
-        this.random = new Random(seed);
+        this.random = random;
     }
 
     public NormalObservationTree<I, O> getTree() {
@@ -235,14 +235,17 @@ public class LSOracle<I, O> {
         WordBuilder<O> outputsReceived = new WordBuilder<>();
         O lastOutput = null;
 
-        I nextInput = ads.nextInput(lastOutput);
-        while (nextInput != null) {
-            inputsSent.add(nextInput);
-            O out = sul.answerQuery(prefix.concat(inputsSent.toWord())).lastSymbol();
-            lastOutput = out;
-            outputsReceived.add(out);
+        try {
+            I nextInput = ads.nextInput(lastOutput);
+            while (nextInput != null) {
+                inputsSent.add(nextInput);
+                O out = sul.answerQuery(prefix.concat(inputsSent.toWord())).lastSymbol();
+                lastOutput = out;
+                outputsReceived.add(out);
 
-            nextInput = ads.nextInput(lastOutput);
+                nextInput = ads.nextInput(lastOutput);
+            }
+        } catch (ADSStatus e) {
         }
 
         return Pair.of(inputsSent.toWord(), outputsReceived.toWord());
@@ -254,20 +257,25 @@ public class LSOracle<I, O> {
         WordBuilder<O> outputsReceived = new WordBuilder<>();
         LSState currState = fromState;
 
-        I nextInput = ads.nextInput(prevOutput);
-        while (nextInput != null) {
-            inputsSent.add(nextInput);
-            @Nullable
-            Pair<O, LSState> pair = obsTree.getOutSucc(currState, nextInput);
-            if (pair == null) {
-                return null;
-            }
-            prevOutput = pair.getFirst();
-            outputsReceived.add(pair.getFirst());
-            currState = pair.getSecond();
+        try {
+            I nextInput = ads.nextInput(prevOutput);
+            while (nextInput != null) {
+                inputsSent.add(nextInput);
+                @Nullable
+                Pair<O, LSState> pair = obsTree.getOutSucc(currState, nextInput);
+                if (pair == null) {
+                    return null;
+                }
+                prevOutput = pair.getFirst();
+                outputsReceived.add(pair.getFirst());
+                currState = pair.getSecond();
 
-            nextInput = ads.nextInput(prevOutput);
+                nextInput = ads.nextInput(prevOutput);
+            }
+        } catch (ADSStatus e) {
+            // TODO: handle exception
         }
+
         ads.resetToRoot();
         return Pair.of(inputsSent.toWord(), outputsReceived.toWord());
     }
