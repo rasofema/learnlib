@@ -5,21 +5,20 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import javax.print.attribute.standard.MediaSize.Other;
-import javax.swing.event.HyperlinkEvent;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+
+import com.rits.cloning.Cloner;
 
 import de.learnlib.api.algorithm.LearningAlgorithm.MealyLearner;
 import de.learnlib.api.query.DefaultQuery;
+import net.automatalib.automata.transducers.MealyMachine;
 import net.automatalib.commons.util.Pair;
+import net.automatalib.util.automata.equivalence.DeterministicEquivalenceTest;
 import net.automatalib.words.Alphabet;
 import net.automatalib.words.Word;
 
@@ -307,5 +306,23 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
             }
         }
         throw new RuntimeException("SUL and HYP do not disagree on CE inputs.");
+    }
+
+    @Override
+    public void startLearning() {
+        this.initObsTree(null);
+    }
+
+    @Override
+    public boolean refineHypothesis(DefaultQuery<I, Word<O>> ceQuery) {
+        LSMealyMachine<I, O> oldHyp = (new Cloner()).deepClone(buildHypothesis());
+        processCex(ceQuery, oldHyp);
+        MealyMachine<?, I, ?, O> newHyp = getHypothesisModel();
+        return DeterministicEquivalenceTest.findSeparatingWord(oldHyp, newHyp, inputAlphabet) != null;
+    }
+
+    @Override
+    public MealyMachine<?, I, ?, O> getHypothesisModel() {
+        return buildHypothesis();
     }
 }
