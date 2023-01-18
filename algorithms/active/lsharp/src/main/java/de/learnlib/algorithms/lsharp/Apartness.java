@@ -67,8 +67,8 @@ public class Apartness {
                     O outHyp = fsm.getOutput(r, i);
                     Objects.requireNonNull(outHyp);
 
-                    if (outHyp == stepFree.getFirst()) {
-                        if (stepFree.getFirst() == sinkOutput) {
+                    if (outHyp.equals(stepFree.getFirst())) {
+                        if (stepFree.getFirst().equals(sinkOutput)) {
                             continue;
                         }
                         if (d + 1 == depth) {
@@ -107,8 +107,8 @@ public class Apartness {
                     O outHyp = fsm.getOutput(r, i);
                     Objects.requireNonNull(outHyp);
 
-                    if (outHyp == stepFree.getFirst()) {
-                        if (stepFree.getFirst() == sinkOutput) {
+                    if (outHyp.equals(stepFree.getFirst())) {
+                        if (stepFree.getFirst().equals(sinkOutput)) {
                             continue;
                         }
                         queue.push(Pair.of(stepFree.getSecond(), dh));
@@ -149,7 +149,7 @@ public class Apartness {
                     O outHyp = fsm.getOutput(r, i);
                     Objects.requireNonNull(outHyp);
 
-                    if (outHyp == stepFree.getFirst()) {
+                    if (outHyp.equals(stepFree.getFirst())) {
                         queue.push(Pair.of(stepFree.getSecond(), dh));
                     } else {
                         return stepFree.getSecond();
@@ -196,7 +196,7 @@ public class Apartness {
                 S fstD = fstOD.getSecond();
                 O sndO = sndOD.getFirst();
                 S sndD = sndOD.getSecond();
-                if (fstO == sndO) {
+                if (fstO.equals(sndO)) {
                     workList.push(Pair.of(fstD, sndD));
                 } else {
                     return fstD;

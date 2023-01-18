@@ -47,7 +47,7 @@ public class SplittingNode<S, I, O> {
                 .map(i -> Pair.of(i, new PartitionInfo<>(mealy, i, rBlock)))
                 .filter(p -> p.getSecond().iType() != PartitionInfo.Type.USELESS).collect(Collectors.toList());
 
-        Optional<I> injSepInput = infos.stream().filter(p -> p.getSecond().iType() == PartitionInfo.Type.SEP_INJ)
+        Optional<I> injSepInput = infos.stream().filter(p -> p.getSecond().iType().equals(PartitionInfo.Type.SEP_INJ))
                 .map(p -> p.getFirst()).findAny();
 
         if (injSepInput.isPresent()) {

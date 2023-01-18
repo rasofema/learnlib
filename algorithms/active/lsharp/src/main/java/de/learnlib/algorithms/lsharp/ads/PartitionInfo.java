@@ -66,7 +66,7 @@ public class PartitionInfo<S, I, O> {
     }
 
     public boolean nonInjSepInput() {
-        return this.iType() == Type.SEP_NON_INJ;
+        return this.iType().equals(Type.SEP_NON_INJ);
     }
 
     public List<S> allDests() {

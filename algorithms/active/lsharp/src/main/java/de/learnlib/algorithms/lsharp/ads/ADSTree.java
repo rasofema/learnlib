@@ -65,7 +65,7 @@ public class ADSTree<S extends Comparable<S>, I, O> implements ADS<I, O> {
             O o = e.getKey();
             List<S> oPart = e.getValue();
             Integer uIO = oPart.size();
-            Integer childScore = o == sinkOut ? 0 : (this.constructADS(tree, oPart, sinkOut)).getScore();
+            Integer childScore = o.equals(sinkOut) ? 0 : (this.constructADS(tree, oPart, sinkOut)).getScore();
             return (Integer) this.computeRegScore(uIO, ui, childScore);
         }).collect(Collectors.summingInt(x -> x));
 
@@ -102,7 +102,7 @@ public class ADSTree<S extends Comparable<S>, I, O> implements ADS<I, O> {
 
     public Pair<Integer, Pair<O, ADSNode<I, O>>> computeOSubtree(ObservationTree<S, I, O> tree, O o, List<S> oPart,
             O sinkOut, Integer ui) {
-        ADSNode<I, O> oSubtree = o == sinkOut ? new ADSNode<>(null, new HashMap<>(), 0)
+        ADSNode<I, O> oSubtree = o.equals(sinkOut) ? new ADSNode<>(null, new HashMap<>(), 0)
                 : this.constructADS(tree, oPart, sinkOut);
         Integer oChildScore = oSubtree.getScore();
         int uio = oPart.size();

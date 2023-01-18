@@ -185,7 +185,7 @@ public class LSOracle<I, O> {
 
         out = sul.answerQuery(inputSeq);
 
-        if (sinkState == null && out.lastSymbol() == sinkOutput) {
+        if (sinkState == null && out.lastSymbol().equals(sinkOutput)) {
             sinkState = inputSeq;
         }
 
@@ -215,7 +215,7 @@ public class LSOracle<I, O> {
         }
 
         Word<O> prefixOut = sul.answerQuery(prefix);
-        if (prefixOut.lastSymbol() == sinkOutput) {
+        if (prefixOut.lastSymbol().equals(sinkOutput)) {
             LSState sink = this.addObservation(prefix, prefixOut);
             if (sinkState == null) {
                 sinkState = prefix;
