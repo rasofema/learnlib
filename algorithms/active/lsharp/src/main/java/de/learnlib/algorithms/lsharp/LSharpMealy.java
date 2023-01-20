@@ -51,7 +51,7 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
         Word<I> ceInput = cex.getInput();
         Word<O> ceOutput = cex.getOutput();
         oqOracle.addObservation(ceInput, ceOutput);
-        Integer prefixIndex = MealyUtil.findMismatch(mealy, ceInput, ceOutput) + 1;
+        Integer prefixIndex = MealyUtil.findMismatch(mealy, ceInput, ceOutput);
         this.processBinarySearch(ceInput.prefix(prefixIndex), ceOutput.prefix(prefixIndex), mealy);
     }
 
@@ -117,7 +117,8 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
                 if (entry.getValue().size() <= 1) {
                     continue;
                 }
-                oqOracle.identifyFrontier(entry.getKey(), entry.getValue());
+                List<Word<I>> newCands = oqOracle.identifyFrontier(entry.getKey(), entry.getValue());
+                frontierToBasisMap.put(entry.getKey(), newCands);
             }
 
             this.promoteFrontierState();

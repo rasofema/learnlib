@@ -96,7 +96,7 @@ public class LSOracle<I, O> {
         throw new RuntimeException("Shouldnt get here!");
     }
 
-    public void identifyFrontier(Word<I> fsAcc, List<Word<I>> candidates) {
+    public List<Word<I>> identifyFrontier(Word<I> fsAcc, List<Word<I>> candidates) {
         LSState fs = obsTree.getSucc(obsTree.defaultState(), fsAcc);
         Objects.requireNonNull(fs);
         candidates.removeIf(b -> {
@@ -107,13 +107,14 @@ public class LSOracle<I, O> {
 
         Integer orgCandLen = candidates.size();
         if (orgCandLen < 2) {
-            return;
+            return candidates;
         }
 
         Pair<Word<I>, Word<O>> pair = rule3IO(candidates, fsAcc);
         obsTree.insertObservation(null, pair.getFirst(), pair.getSecond());
         candidates.removeIf(b -> Apartness.accStatesAreApart(obsTree, fsAcc, b));
         assert candidates.size() != orgCandLen;
+        return candidates;
     }
 
     public List<Pair<Word<I>, List<Word<I>>>> exploreFrontier(List<Word<I>> basis) {
