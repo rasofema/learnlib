@@ -21,6 +21,8 @@ import java.util.Random;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import de.learnlib.algorithms.continuous.base.HypEventable;
+import de.learnlib.algorithms.continuous.base.LearningFinishedException;
 import de.learnlib.api.exception.LimitException;
 import de.learnlib.api.oracle.EquivalenceOracle;
 import de.learnlib.api.oracle.MembershipOracle;
@@ -42,10 +44,11 @@ public class Reviser<S, I, T, O>
     private Double revisionRatio;
     private Boolean caching;
     private AbstractTestWordEQOracle<MealyMachine<?, I, ?, O>, I, Word<O>> testOracle;
+    private final HypEventable<I, O> newHypEvent;
 
     public Reviser(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> memOracle, MembershipOracle<I, Word<O>> eqOracle,
             AbstractTestWordEQOracle<MealyMachine<?, I, ?, O>, I, Word<O>> testOracle,
-            Double revisionRatio, Boolean caching, Random random) {
+            HypEventable<I, O> newHypEvent, Double revisionRatio, Boolean caching, Random random) {
         this.cache = new AdaptiveMealyTreeBuilder<>(alphabet);
         this.memOracle = memOracle;
         this.eqOracle = eqOracle;
@@ -53,12 +56,20 @@ public class Reviser<S, I, T, O>
         this.revisionRatio = revisionRatio;
         this.caching = caching;
         this.testOracle = testOracle;
+        this.newHypEvent = newHypEvent;
     }
 
     private Word<O> internalProcessQuery(Query<I, Word<O>> query, Boolean isMemQuery)
             throws ConflictException, LimitException {
         Word<O> answer = (isMemQuery ? memOracle : eqOracle).answerQuery(query.getInput());
         query.answer(answer.suffix(query.getSuffix().length()));
+
+        // We have done things that changed the query count. So we update the bags and
+        // check if now we are done.
+        MealyMachine<?, I, ?, O> finito = newHypEvent.apply(null);
+        if (finito != null) {
+            throw new LearningFinishedException();
+        }
 
         // Conflict detected
         if (cache.insert(query.getInput(), answer)) {

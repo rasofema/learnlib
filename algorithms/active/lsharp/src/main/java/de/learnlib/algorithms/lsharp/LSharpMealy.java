@@ -141,7 +141,7 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
         NormalObservationTree<I, O> oTree = oqOracle.getTree();
         frontierToBasisMap.entrySet().parallelStream().filter(e -> !Apartness.accStatesAreApart(oTree, e.getKey(), bs))
                 .forEach(e -> {
-                    e.getValue().add(bs);
+                    frontierToBasisMap.get(e.getKey()).add(bs);
                 });
     }
 

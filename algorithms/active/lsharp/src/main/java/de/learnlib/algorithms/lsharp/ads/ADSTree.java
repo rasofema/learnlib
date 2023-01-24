@@ -78,10 +78,11 @@ public class ADSTree<S extends Comparable<S>, I, O> implements ADS<I, O> {
 
         ADSNode<I, O> subtreeInfo = inputsToKeep.parallelStream().map(i -> {
             HashMap<O, List<S>> innerOPartitions = this.partitionOnOutput(tree, currentBlock, i);
-            Integer innerUI = innerOPartitions.values().stream().collect(Collectors.summingInt(x -> x.size()));
+            Integer innerUI = innerOPartitions.values().stream().map(p -> p.size())
+                    .collect(Collectors.summingInt(x -> x));
 
             Pair<List<Integer>, List<Pair<O, ADSNode<I, O>>>> pair = unzip(
-                    oPartitions
+                    innerOPartitions
                             .entrySet().stream().map(e -> (Pair<Integer, Pair<O, ADSNode<I, O>>>) this
                                     .computeOSubtree(tree, e.getKey(), e.getValue(), sinkOut, innerUI))
                             .collect(Collectors.toList()));

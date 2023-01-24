@@ -47,7 +47,8 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
             MembershipOracle<I, Word<O>> memOracle, MembershipOracle<I, Word<O>> eqOracle,
             AbstractTestWordEQOracle<MealyMachine<?, I, ?, O>, I, Word<O>> testOracle, Alphabet<I> alphabet,
             Double revisionRatio, Boolean caching, Random random, HypEventable<I, O> newHypEvent) {
-        this.oracle = new Reviser<>(alphabet, memOracle, eqOracle, testOracle, revisionRatio, caching, random);
+        this.oracle = new Reviser<>(alphabet, memOracle, eqOracle, testOracle, newHypEvent, revisionRatio, caching,
+                random);
         this.constructor = constructor;
         this.alphabet = alphabet;
         this.newHypEvent = newHypEvent;
@@ -103,6 +104,7 @@ public class PAR<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
                 }
             }
         } catch (LearningFinishedException e) {
+            finalHyp = currentHyp;
         }
 
         return finalHyp;

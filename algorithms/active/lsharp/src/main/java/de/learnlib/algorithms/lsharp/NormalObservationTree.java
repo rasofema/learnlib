@@ -89,7 +89,8 @@ public class NormalObservationTree<I, O> implements ObservationTree<LSState, I, 
             currState = parentIndex;
         }
 
-        return accessSeq.reverse().toWord();
+        accessSeq.reverse();
+        return accessSeq.toWord();
     }
 
     @Override
