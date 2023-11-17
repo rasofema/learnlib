@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,15 @@ package de.learnlib.datastructure.pta;
 import java.util.Arrays;
 import java.util.List;
 
-import de.learnlib.datastructure.pta.pta.BlueFringePTA;
-import de.learnlib.datastructure.pta.pta.BlueFringePTAState;
-import de.learnlib.datastructure.pta.pta.RedBlueMerge;
-import net.automatalib.automata.UniversalDeterministicAutomaton;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.automaton.UniversalDeterministicAutomaton;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
  * Test if the inferred automaton of a merge result behaves correctly.
- *
- * @author frohme
  */
 @Test
 public class MergedAutomatonTest {
@@ -49,7 +44,7 @@ public class MergedAutomatonTest {
         final Word<Character> p3 = Word.fromString("bba");
         final Word<Character> p4 = Word.fromString("bbaba");
 
-        final Word<Character> n1 = Word.fromString("a");
+        final Word<Character> n1 = Word.fromLetter('a');
         final Word<Character> n2 = Word.fromString("bb");
         final Word<Character> n3 = Word.fromString("aab");
         final Word<Character> n4 = Word.fromString("aba");
@@ -59,25 +54,25 @@ public class MergedAutomatonTest {
 
         final BlueFringePTA<Boolean, Void> pta = new BlueFringePTA<>(alphabet.size());
 
-        for (final Word<Character> w : positiveSamples) {
+        for (Word<Character> w : positiveSamples) {
             pta.addSample(w.asIntSeq(alphabet), true);
         }
-        for (final Word<Character> w : negativeSamples) {
+        for (Word<Character> w : negativeSamples) {
             pta.addSample(w.asIntSeq(alphabet), false);
         }
 
         // the PTA works on an Integer alphabet abstraction, hence a -> 0, b -> 1
-        final BlueFringePTAState<Boolean, Void> q2 = pta.getState(Word.fromSymbols(0));
-        final BlueFringePTAState<Boolean, Void> q3 = pta.getState(Word.fromSymbols(1));
+        final BlueFringePTAState<Boolean, Void> q2 = pta.getState(Word.fromLetter(0));
+        final BlueFringePTAState<Boolean, Void> q3 = pta.getState(Word.fromLetter(1));
         final BlueFringePTAState<Boolean, Void> q4 = pta.getState(Word.fromSymbols(0, 0));
         final BlueFringePTAState<Boolean, Void> q6 = pta.getState(Word.fromSymbols(0, 0, 0));
 
-        // fast forward algorithm
+        // fast-forward algorithm
         pta.init((q) -> {});
         pta.promote(q2, (q) -> {});
         pta.promote(q3, (q) -> {});
 
-        final RedBlueMerge<Boolean, Void, BlueFringePTAState<Boolean, Void>> merge = pta.tryMerge(q3, q4);
+        final RedBlueMerge<BlueFringePTAState<Boolean, Void>, Boolean, Void> merge = pta.tryMerge(q3, q4);
         Assert.assertNotNull(merge);
 
         final UniversalDeterministicAutomaton<BlueFringePTAState<Boolean, Void>, Integer, ?, Boolean, Void>
@@ -86,6 +81,7 @@ public class MergedAutomatonTest {
         // subtree of 3 states has been subsumed
         Assert.assertEquals(pta.size() - 3, mergedAutomaton.size());
 
+        // the PTA works on an Integer alphabet abstraction, hence a -> 0, b -> 1
         Assert.assertEquals(mergedAutomaton.getState(Word.fromSymbols(0, 0)), q3);
         Assert.assertEquals(mergedAutomaton.getSuccessor(q2, 0), q3);
 

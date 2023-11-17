@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -57,8 +57,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *         input symbol type
  * @param <D>
  *         output domain type
- *
- * @author Malte Isberner
  */
 public final class GenericObservationTable<I, D> implements MutableObservationTable<I, D> {
 
@@ -470,7 +468,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     }
 
     @Override
-    public RowImpl<I> getRow(int rowId) {
+    public Row<I> getRow(int rowId) {
         return allRows.get(rowId);
     }
 
@@ -531,7 +529,7 @@ public final class GenericObservationTable<I, D> implements MutableObservationTa
     }
 
     @Override
-    public List<List<Row<I>>> addAlphabetSymbol(I symbol, final MembershipOracle<I, D> oracle) {
+    public List<List<Row<I>>> addAlphabetSymbol(I symbol, MembershipOracle<I, D> oracle) {
 
         if (!alphabet.containsSymbol(symbol)) {
             Alphabets.toGrowingAlphabetOrThrowException(alphabet).addSymbol(symbol);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +15,24 @@
  */
 package de.learnlib.oracle.membership;
 
-import java.util.Collection;
-
-import de.learnlib.api.oracle.SingleQueryOracle;
-import de.learnlib.api.query.Query;
-import de.learnlib.util.MQUtil;
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.words.Word;
+import de.learnlib.buildtool.refinement.annotation.GenerateRefinement;
+import de.learnlib.buildtool.refinement.annotation.Generic;
+import de.learnlib.buildtool.refinement.annotation.Interface;
+import de.learnlib.buildtool.refinement.annotation.Map;
+import de.learnlib.oracle.SingleQueryOracle;
+import de.learnlib.oracle.SingleQueryOracle.SingleQueryOracleDFA;
+import de.learnlib.oracle.SingleQueryOracle.SingleQueryOracleMealy;
+import de.learnlib.oracle.SingleQueryOracle.SingleQueryOracleMoore;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.fsa.NFA;
+import net.automatalib.automaton.procedural.SBA;
+import net.automatalib.automaton.procedural.SPA;
+import net.automatalib.automaton.procedural.SPMM;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.automaton.vpa.SEVPA;
+import net.automatalib.word.Word;
 
 /**
  * A membership oracle backed by an automaton. The automaton must implement the {@link SuffixOutput} concept, allowing
@@ -37,9 +45,53 @@ import net.automatalib.words.Word;
  *         input symbol type
  * @param <D>
  *         (suffix) output domain type
- *
- * @author Malte Isberner
  */
+@GenerateRefinement(name = "DFASimulatorOracle",
+                    generics = "I",
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Boolean.class)},
+                    parameterMapping = @Map(from = SuffixOutput.class, to = DFA.class, withGenerics = {"?", "I"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleDFA.class, generics = "I"))
+@GenerateRefinement(name = "MealySimulatorOracle",
+                    generics = {"I", "O"},
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Word.class, generics = "O")},
+                    parameterMapping = @Map(from = SuffixOutput.class,
+                                            to = MealyMachine.class,
+                                            withGenerics = {"?", "I", "?", "O"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleMealy.class, generics = {"I", "O"}))
+@GenerateRefinement(name = "MooreSimulatorOracle",
+                    generics = {"I", "O"},
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Word.class, generics = "O")},
+                    parameterMapping = @Map(from = SuffixOutput.class,
+                                            to = MooreMachine.class,
+                                            withGenerics = {"?", "I", "?", "O"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleMoore.class, generics = {"I", "O"}))
+@GenerateRefinement(name = "NFASimulatorOracle",
+                    generics = "I",
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Boolean.class)},
+                    parameterMapping = @Map(from = SuffixOutput.class, to = NFA.class, withGenerics = {"?", "I"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleDFA.class, generics = "I"))
+@GenerateRefinement(name = "SBASimulatorOracle",
+                    generics = "I",
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Boolean.class)},
+                    parameterMapping = @Map(from = SuffixOutput.class, to = SBA.class, withGenerics = {"?", "I"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleDFA.class, generics = "I"))
+@GenerateRefinement(name = "SEVPASimulatorOracle",
+                    generics = "I",
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Boolean.class)},
+                    parameterMapping = @Map(from = SuffixOutput.class, to = SEVPA.class, withGenerics = {"?", "I"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleDFA.class, generics = "I"))
+@GenerateRefinement(name = "SPASimulatorOracle",
+                    generics = "I",
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Boolean.class)},
+                    parameterMapping = @Map(from = SuffixOutput.class, to = SPA.class, withGenerics = {"?", "I"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleDFA.class, generics = "I"))
+@GenerateRefinement(name = "SPMMSimulatorOracle",
+                    generics = {"I", "O"},
+                    parentGenerics = {@Generic("I"), @Generic(clazz = Word.class, generics = "O")},
+                    parameterMapping = @Map(from = SuffixOutput.class,
+                                            to = SPMM.class,
+                                            withGenerics = {"?", "I", "?", "O"}),
+                    interfaces = @Interface(clazz = SingleQueryOracleMealy.class, generics = {"I", "O"}))
 public class SimulatorOracle<I, D> implements SingleQueryOracle<I, D> {
 
     protected SuffixOutput<I, D> automaton;
@@ -58,33 +110,4 @@ public class SimulatorOracle<I, D> implements SingleQueryOracle<I, D> {
     public D answerQuery(Word<I> prefix, Word<I> suffix) {
         return automaton.computeSuffixOutput(prefix, suffix);
     }
-
-    @Override
-    public void processQueries(Collection<? extends Query<I, D>> queries) {
-        MQUtil.answerQueries(this, queries);
-    }
-
-    public static class DFASimulatorOracle<I> extends SimulatorOracle<I, Boolean> implements SingleQueryOracleDFA<I> {
-
-        public DFASimulatorOracle(DFA<?, I> dfa) {
-            super(dfa);
-        }
-    }
-
-    public static class MealySimulatorOracle<I, O> extends SimulatorOracle<I, Word<O>>
-            implements SingleQueryOracleMealy<I, O> {
-
-        public MealySimulatorOracle(MealyMachine<?, I, ?, O> mealy) {
-            super(mealy);
-        }
-    }
-
-    public static class MooreSimulatorOracle<I, O> extends SimulatorOracle<I, Word<O>>
-            implements SingleQueryOracleMoore<I, O> {
-
-        public MooreSimulatorOracle(MooreMachine<?, I, ?, O> moore) {
-            super(moore);
-        }
-    }
-
 }

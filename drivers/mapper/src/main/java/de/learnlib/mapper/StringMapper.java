@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@ package de.learnlib.mapper;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.learnlib.mapper.api.SULMapper;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.impl.GrowingMapAlphabet;
+import de.learnlib.sul.SULMapper;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.GrowingMapAlphabet;
 
 public class StringMapper<CI> implements SULMapper<String, String, CI, Object> {
 

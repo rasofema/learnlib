@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,6 @@ import java.lang.annotation.Target;
 
 /**
  * A refinement mapping of (constructor) parameters for the to-be-generated refinement.
- *
- * @author frohme
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({})
@@ -43,7 +41,7 @@ public @interface Map {
     Class<?> to();
 
     /**
-     * Potential nested type parameters of the replacement (cf. {@link #to()} type. If the replacement type has inner
+     * Potential nested type parameters of the replacement (cf. {@link #to()}) type. If the replacement type has inner
      * type variables use {@link #withComplexGenerics()}.
      *
      * @return potential nested type parameters of the replacement type
@@ -51,8 +49,8 @@ public @interface Map {
     String[] withGenerics() default {};
 
     /**
-     * Potential nested type parameters of the replacement (cf. {@link #to()} type that may contain inner type variables
-     * themselves.
+     * Potential nested type parameters of the replacement (cf. {@link #to()}) type that may contain inner type
+     * variables themselves.
      *
      * @return potential nested type parameters of the replacement type
      */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,21 @@
  */
 package de.learnlib.oracle.equivalence;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.LearningExample;
-import de.learnlib.examples.dfa.ExamplePaulAndMary;
-import de.learnlib.examples.mealy.ExampleStack;
+import de.learnlib.example.LearningExample;
+import de.learnlib.example.dfa.ExamplePaulAndMary;
+import de.learnlib.example.mealy.ExampleStack;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
 import de.learnlib.oracle.membership.SimulatorOracle;
-import net.automatalib.automata.AutomatonCreator;
-import net.automatalib.automata.UniversalDeterministicAutomaton;
-import net.automatalib.automata.concepts.DetSuffixOutputAutomaton;
-import net.automatalib.automata.concepts.Output;
-import net.automatalib.automata.fsa.impl.compact.CompactDFA;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.AutomatonCreator;
+import net.automatalib.automaton.UniversalDeterministicAutomaton;
+import net.automatalib.automaton.concept.DetSuffixOutputAutomaton;
+import net.automatalib.automaton.concept.Output;
+import net.automatalib.automaton.fsa.CompactDFA;
+import net.automatalib.automaton.transducer.CompactMealy;
 import net.automatalib.exception.UndefinedPropertyAccessException;
-import net.automatalib.words.Alphabet;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,16 +20,16 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import de.learnlib.api.ObservableSUL;
-import de.learnlib.api.SUL;
-import de.learnlib.api.StateLocalInputSUL;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.OmegaMembershipOracle;
-import de.learnlib.api.oracle.parallelism.ThreadPool.PoolPolicy;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.OmegaMembershipOracle;
 import de.learnlib.oracle.membership.AbstractSULOmegaOracle;
 import de.learnlib.oracle.membership.SULOracle;
 import de.learnlib.oracle.membership.StateLocalInputSULOracle;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.parallelism.ThreadPool.PoolPolicy;
+import de.learnlib.sul.ObservableSUL;
+import de.learnlib.sul.SUL;
+import de.learnlib.sul.StateLocalInputSUL;
+import net.automatalib.word.Word;
 
 /**
  * Builders for (static and dynamic) parallel oracles.
@@ -64,8 +64,6 @@ import net.automatalib.words.Word;
  *      .withPoolPolicy(PoolPolicy.CACHED)
  *      .create();
  * </pre>
- *
- * @author Malte Isberner
  */
 public final class ParallelOracleBuilders {
 

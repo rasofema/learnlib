@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,16 +17,12 @@ package de.learnlib.oracle.parallelism;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.parallelism.BatchProcessor;
-
 /**
  * A queries job that maintains a fixed reference to a {@link BatchProcessor}, executes queries using this oracle
  * regardless of the executing thread.
  *
  * @param <Q>
  *         query type
- *
- * @author Malte Isberner
  */
 final class StaticQueriesJob<Q> extends AbstractQueriesJob<Q> {
 

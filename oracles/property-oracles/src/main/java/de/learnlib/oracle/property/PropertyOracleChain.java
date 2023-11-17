@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,34 +20,36 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import de.learnlib.api.oracle.PropertyOracle;
-import de.learnlib.api.oracle.PropertyOracle.DFAPropertyOracle;
-import de.learnlib.api.oracle.PropertyOracle.MealyPropertyOracle;
-import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.buildtool.refinement.annotation.GenerateRefinement;
 import de.learnlib.buildtool.refinement.annotation.Generic;
 import de.learnlib.buildtool.refinement.annotation.Interface;
 import de.learnlib.buildtool.refinement.annotation.Map;
-import net.automatalib.automata.concepts.Output;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.PropertyOracle;
+import de.learnlib.oracle.PropertyOracle.DFAPropertyOracle;
+import de.learnlib.oracle.PropertyOracle.MealyPropertyOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.concept.Output;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A chain of property oracles. Useful when combining multiple model checking strategies to disprove a property, or when
  * finding counter examples to hypotheses.
  * <p>
- * For example you may want to construct a chain that first uses a model checker for monitors, and next, one that uses
+ * For example, you may want to construct a chain that first uses a model checker for monitors, and next, one that uses
  * a model checker for full LTL. This strategy tends to give shorter counter examples for properties, and these counter
  * examples can be found more quickly (as in smaller hypothesis size and less learning queries).
  *
- * @param <I> the input type.
- * @param <A> the automaton type.
- * @param <P> the property type.
- * @param <D> the output type.
- *
- * @author Jeroen Meijer
+ * @param <I>
+ *         the input type.
+ * @param <A>
+ *         the automaton type.
+ * @param <P>
+ *         the property type.
+ * @param <D>
+ *         the output type.
  */
 @GenerateRefinement(name = "DFAPropertyOracleChain",
                     generics = {"I", "P"},

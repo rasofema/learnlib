@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,9 +22,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
-import de.learnlib.api.oracle.parallelism.BatchProcessor;
-import de.learnlib.api.oracle.parallelism.ThreadPool.PoolPolicy;
-import net.automatalib.commons.util.concurrent.ScalingThreadPoolExecutor;
+import de.learnlib.oracle.parallelism.ThreadPool.PoolPolicy;
+import net.automatalib.common.util.concurrent.ScalingThreadPoolExecutor;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -37,8 +36,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *         (sub-) processor type
  * @param <OR>
  *         constructed oracle type
- *
- * @author Malte Isberner
  */
 public abstract class AbstractDynamicBatchProcessorBuilder<Q, P extends BatchProcessor<Q>, OR> {
 
@@ -82,6 +79,7 @@ public abstract class AbstractDynamicBatchProcessorBuilder<Q, P extends BatchPro
         return this;
     }
 
+    @SuppressWarnings("PMD.CloseResource") // false positive on JDK21 builds
     public OR create() {
 
         final Supplier<? extends P> supplier;

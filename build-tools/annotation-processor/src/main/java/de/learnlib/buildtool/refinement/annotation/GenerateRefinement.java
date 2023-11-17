@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +24,10 @@ import java.lang.annotation.Target;
 /**
  * Annotation to indicate that a subclass with the specified configuration should be generated. Currently only supports
  * narrowing type parameters/constructor parameters/interfaces. Delegates to super constructors.
- *
- * @author frohme
  */
 @Repeatable(GenerateRefinements.class)
 @Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.TYPE})
+@Target(ElementType.TYPE)
 public @interface GenerateRefinement {
 
     /**

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,11 +23,12 @@ import java.util.stream.Stream;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Streams;
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.concepts.Output;
-import net.automatalib.words.Word;
+import de.learnlib.logging.Category;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.concept.Output;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +46,6 @@ import org.slf4j.LoggerFactory;
  *         input symbol type
  * @param <D>
  *         output (domain) type
- *
- * @author frohme
  */
 public abstract class AbstractTestWordEQOracle<A extends Output<I, D>, I, D> implements EquivalenceOracle<A, I, D> {
 
@@ -70,7 +69,8 @@ public abstract class AbstractTestWordEQOracle<A extends Output<I, D>, I, D> imp
     public @Nullable DefaultQuery<I, D> findCounterExample(A hypothesis, Collection<? extends I> inputs) {
         // Fail fast on empty inputs
         if (inputs.isEmpty()) {
-            LOGGER.warn("Passed empty set of inputs to equivalence oracle; no counterexample can be found!");
+            LOGGER.warn(Category.COUNTEREXAMPLE,
+                        "Passed empty set of inputs to equivalence oracle; no counterexample can be found!");
             return null;
         }
 
@@ -100,16 +100,11 @@ public abstract class AbstractTestWordEQOracle<A extends Output<I, D>, I, D> imp
      */
     public abstract Stream<Word<I>> generateTestWords(A hypothesis, Collection<? extends I> inputs);
 
-    private Stream<DefaultQuery<I, D>> answerQueries(final Stream<DefaultQuery<I, D>> stream) {
+    private Stream<DefaultQuery<I, D>> answerQueries(Stream<DefaultQuery<I, D>> stream) {
         if (isBatched()) {
-            /*
-             * FIXME: currently necessary because of a bug in the JDK
-             * see https://bugs.openjdk.java.net/browse/JDK-8075939
-             */
-            return Streams.stream(Streams.stream(Iterators.partition(stream.iterator(), this.batchSize))
-                                         .peek(membershipOracle::processQueries)
-                                         .flatMap(List::stream)
-                                         .iterator());
+            return Streams.stream(Iterators.partition(stream.iterator(), this.batchSize))
+                          .peek(membershipOracle::processQueries)
+                          .flatMap(List::stream);
         } else {
             return stream.peek(membershipOracle::processQuery);
         }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,28 +17,25 @@ package de.learnlib.oracle.emptiness;
 
 import java.util.Objects;
 
-import de.learnlib.api.oracle.OmegaMembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.api.query.OmegaQuery;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
+import de.learnlib.oracle.OmegaMembershipOracle.MealyOmegaMembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.query.OmegaQuery;
+import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.modelchecking.Lasso;
-import net.automatalib.modelchecking.lasso.MealyLassoImpl;
-import net.automatalib.util.automata.builders.AutomatonBuilders;
-import net.automatalib.words.Word;
+import net.automatalib.modelchecking.MealyLassoImpl;
+import net.automatalib.util.automaton.builder.AutomatonBuilders;
+import net.automatalib.word.Word;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 
-/**
- * @author Jeroen Meijer
- */
 public class MealyLassoEmptinessOracleImplTest
         extends AbstractLassoEmptinessOracleImplTest<Lasso.MealyLasso<Character, Character>, Word<Character>> {
 
     @Mock
-    private OmegaMembershipOracle.MealyOmegaMembershipOracle<Integer, Character, Character> omo;
+    private MealyOmegaMembershipOracle<Integer, Character, Character> omo;
 
     @BeforeMethod
     public void setUp() {

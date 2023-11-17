@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,8 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import net.automatalib.commons.smartcollections.ResizingArrayStorage;
-import net.automatalib.words.Word;
+import net.automatalib.common.smartcollection.ResizingArrayStorage;
+import net.automatalib.word.Word;
 
 final class RowImpl<I> implements Row<I> {
 

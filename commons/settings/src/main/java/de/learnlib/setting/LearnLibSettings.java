@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.function.Function;
 
-import de.learnlib.api.setting.LearnLibSettingsSource;
-import net.automatalib.commons.util.WrapperUtil;
-import net.automatalib.commons.util.settings.SettingsSource;
+import de.learnlib.logging.Category;
+import net.automatalib.common.util.WrapperUtil;
+import net.automatalib.common.util.setting.SettingsSource;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +88,7 @@ public final class LearnLibSettings {
         try {
             return valueExtractor.apply(prop);
         } catch (IllegalArgumentException ex) {
-            LOG.warn("Could not parse LearnLib property '" + property + "'.", ex);
+            LOG.warn(Category.CONFIG, "Could not parse LearnLib property '" + property + "'.", ex);
             return null;
         }
     }

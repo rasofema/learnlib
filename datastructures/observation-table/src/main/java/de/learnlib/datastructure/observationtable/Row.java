@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 /**
  * A row in an observation table. Minimally, a row consists of a prefix (the row label) and a unique identifier in its
@@ -27,8 +27,6 @@ import net.automatalib.words.Word;
  *
  * @param <I>
  *         input symbol type
- *
- * @author Malte Isberner
  */
 public interface Row<I> {
 

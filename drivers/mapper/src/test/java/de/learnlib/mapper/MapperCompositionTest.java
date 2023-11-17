@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +15,12 @@
  */
 package de.learnlib.mapper;
 
-import de.learnlib.api.Mapper;
-import net.automatalib.words.impl.Alphabets;
+import de.learnlib.Mapper;
+import net.automatalib.alphabet.Alphabets;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- * @author frohme
- */
 public class MapperCompositionTest {
 
     private ToUpperCaseMapper toUpperCaseMapper;

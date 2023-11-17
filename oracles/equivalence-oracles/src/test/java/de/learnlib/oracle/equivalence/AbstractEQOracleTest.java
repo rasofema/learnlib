@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@ package de.learnlib.oracle.equivalence;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.SingleQueryOracle;
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.SingleQueryOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.word.Word;
 import org.testng.annotations.Test;
 
 /**
@@ -34,8 +34,6 @@ import org.testng.annotations.Test;
  *         input symbol type
  * @param <D>
  *         output domain type
- *
- * @author frohme
  */
 public abstract class AbstractEQOracleTest<A extends SuffixOutput<I, D>, I, D> {
 

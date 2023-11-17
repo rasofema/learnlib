@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +15,13 @@
  */
 package de.learnlib.testsupport;
 
-import java.io.IOException;
-
-import de.learnlib.api.Resumable;
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.UniversalDeterministicAutomaton;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.Alphabet;
+import de.learnlib.Resumable;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.UniversalDeterministicAutomaton;
+import net.automatalib.util.automaton.Automata;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -43,8 +41,6 @@ import org.testng.annotations.Test;
  *         output domain type
  * @param <T>
  *         state type
- *
- * @author bainczyk
  */
 public abstract class AbstractResumableLearnerTest<L extends Resumable<T> & LearningAlgorithm<M, I, D>, M extends UniversalDeterministicAutomaton<?, I, ?, ?, ?>, OR, I, D, T> {
 
@@ -83,7 +79,7 @@ public abstract class AbstractResumableLearnerTest<L extends Resumable<T> & Lear
     protected abstract int getRounds();
 
     @Test
-    public void testSuspendAndResumeLearner() throws IOException {
+    public void testSuspendAndResumeLearner() {
         learner.startLearning();
 
         int roundsPre = 0, roundsPost = 0;

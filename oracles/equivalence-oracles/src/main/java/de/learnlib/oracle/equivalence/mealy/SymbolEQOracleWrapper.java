@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,10 @@ package de.learnlib.oracle.equivalence.mealy;
 import java.util.Collection;
 import java.util.Objects;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.concepts.DetSuffixOutputAutomaton;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.concept.DetSuffixOutputAutomaton;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SymbolEQOracleWrapper<A extends DetSuffixOutputAutomaton<?, I, ?, Word<O>>, I, O>

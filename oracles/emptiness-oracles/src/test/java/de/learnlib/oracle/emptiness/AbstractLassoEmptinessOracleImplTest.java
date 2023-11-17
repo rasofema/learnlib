@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@ package de.learnlib.oracle.emptiness;
 
 import java.util.Objects;
 
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.api.query.OmegaQuery;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.query.OmegaQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
 import net.automatalib.modelchecking.Lasso;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import net.automatalib.word.Word;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -33,8 +33,6 @@ import org.testng.annotations.Test;
 
 /**
  * Tests the {@link LassoEmptinessOracleImpl} and all its subtypes.
- *
- * @author Jeroen Meijer
  *
  * @param <L> the lasso type
  * @param <D> the output type

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +26,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 /**
  * Primitive implementation for boolean maps.
  *
  * @param <V>
  *         value type
- *
- * @author Malte Isberner
  */
 public class BooleanMap<V> extends AbstractMap<Boolean, V> {
 
@@ -67,7 +67,7 @@ public class BooleanMap<V> extends AbstractMap<Boolean, V> {
     }
 
     @Override
-    public V get(Object key) {
+    public @Nullable V get(Object key) {
         if (key == null || key.getClass() != Boolean.class) {
             return null;
         }
@@ -104,7 +104,7 @@ public class BooleanMap<V> extends AbstractMap<Boolean, V> {
     }
 
     @Override
-    public V remove(Object key) {
+    public @Nullable V remove(Object key) {
         if (key == null || key.getClass() != Boolean.class) {
             return null;
         }

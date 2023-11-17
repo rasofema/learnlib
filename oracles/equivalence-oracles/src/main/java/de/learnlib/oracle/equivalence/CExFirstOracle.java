@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,23 +20,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import de.learnlib.api.oracle.BlackBoxOracle;
-import de.learnlib.api.oracle.BlackBoxOracle.DFABlackBoxOracle;
-import de.learnlib.api.oracle.BlackBoxOracle.MealyBlackBoxOracle;
-import de.learnlib.api.oracle.EquivalenceOracle.DFAEquivalenceOracle;
-import de.learnlib.api.oracle.EquivalenceOracle.MealyEquivalenceOracle;
-import de.learnlib.api.oracle.PropertyOracle;
-import de.learnlib.api.oracle.PropertyOracle.DFAPropertyOracle;
-import de.learnlib.api.oracle.PropertyOracle.MealyPropertyOracle;
-import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.buildtool.refinement.annotation.GenerateRefinement;
 import de.learnlib.buildtool.refinement.annotation.Generic;
 import de.learnlib.buildtool.refinement.annotation.Interface;
 import de.learnlib.buildtool.refinement.annotation.Map;
-import net.automatalib.automata.concepts.Output;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.BlackBoxOracle;
+import de.learnlib.oracle.BlackBoxOracle.DFABlackBoxOracle;
+import de.learnlib.oracle.BlackBoxOracle.MealyBlackBoxOracle;
+import de.learnlib.oracle.EquivalenceOracle.DFAEquivalenceOracle;
+import de.learnlib.oracle.EquivalenceOracle.MealyEquivalenceOracle;
+import de.learnlib.oracle.PropertyOracle;
+import de.learnlib.oracle.PropertyOracle.DFAPropertyOracle;
+import de.learnlib.oracle.PropertyOracle.MealyPropertyOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.concept.Output;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -53,7 +53,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @param <D>
  *         the output type
  *
- * @author Jeroen Meijer
  * @see DisproveFirstOracle
  */
 @GenerateRefinement(name = "DFACExFirstOracle",
@@ -84,7 +83,7 @@ public class CExFirstOracle<A extends Output<I, D>, I, D> implements BlackBoxOra
         this(Collections.emptySet());
     }
 
-    public CExFirstOracle(PropertyOracle<I, A, ?, D> propertyOracle) {
+    public CExFirstOracle(PropertyOracle<I, ? super A, ?, D> propertyOracle) {
         this(Collections.singleton(propertyOracle));
     }
 

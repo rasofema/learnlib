@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,8 @@ import de.learnlib.datastructure.list.IntrusiveListElem;
 
 /**
  * An extension of the {@link AbstractDTNode} that adds the concept of temporary splitters as well as linking
- * discrimination tree nodes outside of their regular tree structure. Currently used by the TTT algorithm (both regular
- * and VPDA) and the DT algorithm (VPDA variant).
+ * discrimination tree nodes outside their regular tree structure. Currently used by the TTT algorithm (both regular
+ * and VPA) and the DT algorithm (VPA variant).
  *
  * @param <DSCR>
  *         discriminator type
@@ -36,8 +36,6 @@ import de.learnlib.datastructure.list.IntrusiveListElem;
  *         link structure type
  * @param <N>
  *         node type
- *
- * @author frohme
  */
 public abstract class AbstractTemporaryIntrusiveDTNode<DSCR, O, D, T extends IntrusiveList<?>, N extends AbstractTemporaryIntrusiveDTNode<DSCR, O, D, T, N>>
         extends AbstractDTNode<DSCR, O, D, N> implements IntrusiveListElem<N> {

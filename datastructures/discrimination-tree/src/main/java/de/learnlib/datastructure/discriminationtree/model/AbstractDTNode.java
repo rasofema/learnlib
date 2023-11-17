@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 /**
- * An abstract super class (DAO) for aggregating several information stored in a node of an discrimination tree.
+ * An abstract super class (DAO) for aggregating some information stored in a node of a discrimination tree.
  *
  * @param <DSCR>
  *         discriminator type
@@ -30,14 +32,12 @@ import java.util.Objects;
  *         data type
  * @param <N>
  *         (recursive) node type
- *
- * @author frohme
  */
 public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, O, D, N>> {
 
-    protected N parent;
-    protected O parentOutcome;
-    protected int depth;
+    protected final N parent;
+    protected final O parentOutcome;
+    protected final int depth;
     protected Map<O, N> children;
     protected DSCR discriminator;
     protected D data;
@@ -59,10 +59,6 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
 
     public N getParent() {
         return parent;
-    }
-
-    public void setParent(N parent) {
-        this.parent = parent;
     }
 
     public DSCR getDiscriminator() {
@@ -106,10 +102,7 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
     }
 
     public boolean isLeaf() {
-        if (children != null) {
-            return children.size() == 0;
-        }
-        return true;
+        return children == null;
     }
 
     protected abstract Map<O, N> createChildMap();
@@ -129,7 +122,7 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
     public N child(O out, D defaultData) {
         assert !isLeaf();
 
-        N result = this.getChild(out);
+        N result = getChild(out);
         if (result == null) {
             result = addChild(out, defaultData);
         }
@@ -148,10 +141,6 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
         return children.entrySet();
     }
 
-    public Map<O, N> getChildMap() {
-        return children;
-    }
-
     public void replaceChildren(Map<O, N> repChildren) {
         this.children = repChildren;
     }
@@ -160,27 +149,17 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
         return depth;
     }
 
-    public void setDepth(int newDepth) {
-        depth = newDepth;
-    }
-
     public D getData() {
-        // Continuous learners can have tree states.
-        // assert isLeaf();
+        assert isLeaf();
         return data;
     }
 
     public void setData(D data) {
-        // Continuous learners can have tree states.
-        // assert isLeaf();
+        assert isLeaf();
         this.data = data;
     }
 
-    public void clearData() {
-        this.data = null;
-    }
-
-    public O subtreeLabel(N descendant) {
+    public @Nullable O subtreeLabel(N descendant) {
         N curr = descendant;
 
         while (curr.depth > this.depth + 1) {
@@ -196,10 +175,6 @@ public abstract class AbstractDTNode<DSCR, O, D, N extends AbstractDTNode<DSCR, 
 
     public O getParentOutcome() {
         return parentOutcome;
-    }
-
-    public void setParentOutcome(O parentOutcome) {
-        this.parentOutcome = parentOutcome;
     }
 
     public class SplitResult {

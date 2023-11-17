@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,8 @@
  */
 package de.learnlib.oracle.membership;
 
-import de.learnlib.api.SUL;
-import de.learnlib.api.oracle.SymbolQueryOracle;
+import de.learnlib.oracle.SymbolQueryOracle;
+import de.learnlib.sul.SUL;
 
 /**
  * A wrapper that allows to use a {@link SUL} where a {@link SymbolQueryOracle} is expected.
@@ -33,8 +33,6 @@ import de.learnlib.api.oracle.SymbolQueryOracle;
  *         input alphabet type
  * @param <O>
  *         output alphabet type
- *
- * @author frohme
  */
 public class SULSymbolQueryOracle<I, O> implements SymbolQueryOracle<I, O> {
 
@@ -43,7 +41,7 @@ public class SULSymbolQueryOracle<I, O> implements SymbolQueryOracle<I, O> {
     private boolean preRequired;
     private boolean postRequired;
 
-    public SULSymbolQueryOracle(final SUL<I, O> sul) {
+    public SULSymbolQueryOracle(SUL<I, O> sul) {
         this.sul = sul;
         this.preRequired = true;
     }

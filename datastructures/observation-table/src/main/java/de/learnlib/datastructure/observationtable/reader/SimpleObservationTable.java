@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,15 +22,15 @@ import java.util.List;
 import de.learnlib.datastructure.observationtable.OTUtils;
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * This class represents the data structure of an {@link ObservationTable} without providing any meaningful
  * functionality. It is used to store the result of reading string representations like with {@link
- * OTUtils#fromString(String, net.automatalib.words.Alphabet, ObservationTableReader)}.
+ * OTUtils#fromString(String, Alphabet, ObservationTableReader)}.
  *
  * @param <I>
  *         The input type.
@@ -82,7 +82,7 @@ public class SimpleObservationTable<I, @Nullable D> implements ObservationTable<
     }
 
     @Override
-    public D cellContents(Row<I> row, int columnId) {
+    public @Nullable D cellContents(Row<I> row, int columnId) {
         return null;
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +17,9 @@ package de.learnlib.oracle.property;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.EmptinessOracle.DFAEmptinessOracle;
-import de.learnlib.api.oracle.PropertyOracle.DFAPropertyOracle;
-import net.automatalib.automata.fsa.DFA;
+import de.learnlib.oracle.EmptinessOracle.DFAEmptinessOracle;
+import de.learnlib.oracle.PropertyOracle.DFAPropertyOracle;
+import net.automatalib.automaton.fsa.DFA;
 import net.automatalib.modelchecking.ModelChecker.DFAModelChecker;
 
 /**
@@ -29,8 +29,6 @@ import net.automatalib.modelchecking.ModelChecker.DFAModelChecker;
  *         the input type
  * @param <P>
  *         the property type
- *
- * @author Jeroen Meijer
  */
 public class DFAFinitePropertyOracle<I, P> extends AbstractPropertyOracle<I, DFA<?, I>, P, Boolean, DFA<?, I>>
         implements DFAPropertyOracle<I, P> {

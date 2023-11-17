@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import de.learnlib.api.AccessSequenceTransformer;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.AccessSequenceTransformer;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.checker.signedness.qual.Signed;
 
@@ -33,7 +33,7 @@ import org.checkerframework.checker.signedness.qual.Signed;
  * implementation.
  * <p>
  * Instances implementing this interface can be obtained from learning algorithms implementing the {@link
- * ObservationTableFeature observation table feature} (or {@link OTLearner}s.
+ * ObservationTableFeature observation table feature} (or {@link OTLearner}s).
  * <p>
  * Basically, an observation table is a two-dimensional table, where both rows and columns are indexed by {@link Word}s.
  * The row indices are called <i>prefixes</i>, whereas the column indexes are referred to as <i>suffixes</i>. The table
@@ -58,8 +58,6 @@ import org.checkerframework.checker.signedness.qual.Signed;
  *         input symbol type
  * @param <D>
  *         observation (output) domain type
- *
- * @author Malte Isberner
  */
 public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
 
@@ -173,7 +171,7 @@ public interface ObservationTable<I, D> extends AccessSequenceTransformer<I> {
 
     /**
      * Returns the number of distinct (regarding row values) rows in this observation table. This number may be used as
-     * the upper bound for the (content ids of the table rows.
+     * the upper bound for the (content ids of the) table rows.
      *
      * @return the number of distinct rows
      *

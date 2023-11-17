@@ -9,7 +9,7 @@ LearnLib is a free, open source ([Apache License, v2.0][1]) Java library for aut
 
 ## About
 
-LearnLib is mainly developed at the [Dortmund University of Technology, Germany][2].
+LearnLib is mainly developed at [TU Dortmund University, Germany][2].
 Its original purpose is to provide a framework for research on automata learning algorithms as well as for their application in practice.
 
 The public version is a re-implemented version of the former closed-source version of LearnLib.
@@ -17,17 +17,18 @@ While certain features have been stripped for improved modularity, development h
 Currently, the following learning algorithms with respective target models are supported:
 
 
-Algorithm (active)  | Target models                || Algorithm (passive) | Models
+Algorithm (active)  | Target models               || Algorithm (passive) | Models
 --- | --- | --- | --- | ---
-ADT                 | `Mealy`                      || OSTIA               | `SST`
-DHC                 | `Mealy`                      || RPNI                | `DFA` `Mealy`
-Discrimination Tree | `DFA` `Mealy` `Moore` `VPDA` || RPNI (EDSM)         | `DFA`
-Kearns & Vazirani   | `DFA` `Mealy`                || RPNI (MDL)          | `DFA`
+AAAR                | `DFA` `Mealy` `Moore`       || OSTIA               | `SST`
+ADT                 | `Mealy`                     || RPNI                | `DFA` `Mealy` `Moore`
+DHC                 | `Mealy`                     || RPNI (EDSM)         | `DFA`
+Kearns & Vazirani   | `DFA` `Mealy`               || RPNI (MDL)          | `DFA`
 L* (incl. variants) | `DFA` `Mealy` `Moore`
 NL*                 | `NFA`
+Observation Pack    | `DFA` `Mealy` `Moore` `VPA`
 OML                 | `DFA` `Mealy`
-SPA                 | `SPA`
-TTT                 | `DFA` `Mealy` `Moore` `VPDA`
+Procedural          | `SPA` `SBA` `SPMM`
+TTT                 | `DFA` `Mealy` `Moore` `VPA`
 
 
 Additionally, LearnLib offers a variety of tools to ease the practical application of automata learning on real-world systems.
@@ -74,7 +75,7 @@ For developing the code base of LearnLib it is suggested to use one of the major
 
 * For [Eclipse][eclipse]:
   1. **Note**: LearnLib uses annotation processing on several occasions throughout the build process.
-  This is usually handled correctly by Maven, however, for Eclipse you need to install the [m2e-apt-plugin](https://marketplace.eclipse.org/content/m2e-apt) and activate annotation processing afterwards (see the [issue #32](https://github.com/LearnLib/learnlib/issues/32)).
+  This is usually handled correctly by Maven, however, for Eclipse you need to install the [m2e-apt-plugin](https://marketplace.eclipse.org/content/m2e-apt) and activate annotation processing afterward (see the [issue #32](https://github.com/LearnLib/learnlib/issues/32)).
   1. Select `File` -> `Import...` and select "Existing Maven Projects".
   1. Select the folder containing the development checkout as the root directory and click `Finish`.
   1. In order to have both development versions of AutomataLib and LearnLib available at once, continue to import AutomataLib as documented in the project's README.
@@ -86,11 +87,9 @@ For developing the code base of LearnLib it is suggested to use one of the major
 * **API Documentation:** [latest release](http://learnlib.github.io/learnlib/maven-site/latest/apidocs/) | [older versions](http://learnlib.github.io/learnlib/maven-site/)
 
 
-## Mailing Lists
+## Questions?
 
-  * [Q&A @ Google Groups][learnlib-qa] -- General questions regarding the usage of LearnLib.
-  * [Discussion @ Google Groups][learnlib-discussion] -- Discussions about the internals of LearnLib.
-  * [Internal (private) @ Google Groups][learnlib-internal] -- Discussions about future development plans.
+If you have any questions regarding the usage of LearnLib or if you want to discuss new and exciting ideas for future contributions, feel free to use the [Discussions](https://github.com/LearnLib/learnlib/discussions) page to get in touch with the LearnLib community.
 
 
 ## Maintainers

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,28 +21,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.io.CharStreams;
-import de.learnlib.datastructure.pta.pta.BlueFringePTA;
-import net.automatalib.automata.transducers.impl.compact.CompactMoore;
-import net.automatalib.commons.util.IOUtil;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.automaton.transducer.CompactMoore;
+import net.automatalib.common.util.IOUtil;
 import net.automatalib.serialization.dot.GraphDOT;
-import net.automatalib.util.automata.builders.AutomatonBuilders;
-import net.automatalib.util.automata.cover.Covers;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import net.automatalib.util.automaton.builder.AutomatonBuilders;
+import net.automatalib.util.automaton.cover.Covers;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author frohme
- */
 public class PTAVisualizationTest {
 
-    private final Alphabet<Character> alphabet;
-    private final BlueFringePTA<Character, Void> moorePTA;
+    private final BlueFringePTA<Character, Void> pta;
 
     public PTAVisualizationTest() {
-        this.alphabet = Alphabets.characters('x', 'z');
+        final Alphabet<Character> alphabet = Alphabets.characters('x', 'z');
         //@formatter:off
         final CompactMoore<Character, Character> moore =
                 AutomatonBuilders.<Character, Character>newMoore(alphabet).withInitial(0)
@@ -63,17 +58,17 @@ public class PTAVisualizationTest {
         final List<Word<Character>> traces = new ArrayList<>();
         Covers.transitionCover(moore, alphabet, traces);
 
-        this.moorePTA = new BlueFringePTA<>(alphabet.size());
+        this.pta = new BlueFringePTA<>(alphabet.size());
 
-        for (final Word<Character> trace : traces) {
-            this.moorePTA.addSampleWithStateProperties(trace.toIntArray(alphabet), moore.computeOutput(trace).asList());
+        for (Word<Character> trace : traces) {
+            this.pta.addSampleWithStateProperties(trace.asIntSeq(alphabet), moore.computeOutput(trace).asList());
         }
     }
 
     @Test
     public void testVisualization() throws IOException {
         final StringWriter actualPTA = new StringWriter();
-        GraphDOT.write(this.moorePTA.graphView(alphabet), actualPTA);
+        GraphDOT.write(this.pta, actualPTA);
 
         final String expectedPTA =
                 CharStreams.toString(IOUtil.asBufferedUTF8Reader(PTAVisualizationTest.class.getResourceAsStream(

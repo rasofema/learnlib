@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +15,12 @@
  */
 package de.learnlib.mapper;
 
-import de.learnlib.api.Mapper;
-import de.learnlib.api.Mapper.AsynchronousMapper;
-import de.learnlib.api.Mapper.SynchronousMapper;
+import de.learnlib.Mapper;
+import de.learnlib.Mapper.AsynchronousMapper;
+import de.learnlib.Mapper.SynchronousMapper;
 
 /**
  * Utility methods for manipulating mappers.
- *
- * @author frohme
  */
 public final class Mappers {
 

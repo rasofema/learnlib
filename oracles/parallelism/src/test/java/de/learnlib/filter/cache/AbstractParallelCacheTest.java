@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.oracle.parallelism.ParallelOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.commons.util.collections.CollectionsUtil;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.oracle.parallelism.ParallelOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.common.util.collection.CollectionsUtil;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -38,8 +38,6 @@ import org.testng.annotations.Test;
  * <p>
  * This test checks that the other way around, i.e. <i>learner</i> -> <i>(parallel querying) cache</i> -> <i>single
  * oracle</i> does at least not throw any synchronization errors.
- *
- * @author frohme
  */
 public abstract class AbstractParallelCacheTest<A, I, D> {
 
@@ -83,7 +81,7 @@ public abstract class AbstractParallelCacheTest<A, I, D> {
 
         final List<CountingQuery<I, D>> queries = new ArrayList<>(numQueries);
 
-        for (final List<I> word : CollectionsUtil.allTuples(alphabet, 0, MAXIMUM_LENGTH_OF_QUERIES)) {
+        for (List<I> word : CollectionsUtil.allTuples(alphabet, 0, MAXIMUM_LENGTH_OF_QUERIES)) {
             queries.add(new CountingQuery<>(Word.fromList(word)));
         }
 
@@ -113,7 +111,7 @@ public abstract class AbstractParallelCacheTest<A, I, D> {
         final List<DefaultQuery<I, D>> queries =
                 new ArrayList<>((int) Math.pow(alphabet.size(), MAXIMUM_LENGTH_OF_QUERIES));
 
-        for (final List<I> word : CollectionsUtil.allTuples(alphabet,
+        for (List<I> word : CollectionsUtil.allTuples(alphabet,
                                                             MAXIMUM_LENGTH_OF_QUERIES + 1,
                                                             MAXIMUM_LENGTH_OF_QUERIES + 1)) {
             queries.add(new DefaultQuery<>(Word.fromList(word)));

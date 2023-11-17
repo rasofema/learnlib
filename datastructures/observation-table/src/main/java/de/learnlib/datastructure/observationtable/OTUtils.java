@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,9 @@ import java.util.function.Function;
 import de.learnlib.datastructure.observationtable.reader.ObservationTableReader;
 import de.learnlib.datastructure.observationtable.writer.ObservationTableHTMLWriter;
 import de.learnlib.datastructure.observationtable.writer.ObservationTableWriter;
-import net.automatalib.commons.util.IOUtil;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.common.util.IOUtil;
+import net.automatalib.word.Word;
 
 public final class OTUtils {
 
@@ -91,7 +91,7 @@ public final class OTUtils {
     }
 
     /**
-     * Displays the observation table as a HTML document in the default browser.
+     * Displays the observation table as an HTML document in the default browser.
      * <p>
      * This method internally relies on {@link Desktop#browse(java.net.URI)}, hence it will not work if {@link Desktop}
      * is not supported, or if the application is running in headless mode.

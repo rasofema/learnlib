@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@ package de.learnlib.oracle.equivalence;
 
 import java.util.Objects;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.fsa.impl.compact.CompactDFA;
-import net.automatalib.util.automata.builders.AutomatonBuilders;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.fsa.CompactDFA;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.util.automaton.builder.AutomatonBuilders;
+import net.automatalib.word.Word;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -31,7 +31,7 @@ import org.testng.annotations.BeforeMethod;
 public class DFABFInclusionOracleTest extends AbstractBFInclusionOracleTest<DFA<?, Character>, Boolean> {
 
     @Mock
-    private MembershipOracle.DFAMembershipOracle<Character> mo;
+    private DFAMembershipOracle<Character> mo;
 
     @BeforeMethod
     public void setUp() {

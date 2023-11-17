@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,16 @@ package de.learnlib.util.mealy;
 import java.util.Iterator;
 import java.util.Objects;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.algorithm.LearningAlgorithm.MealyLearner;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Word;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.algorithm.LearningAlgorithm.MealyLearner;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility class helping to unify various approaches to actively learning Mealy machines.
- *
- * @author Malte Isberner
  */
 public final class MealyUtil {
 
@@ -122,7 +120,8 @@ public final class MealyUtil {
     }
 
     public static <I, O> MembershipOracle<I, @Nullable O> wrapWordOracle(MembershipOracle<I, Word<O>> oracle) {
-        return new SymbolOracleWrapper<>(oracle);
+        // explicit type specification is required by checker-framework
+        return new SymbolOracleWrapper<I, O>(oracle);
     }
 
 }

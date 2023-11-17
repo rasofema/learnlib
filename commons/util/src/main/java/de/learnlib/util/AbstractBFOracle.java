@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,11 @@ package de.learnlib.util;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import de.learnlib.api.oracle.AutomatonOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.DeterministicAutomaton;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.AutomatonOracle;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.DeterministicAutomaton;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -31,8 +31,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @param <A> the automaton type
  * @param <I> the input type
  * @param <D> the output type
- *
- * @author Jeroen Meijer
  */
 public abstract class AbstractBFOracle<A extends DeterministicAutomaton<?, I, ?>, I, D>
         implements AutomatonOracle<A, I, D> {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,19 @@ package de.learnlib.testsupport.it.learner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.examples.LearningExample.SPALearningExample;
-import de.learnlib.examples.LearningExamples;
+import de.learnlib.example.LearningExample.SPALearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
 import de.learnlib.oracle.equivalence.spa.SimulatorEQOracle;
-import de.learnlib.oracle.membership.SimulatorOracle;
+import de.learnlib.oracle.membership.SPASimulatorOracle;
 import de.learnlib.testsupport.it.learner.LearnerVariantList.SPALearnerVariantList;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.SPALearnerVariantListImpl;
-import net.automatalib.words.SPAAlphabet;
+import net.automatalib.alphabet.ProceduralInputAlphabet;
+import net.automatalib.automaton.procedural.SPA;
 import org.testng.annotations.Factory;
 
 /**
- * Abstract integration test for VPDA learning algorithms.
- *
- * @author frohme
+ * Abstract integration test for {@link SPA} learning algorithms.
  */
 public abstract class AbstractSPALearnerIT {
 
@@ -49,8 +48,8 @@ public abstract class AbstractSPALearnerIT {
 
     private <I> List<SPALearnerITCase<I>> createAllVariantsITCase(SPALearningExample<I> example) {
 
-        final SPAAlphabet<I> alphabet = example.getAlphabet();
-        final MembershipOracle<I, Boolean> mqOracle = new SimulatorOracle<>(example.getReferenceAutomaton());
+        final ProceduralInputAlphabet<I> alphabet = example.getAlphabet();
+        final DFAMembershipOracle<I> mqOracle = new SPASimulatorOracle<>(example.getReferenceAutomaton());
         final SPALearnerVariantListImpl<I> variants = new SPALearnerVariantListImpl<>();
         addLearnerVariants(alphabet, mqOracle, variants);
 
@@ -60,8 +59,8 @@ public abstract class AbstractSPALearnerIT {
     }
 
     /**
-     * Adds, for a given setup, all the variants of the DFA learner to be tested to the specified {@link
-     * LearnerVariantList variant list}.
+     * Adds, for a given setup, all the variants of the DFA learner to be tested to the specified
+     * {@link LearnerVariantList variant list}.
      *
      * @param alphabet
      *         the input alphabet
@@ -70,7 +69,7 @@ public abstract class AbstractSPALearnerIT {
      * @param variants
      *         list to add the learner variants to
      */
-    protected abstract <I> void addLearnerVariants(SPAAlphabet<I> alphabet,
-                                                   MembershipOracle<I, Boolean> mqOracle,
+    protected abstract <I> void addLearnerVariants(ProceduralInputAlphabet<I> alphabet,
+                                                   DFAMembershipOracle<I> mqOracle,
                                                    SPALearnerVariantList<I> variants);
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,9 @@
  */
 package de.learnlib.datastructure.discriminationtree;
 
-import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDiscriminationTree;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import net.automatalib.word.Word;
 
 /**
  * Binary discrimination tree specialization.
@@ -26,8 +26,6 @@ import net.automatalib.words.Word;
  *         input symbol type
  * @param <D>
  *         node data type
- *
- * @author Malte Isberner
  */
 public class BinaryDTree<I, D> extends AbstractWordBasedDiscriminationTree<I, Boolean, D> {
 

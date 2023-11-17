@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,24 +18,24 @@ package de.learnlib.testsupport.it.learner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.oracle.EquivalenceOracle.MealyEquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
-import de.learnlib.driver.util.StateLocalInputMealySimulatorSUL;
-import de.learnlib.examples.LearningExample.MealyLearningExample;
-import de.learnlib.examples.LearningExample.StateLocalInputMealyLearningExample;
-import de.learnlib.examples.LearningExamples;
-import de.learnlib.oracle.equivalence.SimulatorEQOracle;
+import de.learnlib.driver.simulator.StateLocalInputMealySimulatorSUL;
+import de.learnlib.example.LearningExample.MealyLearningExample;
+import de.learnlib.example.LearningExample.StateLocalInputMealyLearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.oracle.EquivalenceOracle.MealyEquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
+import de.learnlib.oracle.equivalence.MealySimulatorEQOracle;
 import de.learnlib.oracle.equivalence.mealy.StateLocalInputMealySimulatorEQOracle;
-import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
+import de.learnlib.oracle.membership.MealySimulatorOracle;
 import de.learnlib.oracle.membership.StateLocalInputSULOracle;
 import de.learnlib.testsupport.it.learner.LearnerVariantList.MealyLearnerVariantList;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.MealyLearnerVariantListImpl;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.StateLocalInputMealyMachine;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
-import net.automatalib.util.automata.transducers.MealyFilter;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.automaton.transducer.StateLocalInputMealyMachine;
+import net.automatalib.util.automaton.transducer.MealyFilter;
+import net.automatalib.word.Word;
 import org.testng.annotations.Factory;
 
 /**
@@ -44,8 +44,6 @@ import org.testng.annotations.Factory;
  * Mealy machine learning algorithms tested by this integration test are expected to assume membership queries yield the
  * full output word corresponding to the suffix part of the query. If the learning algorithm only expects the last
  * symbol as output, use {@link AbstractMealySymLearnerIT}.
- *
- * @author Malte Isberner
  */
 public abstract class AbstractMealyLearnerIT {
 
@@ -69,13 +67,14 @@ public abstract class AbstractMealyLearnerIT {
             MealyLearningExample<I, O> example) {
 
         final Alphabet<I> alphabet = example.getAlphabet();
-        final MealyMembershipOracle<I, O> mqOracle = new MealySimulatorOracle<>(example.getReferenceAutomaton());
+        final MealyMachine<?, I, ?, O> reference = example.getReferenceAutomaton();
+        final MealyMembershipOracle<I, O> mqOracle = new MealySimulatorOracle<>(reference);
         final MealyLearnerVariantListImpl<I, O> variants = new MealyLearnerVariantListImpl<>();
-        addLearnerVariants(alphabet, mqOracle, variants);
+        addLearnerVariants(alphabet, reference.size(), mqOracle, variants);
 
         return LearnerITUtil.createExampleITCases(example,
                                                   variants,
-                                                  new SimulatorEQOracle<>(example.getReferenceAutomaton()));
+                                                  new MealySimulatorEQOracle<>(example.getReferenceAutomaton()));
     }
 
     private <I, O> List<UniversalDeterministicLearnerITCase<I, Word<O>, MealyMachine<?, I, ?, O>>> createPartialVariantsITCase(
@@ -92,7 +91,7 @@ public abstract class AbstractMealyLearnerIT {
         final MealyMembershipOracle<I, O> mqOracle =
                 new StateLocalInputSULOracle<>(new StateLocalInputMealySimulatorSUL<>(partialRef), undefinedOutput);
         final MealyLearnerVariantListImpl<I, O> variants = new MealyLearnerVariantListImpl<>();
-        addLearnerVariants(alphabet, mqOracle, variants);
+        addLearnerVariants(alphabet, reference.size(), mqOracle, variants);
 
         final MealyEquivalenceOracle<I, O> eqOracle =
                 new StateLocalInputMealySimulatorEQOracle<>(partialRef, alphabet, undefinedOutput);
@@ -101,17 +100,20 @@ public abstract class AbstractMealyLearnerIT {
     }
 
     /**
-     * Adds, for a given setup, all the variants of the Mealy machine learner to be tested to the specified {@link
-     * LearnerVariantList variant list}.
+     * Adds, for a given setup, all the variants of the Mealy machine learner to be tested to the specified
+     * {@link LearnerVariantList variant list}.
      *
      * @param alphabet
      *         the input alphabet
+     * @param targetSize
+     *         the size of the target automaton
      * @param mqOracle
      *         the membership oracle
      * @param variants
      *         list to add the learner variants to
      */
     protected abstract <I, O> void addLearnerVariants(Alphabet<I> alphabet,
+                                                      int targetSize,
                                                       MealyMembershipOracle<I, O> mqOracle,
                                                       MealyLearnerVariantList<I, O> variants);
 }

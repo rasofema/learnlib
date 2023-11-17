@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (C) 2013-2022 TU Dortmund
+Copyright (C) 2013-2023 TU Dortmund
 This file is part of LearnLib, http://www.learnlib.de/.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +47,9 @@ limitations under the License.
             <includes>
                 <include>*:jar</include>
             </includes>
+            <excludes>
+                <exclude>de.learnlib:*:sources</exclude>
+            </excludes>
             <outputDirectory/>
             <useProjectArtifact>false</useProjectArtifact>
             <unpack>true</unpack>

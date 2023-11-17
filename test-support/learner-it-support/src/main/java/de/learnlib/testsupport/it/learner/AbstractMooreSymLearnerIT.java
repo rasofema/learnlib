@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,18 @@ package de.learnlib.testsupport.it.learner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.MooreMembershipOracle;
-import de.learnlib.examples.LearningExample.MooreLearningExample;
-import de.learnlib.examples.LearningExamples;
+import de.learnlib.example.LearningExample.MooreLearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.MembershipOracle.MooreMembershipOracle;
 import de.learnlib.oracle.equivalence.SimulatorEQOracle;
-import de.learnlib.oracle.membership.SimulatorOracle.MooreSimulatorOracle;
+import de.learnlib.oracle.membership.MooreSimulatorOracle;
 import de.learnlib.testsupport.it.learner.LearnerVariantList.MooreSymLearnerVariantList;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.MooreSymLearnerVariantListImpl;
 import de.learnlib.util.moore.MooreUtil;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.word.Word;
 import org.testng.annotations.Factory;
 
 /**
@@ -38,8 +38,6 @@ import org.testng.annotations.Factory;
  * Mealy machine learning algorithms tested by this integration test are expected to assume membership queries yield
  * only the last symbol of the output word. If the learning algorithm expects the full output word for the suffix part
  * of the query, use {@link AbstractMooreLearnerIT}.
- *
- * @author frohme
  */
 public abstract class AbstractMooreSymLearnerIT {
 

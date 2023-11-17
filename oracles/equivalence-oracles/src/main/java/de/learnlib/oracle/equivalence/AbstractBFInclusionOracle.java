@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,30 +17,29 @@ package de.learnlib.oracle.equivalence;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.AutomatonOracle.DFAOracle;
-import de.learnlib.api.oracle.AutomatonOracle.MealyOracle;
-import de.learnlib.api.oracle.InclusionOracle;
-import de.learnlib.api.oracle.InclusionOracle.DFAInclusionOracle;
-import de.learnlib.api.oracle.InclusionOracle.MealyInclusionOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.DFAMembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
 import de.learnlib.buildtool.refinement.annotation.GenerateRefinement;
 import de.learnlib.buildtool.refinement.annotation.Generic;
 import de.learnlib.buildtool.refinement.annotation.Interface;
 import de.learnlib.buildtool.refinement.annotation.Map;
+import de.learnlib.oracle.AutomatonOracle.DFAOracle;
+import de.learnlib.oracle.AutomatonOracle.MealyOracle;
+import de.learnlib.oracle.InclusionOracle;
+import de.learnlib.oracle.InclusionOracle.DFAInclusionOracle;
+import de.learnlib.oracle.InclusionOracle.MealyInclusionOracle;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
+import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
+import de.learnlib.query.DefaultQuery;
 import de.learnlib.util.AbstractBFOracle;
-import net.automatalib.automata.concepts.DetOutputAutomaton;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Word;
+import net.automatalib.automaton.concept.DetOutputAutomaton;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * An {@link InclusionOracle} that generates words in a breadth-first manner.
  *
- * @author Jeroen Meijer
  * @see InclusionOracle
  * @see AbstractBFOracle
  */

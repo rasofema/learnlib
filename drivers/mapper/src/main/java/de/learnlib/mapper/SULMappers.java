@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,11 @@
  */
 package de.learnlib.mapper;
 
-import de.learnlib.api.SUL;
-import de.learnlib.mapper.api.SULMapper;
+import de.learnlib.sul.SUL;
+import de.learnlib.sul.SULMapper;
 
 /**
  * Utility methods for manipulating mappers.
- *
- * @author Malte Isberner
  */
 public final class SULMappers {
 

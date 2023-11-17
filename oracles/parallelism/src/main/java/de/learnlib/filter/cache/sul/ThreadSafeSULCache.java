@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,12 @@ package de.learnlib.filter.cache.sul;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import de.learnlib.api.SUL;
-import de.learnlib.api.oracle.EquivalenceOracle.MealyEquivalenceOracle;
 import de.learnlib.filter.cache.mealy.ThreadSafeMealyCacheConsistencyTest;
+import de.learnlib.oracle.EquivalenceOracle.MealyEquivalenceOracle;
+import de.learnlib.sul.SUL;
 import net.automatalib.incremental.mealy.IncrementalMealyBuilder;
 import net.automatalib.ts.output.MealyTransitionSystem;
-import net.automatalib.words.WordBuilder;
+import net.automatalib.word.WordBuilder;
 
 /**
  * A thread-safe variant of {@link SULCache}.
@@ -32,8 +32,6 @@ import net.automatalib.words.WordBuilder;
  *         input symbol type
  * @param <O>
  *         output symbol type
- *
- * @author frohme
  */
 public class ThreadSafeSULCache<I, O> extends SULCache<I, O> {
 

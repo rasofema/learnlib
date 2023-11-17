@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (C) 2013-2022 TU Dortmund
+Copyright (C) 2013-2023 TU Dortmund
 This file is part of LearnLib, http://www.learnlib.de/.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,13 @@ limitations under the License.
     <Match>
         <!-- Could be refactored ... -->
         <Bug pattern="NM_CLASS_NOT_EXCEPTION"/>
-        <Class name="de.learnlib.mapper.api.SULMapper$MappedException"/>
+        <Class name="de.learnlib.exception.MappedException"/>
     </Match>
     <Match>
-        <!-- TODO: mostly due to performance. However, usage should be checked again -->
-        <Bug pattern="EI_EXPOSE_REP2"/>
-        <Or>
-            <Class name="de.learnlib.drivers.reflect.MethodInput"/>
-        </Or>
+        <!-- Passing references is mostly fine for performance reasons. Since we do not deal with security-related code,
+             we can leave to the developer's choice
+        -->
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
     </Match>
     <Match>
         <!-- TODO: SpotBugs seem to incorrectly infer type annotations, https://github.com/spotbugs/spotbugs/issues/643
@@ -38,11 +37,11 @@ limitations under the License.
         <Or>
             <!-- SpotBugs doesn't detect that only the inner type is nullable -->
             <And>
-                <Class name="de.learnlib.api.oracle.LassoOracle"/>
+                <Class name="de.learnlib.oracle.LassoOracle"/>
                 <Method name="findCounterExample"/>
             </And>
             <And>
-                <Class name="de.learnlib.api.oracle.SingleQueryOmegaOracle"/>
+                <Class name="de.learnlib.oracle.SingleQueryOmegaOracle"/>
                 <Method name="processQuery"/>
             </And>
             <And>
@@ -58,52 +57,45 @@ limitations under the License.
                 <Method name="disposeSystemStates"/>
             </And>
             <And>
-                <Class name="de.learnlib.examples.Example3"/>
+                <Class name="de.learnlib.example.Example3"/>
                 <Method name="main"/>
             </And>
             <!-- SpotBugs doesn't understand pure functions -->
             <And>
-                <Class name="de.learnlib.algorithms.adt.adt.ADT"/>
+                <Class name="de.learnlib.algorithm.adt.adt.ADT"/>
                 <Or>
                     <Method name="findLCA"/>
                     <Method name="replaceNode"/>
                 </Or>
             </And>
             <And>
-                <Class name="de.learnlib.algorithms.discriminationtree.hypothesis.vpda.TransList"/>
+                <Class name="de.learnlib.algorithm.observationpack.vpa.hypothesis.TransList"/>
                 <Or>
                     <Method name="poll"/>
                     <Method name="addAll"/>
                 </Or>
             </And>
             <And>
-                <Class name="de.learnlib.algorithms.ttt.base.IncomingList"/>
+                <Class name="de.learnlib.algorithm.ttt.base.IncomingList"/>
                 <Method name="insertAllIncoming"/>
             </And>
             <And>
-                <Class name="de.learnlib.algorithms.adt.util.ADTUtil"/>
+                <Class name="de.learnlib.algorithm.adt.util.ADTUtil"/>
                 <Method name="getStartOfADS"/>
             </And>
             <And>
                 <!-- SpotBugs doesn't understand conditional non-nulls -->
-                <Class name="de.learnlib.algorithms.adt.config.LeafSplitters"/>
+                <Class name="de.learnlib.algorithm.adt.config.LeafSplitters"/>
                 <Method name="splitParent"/>
             </And>
             <And>
                 <!-- The node(s) was(were) selected such that getHypothesisState is NOT null -->
-                <Class name="de.learnlib.algorithms.adt.learner.ADTLearner"/>
+                <Class name="de.learnlib.algorithm.adt.learner.ADTLearner"/>
                 <Or>
                     <Method name="refineHypothesisInternal"/>
                     <Method name="resiftAffectedTransitions"/>
                 </Or>
             </And>
-        </Or>
-    </Match>
-    <Match>
-        <!-- Still a false-positive on Java 11. See https://github.com/spotbugs/spotbugs/issues/259 -->
-        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
-        <Or>
-            <Class name="de.learnlib.examples.dfa.DFABenchmarks"/>
         </Or>
     </Match>
 </FindBugsFilter>

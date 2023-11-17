@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +21,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.SupportsGrowingAlphabet;
-import net.automatalib.automata.UniversalDeterministicAutomaton;
-import net.automatalib.automata.concepts.Output;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.alphabet.GrowingAlphabet;
+import net.automatalib.alphabet.GrowingMapAlphabet;
+import net.automatalib.alphabet.SupportsGrowingAlphabet;
+import net.automatalib.automaton.UniversalDeterministicAutomaton;
+import net.automatalib.automaton.concept.Output;
 import net.automatalib.exception.GrowingAlphabetNotSupportedException;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.GrowingAlphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
-import net.automatalib.words.impl.GrowingMapAlphabet;
+import net.automatalib.util.automaton.Automata;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -40,8 +40,6 @@ import org.testng.annotations.Test;
 /**
  * Simple (abstract super) test class that checks the basic workflow of a learning algorithm that implements {@link
  * SupportsGrowingAlphabet}.
- *
- * @author frohme
  */
 public abstract class AbstractGrowingAlphabetTest<L extends SupportsGrowingAlphabet<I> & LearningAlgorithm<M, I, D>, M extends UniversalDeterministicAutomaton<?, I, ?, ?, ?> & Output<I, D>, OR, I, D> {
 
@@ -92,15 +90,15 @@ public abstract class AbstractGrowingAlphabetTest<L extends SupportsGrowingAlpha
 
     /**
      * In case of passing a growing alphabet, the learners may use the existing {@link
-     * net.automatalib.words.GrowingAlphabet#addSymbol(Object)} functionality. Due to references, this may alter their
+     * GrowingAlphabet#addSymbol(Object)} functionality. Due to references, this may alter their
      * behavior. Check it!
      */
     @Test
     public void testGrowingAlphabet() {
         final GrowingAlphabet<I> alphabet = new GrowingMapAlphabet<>(initialAlphabet);
-        final L leaner = getLearner(oracle, alphabet);
+        final L learner = getLearner(oracle, alphabet);
 
-        testAlphabet(alphabet, leaner, Collections.singletonList(leaner::addAlphabetSymbol));
+        testAlphabet(alphabet, learner, Collections.singletonList(learner::addAlphabetSymbol));
     }
 
     @Test
@@ -127,7 +125,7 @@ public abstract class AbstractGrowingAlphabetTest<L extends SupportsGrowingAlpha
 
         boolean duplicateAdd = false;
 
-        for (final I i : alphabetExtensions) {
+        for (I i : alphabetExtensions) {
             currentAlphabet.add(i);
             symbolListener.forEach(c -> c.accept(i));
 
@@ -145,7 +143,7 @@ public abstract class AbstractGrowingAlphabetTest<L extends SupportsGrowingAlpha
 
     }
 
-    private void performLearnLoopAndCheck(final L learner, final Collection<? extends I> effectiveAlphabet) {
+    private void performLearnLoopAndCheck(L learner, Collection<? extends I> effectiveAlphabet) {
 
         M hyp = learner.getHypothesisModel();
         Word<I> sepWord = Automata.findSeparatingWord(target, hyp, effectiveAlphabet);
@@ -162,10 +160,10 @@ public abstract class AbstractGrowingAlphabetTest<L extends SupportsGrowingAlpha
         Assert.assertTrue(Automata.testEquivalence(target, hyp, effectiveAlphabet));
     }
 
-    private <S, T> void checkCompletenessOfHypothesis(final UniversalDeterministicAutomaton<S, I, T, ?, ?> hypothesis,
-                                                      final Collection<? extends I> alphabet) {
-        for (final S s : hypothesis.getStates()) {
-            for (final I i : alphabet) {
+    private <S, T> void checkCompletenessOfHypothesis(UniversalDeterministicAutomaton<S, I, T, ?, ?> hypothesis,
+                                                      Collection<? extends I> alphabet) {
+        for (S s : hypothesis.getStates()) {
+            for (I i : alphabet) {
                 final T trans = hypothesis.getTransition(s, i);
 
                 Assert.assertNotNull(trans);

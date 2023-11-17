@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,18 +21,16 @@ import java.util.function.Function;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 /**
- * Writes an observation table as a HTML table.
+ * Writes an observation table as an HTML table.
  * <p>
  *
  * @param <I>
  *         input symbol type (upper bound)
  * @param <D>
  *         output domain type (upper bound)
- *
- * @author Malte Isberner
  */
 public class ObservationTableHTMLWriter<I, D> extends AbstractObservationTableWriter<I, D> {
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,18 +19,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.DefaultPassiveLearningExample;
-import de.learnlib.examples.LearningExample;
-import de.learnlib.examples.LearningExample.MealyLearningExample;
-import de.learnlib.examples.LearningExample.SSTLearningExample;
-import de.learnlib.examples.LearningExamples;
-import de.learnlib.examples.PassiveLearningExample;
-import net.automatalib.automata.UniversalDeterministicAutomaton;
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.automata.transducers.SubsequentialTransducer;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.example.DefaultPassiveLearningExample.DefaultSSTPassiveLearningExample;
+import de.learnlib.example.LearningExample;
+import de.learnlib.example.LearningExample.MealyLearningExample;
+import de.learnlib.example.LearningExample.SSTLearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.example.PassiveLearningExample.SSTPassiveLearningExample;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.testsupport.it.learner.PassiveLearnerVariantListImpl.SSTLearnerVariantListImpl;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.UniversalDeterministicAutomaton;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.automaton.transducer.SubsequentialTransducer;
+import net.automatalib.word.Word;
 import org.testng.annotations.Factory;
 
 /**
@@ -38,8 +39,6 @@ import org.testng.annotations.Factory;
  * <p>
  * SST learning algorithms tested by this integration test are expected to assume membership queries yield the full
  * output word corresponding to the suffix part of the query.
- *
- * @author frohme
  */
 public abstract class AbstractSSTPassiveLearnerIT {
 
@@ -66,12 +65,10 @@ public abstract class AbstractSSTPassiveLearnerIT {
 
         Collection<DefaultQuery<I, Word<O>>> queries = LearnerITUtil.generateSamples(alphabet, reference);
 
-        final PassiveLearnerVariantListImpl<SubsequentialTransducer<?, I, ?, O>, I, Word<O>> variants =
-                new PassiveLearnerVariantListImpl<>();
+        final SSTLearnerVariantListImpl<I, O> variants = new SSTLearnerVariantListImpl<>();
         addLearnerVariants(alphabet, variants);
 
-        final PassiveLearningExample<I, Word<O>> effectiveExample =
-                new DefaultPassiveLearningExample<>(queries, alphabet);
+        final SSTPassiveLearningExample<I, O> effectiveExample = new DefaultSSTPassiveLearningExample<>(queries);
 
         return LearnerITUtil.createPassiveExampleITCases(effectiveExample, variants);
     }

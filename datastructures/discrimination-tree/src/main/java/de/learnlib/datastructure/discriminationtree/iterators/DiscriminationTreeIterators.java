@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +23,6 @@ import de.learnlib.datastructure.discriminationtree.model.AbstractDTNode;
 
 /**
  * Factory methods for several kinds of discrimination tree node iterators.
- *
- * @author frohme
  */
 public final class DiscriminationTreeIterators {
 
@@ -71,7 +69,7 @@ public final class DiscriminationTreeIterators {
 
     /**
      * Iterator that traverses all leaves (no inner nodes) of a subtree of a given discrimination tree node.
-     * Additionally allows to specify a transformer that is applied to the leaf nodes
+     * Additionally, allows to specify a transformer that is applied to the leaf nodes
      *
      * @param root
      *         the root node, from which traversal should start

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,6 @@ import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import com.google.common.base.Throwables;
-import de.learnlib.api.oracle.parallelism.BatchInterruptedException;
-import de.learnlib.api.oracle.parallelism.BatchProcessor;
-import de.learnlib.api.oracle.parallelism.ThreadPool;
 import de.learnlib.setting.LearnLibProperty;
 import de.learnlib.setting.LearnLibSettings;
 import org.checkerframework.checker.index.qual.NonNegative;
@@ -38,8 +35,6 @@ import org.checkerframework.checker.index.qual.NonNegative;
  *         query type
  * @param <P>
  *         (sub-) processor type
- *
- * @author Malte Isberner
  */
 public abstract class AbstractDynamicBatchProcessor<Q, P extends BatchProcessor<Q>>
         implements ThreadPool, BatchProcessor<Q> {
@@ -62,7 +57,7 @@ public abstract class AbstractDynamicBatchProcessor<Q, P extends BatchProcessor<
     private final ExecutorService executor;
     private final @NonNegative int batchSize;
 
-    public AbstractDynamicBatchProcessor(final Supplier<? extends P> oracleSupplier,
+    public AbstractDynamicBatchProcessor(Supplier<? extends P> oracleSupplier,
                                          @NonNegative int batchSize,
                                          ExecutorService executor) {
         this.threadLocalOracle = ThreadLocal.withInitial(oracleSupplier);

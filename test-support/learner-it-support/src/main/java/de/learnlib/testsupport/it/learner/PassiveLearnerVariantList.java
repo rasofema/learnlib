@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,12 @@
  */
 package de.learnlib.testsupport.it.learner;
 
-import de.learnlib.api.algorithm.PassiveLearningAlgorithm;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.vpda.OneSEVPA;
-import net.automatalib.words.Word;
+import de.learnlib.algorithm.PassiveLearningAlgorithm;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.automaton.transducer.SubsequentialTransducer;
+import net.automatalib.word.Word;
 
 public interface PassiveLearnerVariantList<M, I, D> {
 
@@ -40,7 +41,8 @@ public interface PassiveLearnerVariantList<M, I, D> {
 
     interface MealyLearnerVariantList<I, O> extends PassiveLearnerVariantList<MealyMachine<?, I, ?, O>, I, Word<O>> {}
 
-    interface MealySymLearnerVariantList<I, O> extends PassiveLearnerVariantList<MealyMachine<?, I, ?, O>, I, O> {}
+    interface MooreLearnerVariantList<I, O> extends PassiveLearnerVariantList<MooreMachine<?, I, ?, O>, I, Word<O>> {}
 
-    interface OneSEVPALearnerVariantList<I> extends PassiveLearnerVariantList<OneSEVPA<?, I>, I, Boolean> {}
+    interface SSTLearnerVariantList<I, O>
+            extends PassiveLearnerVariantList<SubsequentialTransducer<?, I, ?, O>, I, Word<O>> {}
 }

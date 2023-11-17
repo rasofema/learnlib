@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,18 +17,16 @@ package de.learnlib.util.moore;
 
 import java.util.Objects;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.algorithm.LearningAlgorithm.MooreLearner;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.words.Word;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.algorithm.LearningAlgorithm.MooreLearner;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility class helping to unify various approaches to actively learning Moore machines.
- *
- * @author frohme
  */
 public final class MooreUtil {
 
@@ -54,6 +52,21 @@ public final class MooreUtil {
         return NO_MISMATCH;
     }
 
+    public static <I, O> @Nullable DefaultQuery<I, Word<O>> shortenCounterExample(MooreMachine<?, I, ?, O> hypothesis,
+                                                                                  DefaultQuery<I, Word<O>> ceQuery) {
+        Word<I> cePrefix = ceQuery.getPrefix(), ceSuffix = ceQuery.getSuffix();
+        Word<O> hypOut = hypothesis.computeSuffixOutput(cePrefix, ceSuffix);
+        Word<O> ceOut = ceQuery.getOutput();
+        assert ceOut.length() == hypOut.length();
+
+        int mismatchIdx = findMismatch(hypOut, ceOut);
+        if (mismatchIdx == NO_MISMATCH) {
+            return null;
+        }
+
+        return new DefaultQuery<>(cePrefix, ceSuffix.prefix(mismatchIdx), ceOut.prefix(mismatchIdx + 1));
+    }
+
     public static <I, O> @Nullable DefaultQuery<I, O> reduceCounterExample(MooreMachine<?, I, ?, O> hypothesis,
                                                                            DefaultQuery<I, Word<O>> ceQuery) {
         Word<I> cePrefix = ceQuery.getPrefix(), ceSuffix = ceQuery.getSuffix();
@@ -73,7 +86,7 @@ public final class MooreUtil {
         return new MooreLearnerWrapper<>(learner);
     }
 
-    public static <I, O> MembershipOracle<I, @Nullable O> wrapWordOracle(MembershipOracle<I, Word<O>> oracle) {
+    public static <I, O> MembershipOracle<I, O> wrapWordOracle(MembershipOracle<I, Word<O>> oracle) {
         return new SymbolOracleWrapper<>(oracle);
     }
 

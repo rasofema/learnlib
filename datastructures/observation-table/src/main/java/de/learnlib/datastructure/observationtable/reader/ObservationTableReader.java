@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 package de.learnlib.datastructure.observationtable.reader;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
-import net.automatalib.words.Alphabet;
+import net.automatalib.alphabet.Alphabet;
 
 /**
  * Reads an {@link ObservationTable} from a string source.

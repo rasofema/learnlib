@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,9 @@ package de.learnlib.mapper;
 
 import java.util.Optional;
 
-import de.learnlib.api.exception.SULException;
-import de.learnlib.mapper.api.SULMapper;
+import de.learnlib.exception.MappedException;
+import de.learnlib.exception.SULException;
+import de.learnlib.sul.SULMapper;
 
 final class SULMapperComposition<AI, AO, ACI, CAO, CI, CO>
         extends MapperComposition<AI, AO, ACI, CAO, CI, CO, SULMapper<? super AI, ? extends AO, ACI, CAO>, SULMapper<? super ACI, ? extends CAO, ? extends CI, ? super CO>>

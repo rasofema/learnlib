@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,8 @@
 package de.learnlib.datastructure.discriminationtree;
 
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
-/**
- * @author frohme
- */
 final class DummyDT {
 
     static final BinaryDTree<Integer, Character> DT;

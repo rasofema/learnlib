@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,8 @@
  */
 package de.learnlib.datastructure.discriminationtree;
 
-import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDiscriminationTree;
+import de.learnlib.oracle.MembershipOracle;
 
 /**
  * Generic n-ary discrimination tree specialization.
@@ -27,8 +27,6 @@ import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDiscr
  *         output symbol type
  * @param <D>
  *         node data type
- *
- * @author Malte Isberner
  */
 public class MultiDTree<I, O, D> extends AbstractWordBasedDiscriminationTree<I, O, D> {
 

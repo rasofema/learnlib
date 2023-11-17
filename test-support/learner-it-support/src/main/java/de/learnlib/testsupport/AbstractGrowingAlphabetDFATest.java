@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,22 +20,19 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.QueryAnswerer;
+import de.learnlib.algorithm.LearningAlgorithm;
 import de.learnlib.filter.cache.dfa.DFACacheOracle;
 import de.learnlib.filter.cache.dfa.DFACaches;
-import net.automatalib.SupportsGrowingAlphabet;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.util.automata.random.RandomAutomata;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.impl.Alphabets;
+import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
+import de.learnlib.oracle.membership.DFASimulatorOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.alphabet.SupportsGrowingAlphabet;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.util.automaton.random.RandomAutomata;
 
-/**
- * @author frohme
- */
 public abstract class AbstractGrowingAlphabetDFATest<L extends SupportsGrowingAlphabet<Character> & LearningAlgorithm<DFA<?, Character>, Character, Boolean>>
-        extends AbstractGrowingAlphabetTest<L, DFA<?, Character>, MembershipOracle<Character, Boolean>, Character, Boolean> {
+        extends AbstractGrowingAlphabetTest<L, DFA<?, Character>, DFAMembershipOracle<Character>, Character, Boolean> {
 
     @Override
     protected Alphabet<Character> getInitialAlphabet() {
@@ -53,14 +50,14 @@ public abstract class AbstractGrowingAlphabetDFATest<L extends SupportsGrowingAl
     }
 
     @Override
-    protected MembershipOracle<Character, Boolean> getOracle(DFA<?, Character> target) {
-        return ((QueryAnswerer<Character, Boolean>) target::computeSuffixOutput).asOracle();
+    protected DFAMembershipOracle<Character> getOracle(DFA<?, Character> target) {
+        return new DFASimulatorOracle<>(target);
     }
 
     @Override
-    protected MembershipOracle<Character, Boolean> getCachedOracle(Alphabet<Character> alphabet,
-                                                                   MembershipOracle<Character, Boolean> original,
-                                                                   List<Consumer<Character>> symbolListener) {
+    protected DFAMembershipOracle<Character> getCachedOracle(Alphabet<Character> alphabet,
+                                                             DFAMembershipOracle<Character> original,
+                                                             List<Consumer<Character>> symbolListener) {
         final DFACacheOracle<Character> cache = DFACaches.createDAGCache(alphabet, original);
         symbolListener.add(cache::addAlphabetSymbol);
         return cache;

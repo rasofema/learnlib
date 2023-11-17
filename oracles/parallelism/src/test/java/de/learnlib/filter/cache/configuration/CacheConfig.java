@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,27 +21,26 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-import de.learnlib.api.SUL;
-import de.learnlib.api.StateLocalInputSUL;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.parallelism.ParallelOracle;
 import de.learnlib.filter.cache.LearningCache;
 import de.learnlib.filter.cache.LearningCache.MealyLearningCache;
 import de.learnlib.filter.cache.LearningCacheOracle;
 import de.learnlib.filter.cache.LearningCacheOracle.DFALearningCacheOracle;
 import de.learnlib.filter.cache.LearningCacheOracle.MealyLearningCacheOracle;
+import de.learnlib.filter.cache.LearningCacheOracle.MooreLearningCacheOracle;
 import de.learnlib.filter.cache.configuration.CacheCreator.DFACacheCreator;
 import de.learnlib.filter.cache.configuration.CacheCreator.MealyCacheCreator;
+import de.learnlib.filter.cache.configuration.CacheCreator.MooreCacheCreator;
 import de.learnlib.filter.cache.configuration.CacheCreator.SLISULCacheCreator;
 import de.learnlib.filter.cache.configuration.CacheCreator.SULCacheCreator;
+import de.learnlib.oracle.MembershipOracle;
 import de.learnlib.oracle.parallelism.AbstractStaticBatchProcessor;
+import de.learnlib.oracle.parallelism.ParallelOracle;
 import de.learnlib.oracle.parallelism.ParallelOracleBuilders;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.sul.SUL;
+import de.learnlib.sul.StateLocalInputSUL;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.word.Word;
 
-/**
- * @author frohme
- */
 public interface CacheConfig<I, D, C extends LearningCache<?, I, D>> {
 
     C getRepresentative();
@@ -95,6 +94,14 @@ public interface CacheConfig<I, D, C extends LearningCache<?, I, D>> {
             extends SupplierConfig<I, Word<O>, MembershipOracle<I, Word<O>>, C> implements MealyCacheCreator<I, O, C> {
 
         public MealySupplierConfig(BiFunction<Alphabet<I>, Supplier<? extends MembershipOracle<I, Word<O>>>, Supplier<C>> provider) {
+            super(provider);
+        }
+    }
+
+    class MooreSupplierConfig<I, O, C extends MooreLearningCacheOracle<I, O>>
+            extends SupplierConfig<I, Word<O>, MembershipOracle<I, Word<O>>, C> implements MooreCacheCreator<I, O, C> {
+
+        public MooreSupplierConfig(BiFunction<Alphabet<I>, Supplier<? extends MembershipOracle<I, Word<O>>>, Supplier<C>> provider) {
             super(provider);
         }
     }
@@ -217,6 +224,15 @@ public interface CacheConfig<I, D, C extends LearningCache<?, I, D>> {
             implements MealyCacheCreator<I, O, C> {
 
         public MealyCollectionConfig(BiFunction<Alphabet<I>, Collection<? extends MembershipOracle<I, Word<O>>>, Collection<C>> provider) {
+            super(provider);
+        }
+    }
+
+    class MooreCollectionConfig<I, O, C extends MooreLearningCacheOracle<I, O>>
+            extends CollectionConfig<I, Word<O>, MembershipOracle<I, Word<O>>, C>
+            implements MooreCacheCreator<I, O, C> {
+
+        public MooreCollectionConfig(BiFunction<Alphabet<I>, Collection<? extends MembershipOracle<I, Word<O>>>, Collection<C>> provider) {
             super(provider);
         }
     }

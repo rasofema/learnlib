@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,10 +17,11 @@ package de.learnlib.testsupport.it.learner;
 
 import java.util.Collection;
 
-import de.learnlib.api.algorithm.PassiveLearningAlgorithm;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.PassiveLearningExample;
-import net.automatalib.automata.concepts.SuffixOutput;
+import de.learnlib.algorithm.PassiveLearningAlgorithm;
+import de.learnlib.example.PassiveLearningExample;
+import de.learnlib.logging.Category;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.concept.SuffixOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -36,8 +37,6 @@ import org.testng.annotations.Test;
  *         output domain type
  * @param <M>
  *         inferred model type
- *
- * @author frohme
  */
 public final class PassiveLearnerVariantITCase<I, D, M extends SuffixOutput<I, D>> implements ITest {
 
@@ -70,7 +69,8 @@ public final class PassiveLearnerVariantITCase<I, D, M extends SuffixOutput<I, D
         }
 
         long duration = (System.nanoTime() - start) / NANOS_PER_MILLISECOND;
-        LOGGER.info("Passed learner integration test {} ... took [{}]",
+        LOGGER.info(Category.EVENT,
+                    "Passed learner integration test {} ... took [{}]",
                     getTestName(),
                     String.format("%d.%03ds", duration / MILLIS_PER_SECOND, duration % MILLIS_PER_SECOND));
     }

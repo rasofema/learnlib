@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,8 +29,6 @@ import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNod
  *         output symbol type
  * @param <D>
  *         node data type
- *
- * @author Malte Isberner
  */
 public class MultiDTNode<I, O, D> extends AbstractWordBasedDTNode<I, O, D> {
 

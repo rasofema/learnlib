@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,6 @@ package de.learnlib.oracle.parallelism;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.parallelism.BatchProcessor;
-
 /**
  * A queries job that maintains a thread-local reference to a {@link BatchProcessor}, and dynamically selects that
  * oracle depending on the executing thread.
@@ -28,8 +26,6 @@ import de.learnlib.api.oracle.parallelism.BatchProcessor;
  *
  * @param <Q>
  *         query type
- *
- * @author Malte Isberner
  */
 final class DynamicQueriesJob<Q> extends AbstractQueriesJob<Q> {
 

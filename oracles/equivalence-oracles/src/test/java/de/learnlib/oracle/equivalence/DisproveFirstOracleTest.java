@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,11 @@ package de.learnlib.oracle.equivalence;
 import java.util.Collection;
 
 import com.google.common.collect.Lists;
-import de.learnlib.api.oracle.BlackBoxOracle;
-import de.learnlib.api.oracle.PropertyOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.concepts.Output;
-import net.automatalib.words.Alphabet;
+import de.learnlib.oracle.BlackBoxOracle;
+import de.learnlib.oracle.PropertyOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.concept.Output;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;

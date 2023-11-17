@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (C) 2013-2022 TU Dortmund
+Copyright (C) 2013-2023 TU Dortmund
 This file is part of LearnLib, http://www.learnlib.de/.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>de.learnlib</groupId>
         <artifactId>learnlib-algorithms-parent</artifactId>
-        <version>0.17.0-SNAPSHOT</version>
+        <version>0.18.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -32,18 +32,19 @@ limitations under the License.
     <description>Parent module for (active) automata learning algorithms shipped with LearnLib</description>
 
     <modules>
+        <module>aaar</module>
         <module>adt</module>
         <module>dhc</module>
-        <module>discrimination-tree</module>
-        <module>discrimination-tree-vpda</module>
         <module>kearns-vazirani</module>
         <module>lstar</module>
         <module>lsharp</module>
         <module>nlstar</module>
+        <module>observation-pack</module>
+        <module>observation-pack-vpa</module>
         <module>oml</module>
-        <module>spa</module>
+        <module>procedural</module>
         <module>ttt</module>
-        <module>ttt-vpda</module>
+        <module>ttt-vpa</module>
     </modules>
 
     <profiles>

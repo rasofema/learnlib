@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,12 +25,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.google.common.base.Throwables;
-import de.learnlib.api.oracle.parallelism.BatchInterruptedException;
-import de.learnlib.api.oracle.parallelism.BatchProcessor;
-import de.learnlib.api.oracle.parallelism.ThreadPool;
 import de.learnlib.setting.LearnLibProperty;
 import de.learnlib.setting.LearnLibSettings;
-import net.automatalib.commons.smartcollections.ArrayStorage;
+import net.automatalib.common.smartcollection.ArrayStorage;
 import org.checkerframework.checker.index.qual.NonNegative;
 
 /**
@@ -44,8 +41,6 @@ import org.checkerframework.checker.index.qual.NonNegative;
  *         query type
  * @param <P>
  *         (sub-) processor type
- *
- * @author Malte Isberner
  */
 public abstract class AbstractStaticBatchProcessor<Q, P extends BatchProcessor<Q>>
         implements ThreadPool, BatchProcessor<Q> {
@@ -91,7 +86,7 @@ public abstract class AbstractStaticBatchProcessor<Q, P extends BatchProcessor<Q
     @Override
     public void processBatch(Collection<? extends Q> queries) {
         int num = queries.size();
-        if (num <= 0) {
+        if (num == 0) {
             return;
         }
 

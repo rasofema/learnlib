@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,8 @@ package de.learnlib.oracle.membership;
 import java.util.Collection;
 import java.util.Collections;
 
-import de.learnlib.api.StateLocalInputSUL;
-import de.learnlib.api.oracle.SymbolQueryOracle;
+import de.learnlib.oracle.SymbolQueryOracle;
+import de.learnlib.sul.StateLocalInputSUL;
 
 /**
  * A {@link SymbolQueryOracle} wrapper for {@link StateLocalInputSUL}s. See {@link SULSymbolQueryOracle}.
@@ -32,8 +32,6 @@ import de.learnlib.api.oracle.SymbolQueryOracle;
  * @param <O>
  *         output symbol type
  *
- * @author bainczyk
- * @author frohme
  * @see SULSymbolQueryOracle
  */
 public class StateLocalInputSULSymbolQueryOracle<I, O> extends SULSymbolQueryOracle<I, O>

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,13 @@ package de.learnlib.oracle.membership;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.dfa.ExamplePaulAndMary;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.words.Word;
+import de.learnlib.example.dfa.ExamplePaulAndMary;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Maik Merten
- */
 public class SimulatorOracleTest {
 
     @Test

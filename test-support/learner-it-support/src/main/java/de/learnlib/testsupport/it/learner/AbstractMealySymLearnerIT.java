@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,18 @@ package de.learnlib.testsupport.it.learner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
-import de.learnlib.examples.LearningExample.MealyLearningExample;
-import de.learnlib.examples.LearningExamples;
+import de.learnlib.example.LearningExample.MealyLearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
 import de.learnlib.oracle.equivalence.SimulatorEQOracle;
-import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
+import de.learnlib.oracle.membership.MealySimulatorOracle;
 import de.learnlib.testsupport.it.learner.LearnerVariantList.MealySymLearnerVariantList;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.MealySymLearnerVariantListImpl;
 import de.learnlib.util.mealy.MealyUtil;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 import org.testng.annotations.Factory;
 
 /**
@@ -38,8 +38,6 @@ import org.testng.annotations.Factory;
  * Mealy machine learning algorithms tested by this integration test are expected to assume membership queries yield
  * only the last symbol of the output word. If the learning algorithm expects the full output word for the suffix part
  * of the query, use {@link AbstractMealyLearnerIT}.
- *
- * @author Malte Isberner
  */
 public abstract class AbstractMealySymLearnerIT {
 

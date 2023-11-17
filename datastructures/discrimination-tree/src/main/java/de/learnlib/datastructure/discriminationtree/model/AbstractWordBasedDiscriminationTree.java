@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,9 @@
  */
 package de.learnlib.datastructure.discriminationtree.model;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.word.Word;
 
 /**
  * Convenient class for word-based discrimination trees that already binds certain generics.
@@ -28,8 +28,6 @@ import net.automatalib.words.Word;
  *         output symbol type
  * @param <D>
  *         node data type
- *
- * @author frohme
  */
 public abstract class AbstractWordBasedDiscriminationTree<I, O, D>
         extends AbstractDiscriminationTree<Word<I>, I, O, D, AbstractWordBasedDTNode<I, O, D>> {

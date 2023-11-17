@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,25 +18,23 @@ package de.learnlib.testsupport.it.learner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle.DFAMembershipOracle;
-import de.learnlib.examples.LearningExample.DFALearningExample;
-import de.learnlib.examples.LearningExamples;
+import de.learnlib.example.LearningExample.DFALearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
 import de.learnlib.oracle.equivalence.SimulatorEQOracle;
-import de.learnlib.oracle.membership.SimulatorOracle.DFASimulatorOracle;
+import de.learnlib.oracle.membership.DFASimulatorOracle;
 import de.learnlib.testsupport.it.learner.LearnerVariantList.DFALearnerVariantList;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.DFALearnerVariantListImpl;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.words.Alphabet;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.fsa.DFA;
 import org.testng.annotations.Factory;
 
 /**
  * Abstract integration test for DFA learning algorithms.
  * <p>
- * If run, this integration test tests the functionality of all {@link #addLearnerVariants(Alphabet, int,
- * DFAMembershipOracle, DFALearnerVariantList) variants} of a DFA learning algorithm against all the examples contained
- * in {@link LearningExamples#createDFAExamples()}.
- *
- * @author Malte Isberner
+ * If run, this integration test tests the functionality of all
+ * {@link #addLearnerVariants(Alphabet, int, DFAMembershipOracle, DFALearnerVariantList) variants} of a DFA learning
+ * algorithm against all the examples contained in {@link LearningExamples#createDFAExamples()}.
  */
 public abstract class AbstractDFALearnerIT {
 
@@ -66,11 +64,13 @@ public abstract class AbstractDFALearnerIT {
     }
 
     /**
-     * Adds, for a given setup, all the variants of the DFA learner to be tested to the specified {@link
-     * LearnerVariantList variant list}.
+     * Adds, for a given setup, all the variants of the DFA learner to be tested to the specified
+     * {@link LearnerVariantList variant list}.
      *
      * @param alphabet
      *         the input alphabet
+     * @param targetSize
+     *         the size of the target automaton
      * @param mqOracle
      *         the membership oracle
      * @param variants

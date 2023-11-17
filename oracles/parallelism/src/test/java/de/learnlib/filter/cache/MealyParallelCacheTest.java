@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,23 +19,20 @@ import java.util.Collection;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.parallelism.ParallelOracle;
 import de.learnlib.filter.cache.configuration.CacheConfig;
 import de.learnlib.filter.cache.configuration.CacheCreator.MealyCacheCreator;
 import de.learnlib.filter.cache.configuration.Config;
 import de.learnlib.filter.cache.mealy.ThreadSafeMealyCacheOracle;
 import de.learnlib.filter.cache.mealy.ThreadSafeMealyCaches;
 import de.learnlib.filter.statistic.oracle.MealyCounterOracle;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.parallelism.ParallelOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 
-/**
- * @author frohme
- */
 public class MealyParallelCacheTest
         extends AbstractParallelCacheTest<MealyMachine<?, Character, ?, Character>, Character, Word<Character>> {
 
@@ -86,6 +83,6 @@ public class MealyParallelCacheTest
 
     @Override
     protected long getNumberOfQueries() {
-        return this.sul.getStatisticalData().getCount();
+        return this.sul.getQueryCounter().getCount();
     }
 }

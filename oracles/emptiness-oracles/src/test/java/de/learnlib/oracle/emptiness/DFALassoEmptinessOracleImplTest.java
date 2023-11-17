@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,28 +17,25 @@ package de.learnlib.oracle.emptiness;
 
 import java.util.Objects;
 
-import de.learnlib.api.oracle.OmegaMembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.api.query.OmegaQuery;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.fsa.impl.compact.CompactDFA;
+import de.learnlib.oracle.OmegaMembershipOracle.DFAOmegaMembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.query.OmegaQuery;
+import net.automatalib.automaton.fsa.CompactDFA;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.modelchecking.DFALassoImpl;
 import net.automatalib.modelchecking.Lasso;
-import net.automatalib.modelchecking.lasso.DFALassoImpl;
-import net.automatalib.util.automata.builders.AutomatonBuilders;
-import net.automatalib.words.Word;
+import net.automatalib.util.automaton.builder.AutomatonBuilders;
+import net.automatalib.word.Word;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 
-/**
- * @author Jeroen Meijer
- */
 public class DFALassoEmptinessOracleImplTest
         extends AbstractLassoEmptinessOracleImplTest<Lasso.DFALasso<Character>, Boolean> {
 
     @Mock
-    private OmegaMembershipOracle.DFAOmegaMembershipOracle<Integer, Character> omo;
+    private DFAOmegaMembershipOracle<Integer, Character> omo;
 
     @BeforeMethod
     public void setUp() {

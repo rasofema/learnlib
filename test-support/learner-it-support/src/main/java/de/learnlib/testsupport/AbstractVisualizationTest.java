@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,18 +19,18 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.google.common.io.CharStreams;
-import de.learnlib.api.SUL;
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.driver.util.MealySimulatorSUL;
-import de.learnlib.examples.mealy.ExampleCoffeeMachine;
-import de.learnlib.examples.mealy.ExampleCoffeeMachine.Input;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.driver.simulator.MealySimulatorSUL;
+import de.learnlib.example.mealy.ExampleCoffeeMachine;
+import de.learnlib.example.mealy.ExampleCoffeeMachine.Input;
 import de.learnlib.oracle.equivalence.SimulatorEQOracle;
+import de.learnlib.sul.SUL;
 import de.learnlib.util.Experiment;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
-import net.automatalib.commons.util.IOUtil;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.common.util.IOUtil;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.initialization.qual.UnderInitialization;
 
 /**
@@ -40,8 +40,6 @@ import org.checkerframework.checker.initialization.qual.UnderInitialization;
  *
  * @param <L>
  *         type of the learner
- *
- * @author frohme
  */
 public abstract class AbstractVisualizationTest<L extends LearningAlgorithm<? extends MealyMachine<?, Input, ?, String>, Input, Word<String>>> {
 

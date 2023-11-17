@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,9 @@
  */
 package de.learnlib.testsupport.it.learner;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
+import de.learnlib.algorithm.LearningAlgorithm;
 
-class LearnerVariant<M, I, D> {
+public class LearnerVariant<M, I, D> {
 
     private final String name;
     private final LearningAlgorithm<? extends M, I, D> learner;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,26 +17,26 @@ package de.learnlib.oracle.emptiness;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.LassoEmptinessOracle;
-import de.learnlib.api.oracle.LassoEmptinessOracle.DFALassoEmptinessOracle;
-import de.learnlib.api.oracle.LassoEmptinessOracle.MealyLassoEmptinessOracle;
-import de.learnlib.api.oracle.LassoOracle;
-import de.learnlib.api.oracle.LassoOracle.DFALassoOracle;
-import de.learnlib.api.oracle.LassoOracle.MealyLassoOracle;
-import de.learnlib.api.oracle.OmegaMembershipOracle;
-import de.learnlib.api.oracle.OmegaMembershipOracle.DFAOmegaMembershipOracle;
-import de.learnlib.api.oracle.OmegaMembershipOracle.MealyOmegaMembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.api.query.OmegaQuery;
 import de.learnlib.buildtool.refinement.annotation.GenerateRefinement;
 import de.learnlib.buildtool.refinement.annotation.Generic;
 import de.learnlib.buildtool.refinement.annotation.Interface;
 import de.learnlib.buildtool.refinement.annotation.Map;
-import net.automatalib.automata.concepts.Output;
+import de.learnlib.oracle.LassoEmptinessOracle;
+import de.learnlib.oracle.LassoEmptinessOracle.DFALassoEmptinessOracle;
+import de.learnlib.oracle.LassoEmptinessOracle.MealyLassoEmptinessOracle;
+import de.learnlib.oracle.LassoOracle;
+import de.learnlib.oracle.LassoOracle.DFALassoOracle;
+import de.learnlib.oracle.LassoOracle.MealyLassoOracle;
+import de.learnlib.oracle.OmegaMembershipOracle;
+import de.learnlib.oracle.OmegaMembershipOracle.DFAOmegaMembershipOracle;
+import de.learnlib.oracle.OmegaMembershipOracle.MealyOmegaMembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.query.OmegaQuery;
+import net.automatalib.automaton.concept.Output;
 import net.automatalib.modelchecking.Lasso;
 import net.automatalib.modelchecking.Lasso.DFALasso;
 import net.automatalib.modelchecking.Lasso.MealyLasso;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 @GenerateRefinement(name = "DFALassoEmptinessOracleImpl",

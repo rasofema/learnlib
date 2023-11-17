@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,26 +20,27 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import de.learnlib.api.SUL;
-import de.learnlib.api.StateLocalInputSUL;
-import de.learnlib.api.oracle.MembershipOracle;
 import de.learnlib.filter.cache.LearningCache;
 import de.learnlib.filter.cache.LearningCache.DFALearningCache;
 import de.learnlib.filter.cache.LearningCache.MealyLearningCache;
+import de.learnlib.filter.cache.LearningCache.MooreLearningCache;
 import de.learnlib.filter.cache.LearningCacheOracle.DFALearningCacheOracle;
 import de.learnlib.filter.cache.LearningCacheOracle.MealyLearningCacheOracle;
+import de.learnlib.filter.cache.LearningCacheOracle.MooreLearningCacheOracle;
 import de.learnlib.filter.cache.configuration.CacheConfig.DFACollectionConfig;
 import de.learnlib.filter.cache.configuration.CacheConfig.DFASupplierConfig;
 import de.learnlib.filter.cache.configuration.CacheConfig.MealyCollectionConfig;
 import de.learnlib.filter.cache.configuration.CacheConfig.MealySupplierConfig;
+import de.learnlib.filter.cache.configuration.CacheConfig.MooreCollectionConfig;
+import de.learnlib.filter.cache.configuration.CacheConfig.MooreSupplierConfig;
 import de.learnlib.filter.cache.configuration.CacheConfig.SLISULConfig;
 import de.learnlib.filter.cache.configuration.CacheConfig.SULConfig;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.sul.SUL;
+import de.learnlib.sul.StateLocalInputSUL;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.word.Word;
 
-/**
- * @author frohme
- */
 public interface CacheCreator<I, D, M, C extends LearningCache<?, I, D>>
         extends BiFunction<Alphabet<I>, M, CacheConfig<I, D, C>> {
 
@@ -72,6 +73,18 @@ public interface CacheCreator<I, D, M, C extends LearningCache<?, I, D>>
 
         static <I, O, C extends MealyLearningCacheOracle<I, O>> MealyCacheCreator<I, O, C> forCollection(Function<Collection<? extends MembershipOracle<I, Word<O>>>, Collection<C>> provider) {
             return new MealyCollectionConfig<>((alphabet, supplier) -> provider.apply(supplier));
+        }
+    }
+
+    interface MooreCacheCreator<I, O, C extends MooreLearningCache<I, O>>
+            extends CacheCreator<I, Word<O>, MembershipOracle<I, Word<O>>, C> {
+
+        static <I, O, C extends MooreLearningCacheOracle<I, O>> MooreCacheCreator<I, O, C> forSupplier(BiFunction<Alphabet<I>, Supplier<? extends MembershipOracle<I, Word<O>>>, Supplier<C>> provider) {
+            return new MooreSupplierConfig<>(provider);
+        }
+
+        static <I, O, C extends MooreLearningCacheOracle<I, O>> MooreCacheCreator<I, O, C> forCollection(BiFunction<Alphabet<I>, Collection<? extends MembershipOracle<I, Word<O>>>, Collection<C>> provider) {
+            return new MooreCollectionConfig<>(provider);
         }
     }
 

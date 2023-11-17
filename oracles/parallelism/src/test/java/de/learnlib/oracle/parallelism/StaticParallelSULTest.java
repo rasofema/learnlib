@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ package de.learnlib.oracle.parallelism;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.learnlib.oracle.parallelism.Utils.TestSULOutput;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 public class StaticParallelSULTest extends AbstractStaticParallelOracleTest<Word<TestSULOutput>> {
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,10 @@ package de.learnlib.filter.cache.dfa;
 import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import de.learnlib.api.oracle.EquivalenceOracle.DFAEquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.commons.util.Pair;
+import de.learnlib.oracle.EquivalenceOracle.DFAEquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.common.util.Pair;
 import net.automatalib.incremental.dfa.IncrementalDFABuilder;
 
 /**
@@ -29,8 +29,6 @@ import net.automatalib.incremental.dfa.IncrementalDFABuilder;
  *
  * @param <I>
  *         input symbol type
- *
- * @author frohme
  */
 public class ThreadSafeDFACacheOracle<I> extends DFACacheOracle<I> {
 
@@ -49,7 +47,7 @@ public class ThreadSafeDFACacheOracle<I> extends DFACacheOracle<I> {
     }
 
     @Override
-    protected Pair<Collection<ProxyQuery<I>>, Collection<Query<I, Boolean>>> queryCache(Collection<? extends Query<I, Boolean>> queries) {
+    Pair<Collection<ProxyQuery<I>>, Collection<Query<I, Boolean>>> queryCache(Collection<? extends Query<I, Boolean>> queries) {
         lock.readLock().lock();
         try {
             return super.queryCache(queries);
@@ -59,7 +57,7 @@ public class ThreadSafeDFACacheOracle<I> extends DFACacheOracle<I> {
     }
 
     @Override
-    protected void updateCache(Collection<? extends ProxyQuery<I>> proxyQueries) {
+    void updateCache(Collection<? extends ProxyQuery<I>> proxyQueries) {
         lock.writeLock().lock();
         try {
             super.updateCache(proxyQueries);

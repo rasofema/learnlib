@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ import java.util.StringJoiner;
 import java.util.function.Function;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -62,7 +62,6 @@ public class SuffixASCIIWriter<I, D> extends AbstractObservationTableWriter<I, D
     };
 
     public SuffixASCIIWriter() {
-        super();
         super.setWordToString(WORD_TO_STRING);
     }
 

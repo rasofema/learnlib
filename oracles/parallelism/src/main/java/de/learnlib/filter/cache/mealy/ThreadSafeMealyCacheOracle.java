@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import de.learnlib.api.oracle.EquivalenceOracle.MealyEquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.commons.util.mappings.Mapping;
+import de.learnlib.oracle.EquivalenceOracle.MealyEquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.common.util.mapping.Mapping;
 import net.automatalib.incremental.mealy.IncrementalMealyBuilder;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -33,8 +33,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *
  * @param <I>
  *         input symbol type
- *
- * @author frohme
+ * @param <O>
+ *         output symbol type
  */
 public class ThreadSafeMealyCacheOracle<I, O> extends MealyCacheOracle<I, O> {
 
@@ -58,7 +58,7 @@ public class ThreadSafeMealyCacheOracle<I, O> extends MealyCacheOracle<I, O> {
     }
 
     @Override
-    protected List<MasterQuery<I, O>> queryCache(Collection<? extends Query<I, Word<O>>> queries) {
+    List<MasterQuery<I, O>> queryCache(Collection<? extends Query<I, Word<O>>> queries) {
         this.lock.readLock().lock();
         try {
             return super.queryCache(queries);
@@ -68,7 +68,7 @@ public class ThreadSafeMealyCacheOracle<I, O> extends MealyCacheOracle<I, O> {
     }
 
     @Override
-    protected void updateCache(Collection<? extends MasterQuery<I, O>> masterQueries) {
+    void updateCache(Collection<? extends MasterQuery<I, O>> masterQueries) {
         this.lock.writeLock().lock();
         try {
             super.updateCache(masterQueries);

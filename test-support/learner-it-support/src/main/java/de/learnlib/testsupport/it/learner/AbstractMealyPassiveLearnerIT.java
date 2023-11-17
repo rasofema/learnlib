@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.DefaultPassiveLearningExample;
-import de.learnlib.examples.LearningExample;
-import de.learnlib.examples.LearningExamples;
-import de.learnlib.examples.PassiveLearningExample;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.example.DefaultPassiveLearningExample.DefaultMealyPassiveLearningExample;
+import de.learnlib.example.LearningExample.MealyLearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.example.PassiveLearningExample.MealyPassiveLearningExample;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.testsupport.it.learner.PassiveLearnerVariantListImpl.MealyLearnerVariantListImpl;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 import org.testng.annotations.Factory;
 
 /**
@@ -34,17 +35,15 @@ import org.testng.annotations.Factory;
  * <p>
  * Mealy machine learning algorithms tested by this integration test are expected to assume membership queries yield the
  * full output word corresponding to the suffix part of the query.
- *
- * @author frohme
  */
 public abstract class AbstractMealyPassiveLearnerIT {
 
     @Factory
     public Object[] createExampleITCases() {
-        final List<LearningExample.MealyLearningExample<?, ?>> examples = LearningExamples.createMealyExamples();
+        final List<MealyLearningExample<?, ?>> examples = LearningExamples.createMealyExamples();
         final List<PassiveLearnerVariantITCase<?, ?, ?>> result = new ArrayList<>(examples.size());
 
-        for (LearningExample.MealyLearningExample<?, ?> example : examples) {
+        for (MealyLearningExample<?, ?> example : examples) {
             result.addAll(createAllVariantsITCase(example));
         }
 
@@ -52,19 +51,17 @@ public abstract class AbstractMealyPassiveLearnerIT {
     }
 
     private <I, O> List<PassiveLearnerVariantITCase<I, Word<O>, MealyMachine<?, I, ?, O>>> createAllVariantsITCase(
-            LearningExample.MealyLearningExample<I, O> example) {
+            MealyLearningExample<I, O> example) {
 
         final Alphabet<I> alphabet = example.getAlphabet();
         final MealyMachine<?, I, ?, O> reference = example.getReferenceAutomaton();
 
         Collection<DefaultQuery<I, Word<O>>> queries = LearnerITUtil.generateSamples(alphabet, reference);
 
-        final PassiveLearnerVariantListImpl<MealyMachine<?, I, ?, O>, I, Word<O>> variants =
-                new PassiveLearnerVariantListImpl<>();
+        final MealyLearnerVariantListImpl<I, O> variants = new MealyLearnerVariantListImpl<>();
         addLearnerVariants(alphabet, variants);
 
-        final PassiveLearningExample<I, Word<O>> effectiveExample =
-                new DefaultPassiveLearningExample<>(queries, alphabet);
+        final MealyPassiveLearningExample<I, O> effectiveExample = new DefaultMealyPassiveLearningExample<>(queries);
 
         return LearnerITUtil.createPassiveExampleITCases(effectiveExample, variants);
     }

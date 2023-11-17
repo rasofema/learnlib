@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,10 @@
  */
 package de.learnlib.oracle.equivalence;
 
-import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.query.DefaultQuery;
 import de.learnlib.testsupport.AbstractBFOracleTest;
 import de.learnlib.util.AbstractBFOracle;
-import net.automatalib.automata.concepts.DetOutputAutomaton;
+import net.automatalib.automaton.concept.DetOutputAutomaton;
 import net.automatalib.ts.simple.SimpleDTS;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -26,8 +26,6 @@ import org.testng.annotations.Test;
 
 /**
  * Tests any breadth-first inclusion oracle.
- *
- * @author Jeroen Meijer
  *
  * @param <D> the output type
  */

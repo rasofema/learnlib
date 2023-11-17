@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,24 +17,27 @@ package de.learnlib.oracle.property;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.EmptinessOracle;
-import de.learnlib.api.oracle.InclusionOracle;
-import de.learnlib.api.oracle.PropertyOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.concepts.Output;
+import de.learnlib.oracle.EmptinessOracle;
+import de.learnlib.oracle.InclusionOracle;
+import de.learnlib.oracle.PropertyOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.concept.Output;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
- * A {@link PropertyOracle} that uses {@link InclusionOracle}s and {@link EmptinessOracle}s to find counter examples
- * and disprove properties.
+ * A {@link PropertyOracle} that uses {@link InclusionOracle}s and {@link EmptinessOracle}s to find counter examples and
+ * disprove properties.
  *
- * @author Jeroen Meijer
- *
- * @param <I> the input type
- * @param <A> the automaton type
- * @param <P> the property type
- * @param <D> the output type
- * @param <R> the result type of a model checker
+ * @param <I>
+ *         the input type
+ * @param <A>
+ *         the automaton type
+ * @param <P>
+ *         the property type
+ * @param <D>
+ *         the output type
+ * @param <R>
+ *         the result type of model checker
  */
 abstract class AbstractPropertyOracle<I, A extends Output<I, D>, P, D, R extends A>
         implements PropertyOracle<I, A, P, D> {

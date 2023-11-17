@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,16 @@ package de.learnlib.oracle.membership;
 import java.util.Collection;
 import java.util.Collections;
 
-import de.learnlib.api.StateLocalInputSUL;
-import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.words.Word;
-import net.automatalib.words.WordBuilder;
+import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
+import de.learnlib.query.Query;
+import de.learnlib.sul.StateLocalInputSUL;
+import net.automatalib.word.Word;
+import net.automatalib.word.WordBuilder;
 
 /**
  * A wrapper around a system under learning (SUL) with state local inputs.
  * <p>
  * This membership oracle is <b>not</b> thread-safe.
- *
- * @author frohme
  */
 public class StateLocalInputSULOracle<I, O> implements MealyMembershipOracle<I, O> {
 

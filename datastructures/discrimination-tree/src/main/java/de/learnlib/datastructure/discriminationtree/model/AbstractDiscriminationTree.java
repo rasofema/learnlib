@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,21 +27,21 @@ import java.util.RandomAccess;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Iterables;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.commons.smartcollections.ArrayStorage;
-import net.automatalib.commons.util.collections.BitSetIterator;
-import net.automatalib.graphs.Graph;
-import net.automatalib.util.graphs.traversal.GraphTraversal;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.common.smartcollection.ArrayStorage;
+import net.automatalib.common.util.collection.BitSetIterator;
+import net.automatalib.graph.Graph;
+import net.automatalib.util.graph.traversal.GraphTraversal;
 import net.automatalib.visualization.DefaultVisualizationHelper;
 import net.automatalib.visualization.VisualizationHelper;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 /**
- * An abstract super class for aggregating several information/functionality for discrimination trees.
+ * An abstract super class for aggregating some information/functionality for discrimination trees.
  *
  * @param <DSCR>
- *         type of discrimantor
+ *         type of discriminator
  * @param <I>
  *         input symbol type
  * @param <O>
@@ -50,8 +50,6 @@ import net.automatalib.words.Word;
  *         data symbol type
  * @param <N>
  *         node type
- *
- * @author frohme
  */
 public abstract class AbstractDiscriminationTree<DSCR, I, O, D, N extends AbstractDTNode<DSCR, O, D, N>>
         implements Graph<N, Map.Entry<O, N>> {
@@ -259,9 +257,8 @@ public abstract class AbstractDiscriminationTree<DSCR, I, O, D, N extends Abstra
 
             @Override
             public boolean getNodeProperties(N node, Map<String, String> properties) {
-                if (!super.getNodeProperties(node, properties)) {
-                    return false;
-                }
+                super.getNodeProperties(node, properties);
+
                 if (node.isLeaf()) {
                     properties.put(NodeAttrs.SHAPE, NodeShapes.BOX);
                     properties.put(NodeAttrs.LABEL, String.valueOf(node.getData()));
@@ -270,15 +267,16 @@ public abstract class AbstractDiscriminationTree<DSCR, I, O, D, N extends Abstra
                     properties.put(NodeAttrs.SHAPE, NodeShapes.OVAL);
                     properties.put(NodeAttrs.LABEL, d.toString());
                 }
+
                 return true;
             }
 
             @Override
             public boolean getEdgeProperties(N src, Entry<O, N> edge, N tgt, Map<String, String> properties) {
-                if (!super.getEdgeProperties(src, edge, tgt, properties)) {
-                    return false;
-                }
+                super.getEdgeProperties(src, edge, tgt, properties);
+
                 properties.put(EdgeAttrs.LABEL, String.valueOf(edge.getKey()));
+
                 return true;
             }
         };

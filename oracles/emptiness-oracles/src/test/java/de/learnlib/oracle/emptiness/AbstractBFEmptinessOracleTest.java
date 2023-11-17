@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,10 @@
  */
 package de.learnlib.oracle.emptiness;
 
-import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.query.DefaultQuery;
 import de.learnlib.testsupport.AbstractBFOracleTest;
 import de.learnlib.util.AbstractBFOracle;
-import net.automatalib.automata.concepts.DetOutputAutomaton;
+import net.automatalib.automaton.concept.DetOutputAutomaton;
 import net.automatalib.ts.simple.SimpleDTS;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -26,8 +26,6 @@ import org.testng.annotations.Test;
 
 /**
  * Tests any breadth-first emptiness oracle.
- *
- * @author Jeroen Meijer
  */
 public abstract class AbstractBFEmptinessOracleTest<A extends DetOutputAutomaton<?, Character, ?, D>, D>
         extends AbstractBFOracleTest<D> {
@@ -38,7 +36,7 @@ public abstract class AbstractBFEmptinessOracleTest<A extends DetOutputAutomaton
 
     private DefaultQuery<Character, D> query;
 
-    protected abstract AbstractBFEmptinessOracle<A, Character, D> createBreadthFirstEmptinessOracle();
+    protected abstract AbstractBFEmptinessOracle<A, Character, D> createBreadthFirstEmptinessOracle(double multiplier);
 
     protected abstract A createAutomaton();
 
@@ -47,14 +45,14 @@ public abstract class AbstractBFEmptinessOracleTest<A extends DetOutputAutomaton
     @BeforeMethod
     public void setUp() {
         super.setUp();
-        bfeo = createBreadthFirstEmptinessOracle();
+        bfeo = createBreadthFirstEmptinessOracle(MULTIPLIER);
         automaton = createAutomaton();
         query = createQuery();
     }
 
     @Override
     protected AbstractBFOracle<? extends SimpleDTS<?, Character>, Character, D> createBreadthFirstOracle(double multiplier) {
-        return createBreadthFirstEmptinessOracle();
+        return createBreadthFirstEmptinessOracle(multiplier);
     }
 
     @Test

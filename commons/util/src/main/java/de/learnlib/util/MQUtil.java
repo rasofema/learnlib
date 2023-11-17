@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,15 @@ package de.learnlib.util;
 import java.util.Collection;
 import java.util.Objects;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.OmegaQueryAnswerer;
-import de.learnlib.api.oracle.QueryAnswerer;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.api.query.OmegaQuery;
-import de.learnlib.api.query.Query;
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.commons.util.Pair;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.OmegaQueryAnswerer;
+import de.learnlib.oracle.QueryAnswerer;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.query.OmegaQuery;
+import de.learnlib.query.Query;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.common.util.Pair;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class MQUtil {

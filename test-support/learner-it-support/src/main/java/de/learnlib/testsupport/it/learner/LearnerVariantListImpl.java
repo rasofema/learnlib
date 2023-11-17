@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,19 @@ package de.learnlib.testsupport.it.learner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
+import de.learnlib.algorithm.LearningAlgorithm;
 import de.learnlib.util.mealy.MealyUtil;
 import de.learnlib.util.moore.MooreUtil;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.spa.SPA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.automata.vpda.OneSEVPA;
-import net.automatalib.words.Word;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.procedural.SBA;
+import net.automatalib.automaton.procedural.SPA;
+import net.automatalib.automaton.procedural.SPMM;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.automaton.vpa.OneSEVPA;
+import net.automatalib.word.Word;
 
-class LearnerVariantListImpl<M, I, D> implements LearnerVariantList<M, I, D> {
+public class LearnerVariantListImpl<M, I, D> implements LearnerVariantList<M, I, D> {
 
     private final List<LearnerVariant<M, I, D>> learnerVariants = new ArrayList<>();
 
@@ -63,6 +65,12 @@ class LearnerVariantListImpl<M, I, D> implements LearnerVariantList<M, I, D> {
 
     public static class SPALearnerVariantListImpl<I> extends LearnerVariantListImpl<SPA<?, I>, I, Boolean>
             implements SPALearnerVariantList<I> {}
+
+    public static class SBALearnerVariantListImpl<I> extends LearnerVariantListImpl<SBA<?, I>, I, Boolean>
+            implements SBALearnerVariantList<I> {}
+
+    public static class SPMMLearnerVariantListImpl<I, O> extends LearnerVariantListImpl<SPMM<?, I, ?, O>, I, Word<O>>
+            implements SPMMLearnerVariantList<I, O> {}
 
     public static class MealySymLearnerVariantListImpl<I, O> implements MealySymLearnerVariantList<I, O> {
 

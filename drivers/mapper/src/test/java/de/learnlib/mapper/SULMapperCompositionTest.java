@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +15,14 @@
  */
 package de.learnlib.mapper;
 
-import de.learnlib.api.SUL;
-import de.learnlib.api.exception.SULException;
-import de.learnlib.mapper.api.SULMapper;
+import de.learnlib.exception.MappedException;
+import de.learnlib.exception.SULException;
+import de.learnlib.sul.SUL;
+import de.learnlib.sul.SULMapper;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- * @author frohme
- */
 public class SULMapperCompositionTest {
 
     private static final char OUTER_EXCEPTION_TRIGGER_CHAR = 'X';

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,10 @@
  */
 package de.learnlib.oracle.membership;
 
-import de.learnlib.api.Mapper.AsynchronousMapper;
-import de.learnlib.api.oracle.QueryAnswerer;
-import de.learnlib.api.oracle.SingleQueryOracle;
-import net.automatalib.words.Word;
+import de.learnlib.Mapper.AsynchronousMapper;
+import de.learnlib.oracle.QueryAnswerer;
+import de.learnlib.oracle.SingleQueryOracle;
+import net.automatalib.word.Word;
 
 /**
  * A utility class that allows to lift a membership oracle of concrete input/output symbols to a membership oracle of
@@ -32,8 +32,6 @@ import net.automatalib.words.Word;
  *         concrete input symbol type.
  * @param <CO>
  *         concrete output symbol type.
- *
- * @author frohme
  */
 public class MappedOracle<AI, AO, CI, CO> implements SingleQueryOracle<AI, AO> {
 

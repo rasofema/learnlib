@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@ import java.util.Map;
 
 import com.google.common.base.Preconditions;
 import de.learnlib.datastructure.observationtable.reader.SimpleObservationTable;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 /**
  * Mock-up observation table for testing writers.
@@ -33,8 +33,6 @@ import net.automatalib.words.Word;
  *         input symbol type
  * @param <D>
  *         observation (output) domain type
- *
- * @author frohme
  */
 public class MockedObservationTable<I, D> extends SimpleObservationTable<I, D> {
 
@@ -55,15 +53,15 @@ public class MockedObservationTable<I, D> extends SimpleObservationTable<I, D> {
         this.longPrefixes = new LinkedList<>();
     }
 
-    void addShortPrefix(final Word<I> prefix, List<D> contents) {
+    void addShortPrefix(Word<I> prefix, List<D> contents) {
         shortPrefixes.add(addPrefix(prefix, contents));
     }
 
-    void addLongPrefix(final Word<I> prefix, List<D> contents) {
+    void addLongPrefix(Word<I> prefix, List<D> contents) {
         longPrefixes.add(addPrefix(prefix, contents));
     }
 
-    private RowImpl<I> addPrefix(final Word<I> prefix, List<D> contents) {
+    private RowImpl<I> addPrefix(Word<I> prefix, List<D> contents) {
         Preconditions.checkArgument(getSuffixes().size() == contents.size());
 
         final RowImpl<I> row = new RowImpl<>(prefix, rows.size());
@@ -90,7 +88,7 @@ public class MockedObservationTable<I, D> extends SimpleObservationTable<I, D> {
     }
 
     @Override
-    public RowImpl<I> getRow(int idx) {
+    public Row<I> getRow(int idx) {
         return rows.get(idx);
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,19 +19,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.DFAMembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.automata.concepts.Output;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.automaton.concept.Output;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
  * Test for size of batch generation of {@link AbstractTestWordEQOracle}.
- *
- * @author frohme
  */
 public class TestWordEQOracleBatchTest {
 

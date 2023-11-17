@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,18 @@
  */
 package de.learnlib.filter.cache;
 
-import de.learnlib.api.oracle.parallelism.ParallelOracle;
 import de.learnlib.filter.cache.configuration.CacheConfig;
 import de.learnlib.filter.cache.configuration.CacheCreator.DFACacheCreator;
 import de.learnlib.filter.cache.configuration.Config;
 import de.learnlib.filter.cache.dfa.ThreadSafeDFACacheOracle;
 import de.learnlib.filter.cache.dfa.ThreadSafeDFACaches;
 import de.learnlib.filter.statistic.oracle.DFACounterOracle;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.words.Alphabet;
+import de.learnlib.oracle.parallelism.ParallelOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.fsa.DFA;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 
-/**
- * @author frohme
- */
 public class DFAParallelCacheTest extends AbstractParallelCacheTest<DFA<?, Character>, Character, Boolean> {
 
     private final DFACounterOracle<Character> sul;
@@ -79,6 +76,6 @@ public class DFAParallelCacheTest extends AbstractParallelCacheTest<DFA<?, Chara
 
     @Override
     protected long getNumberOfQueries() {
-        return this.sul.getStatisticalData().getCount();
+        return this.sul.getQueryCounter().getCount();
     }
 }

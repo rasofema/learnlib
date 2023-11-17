@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -34,8 +34,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *         input symbol type
  * @param <O>
  *         output symbol type
- *
- * @author Malte Isberner
  */
 final class SymbolOracleWrapper<I, O> implements MembershipOracle<I, @Nullable O> {
 
@@ -71,9 +69,6 @@ final class SymbolOracleWrapper<I, O> implements MembershipOracle<I, @Nullable O
 
         @Override
         public void answer(Word<O> output) {
-            if (output == null) {
-                throw new IllegalArgumentException("Query answer words must not be null");
-            }
             originalQuery.answer(output.isEmpty() ? null : output.lastSymbol());
         }
 

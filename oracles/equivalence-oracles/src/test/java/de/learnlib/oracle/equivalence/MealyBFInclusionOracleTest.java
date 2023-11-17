@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@ package de.learnlib.oracle.equivalence;
 
 import java.util.Objects;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
-import net.automatalib.util.automata.builders.AutomatonBuilders;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.util.automaton.builder.AutomatonBuilders;
+import net.automatalib.word.Word;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -31,7 +31,7 @@ import org.testng.annotations.BeforeMethod;
 public class MealyBFInclusionOracleTest extends AbstractBFInclusionOracleTest<MealyMachine<?, Character, ?, Character>, Word<Character>> {
 
     @Mock
-    private MembershipOracle.MealyMembershipOracle<Character, Character> mo;
+    private MealyMembershipOracle<Character, Character> mo;
 
     @BeforeMethod
     public void setUp() {

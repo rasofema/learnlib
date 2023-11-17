@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,15 @@ package de.learnlib.oracle.equivalence;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.examples.dfa.ExamplePaulAndMary;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.example.dfa.ExamplePaulAndMary;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.util.automaton.Automata;
+import net.automatalib.word.Word;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
-/**
- * @author frohme
- */
 public class IncrementalWMethodEQOracleTest extends AbstractEQOracleTest<DFA<?, String>, String, Boolean> {
 
     private DFA<?, String> dfa;
@@ -44,11 +40,6 @@ public class IncrementalWMethodEQOracleTest extends AbstractEQOracleTest<DFA<?, 
         this.transitionCover = new HashSet<>(Automata.transitionCover(this.dfa, getAlphabet()));
         this.characterizingSet = new HashSet<>(Automata.characterizingSet(this.dfa, getAlphabet()));
     }
-
-    // TODO: this currently seems necessary to fix test scheduling (removing this breaks _other_ tests?!?).
-    // Check with newer versions of TestNG again.
-    @Test(dependsOnMethods = "testGeneratedEQQueries")
-    public void testNGFix() {}
 
     @Override
     protected void checkGeneratedQuery(Word<String> query) {

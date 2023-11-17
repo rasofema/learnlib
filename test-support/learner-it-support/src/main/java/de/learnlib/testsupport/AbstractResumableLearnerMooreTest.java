@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,23 +17,20 @@ package de.learnlib.testsupport;
 
 import java.util.Random;
 
-import de.learnlib.api.Resumable;
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.oracle.EquivalenceOracle.MooreEquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.QueryAnswerer;
+import de.learnlib.Resumable;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.oracle.EquivalenceOracle.MooreEquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle.MooreMembershipOracle;
 import de.learnlib.oracle.equivalence.MooreSimulatorEQOracle;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.util.automata.random.RandomAutomata;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import de.learnlib.oracle.membership.MooreSimulatorOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.util.automaton.random.RandomAutomata;
+import net.automatalib.word.Word;
 
-/**
- * @author frohme
- */
 public abstract class AbstractResumableLearnerMooreTest<L extends Resumable<T> & LearningAlgorithm<MooreMachine<?, Character, ?, Character>, Character, Word<Character>>, T>
-        extends AbstractResumableLearnerTest<L, MooreMachine<?, Character, ?, Character>, MembershipOracle<Character, Word<Character>>, Character, Word<Character>, T> {
+        extends AbstractResumableLearnerTest<L, MooreMachine<?, Character, ?, Character>, MooreMembershipOracle<Character, Character>, Character, Word<Character>, T> {
 
     private static final int AUTOMATON_SIZE = 20;
 
@@ -51,8 +48,8 @@ public abstract class AbstractResumableLearnerMooreTest<L extends Resumable<T> &
     }
 
     @Override
-    protected MembershipOracle<Character, Word<Character>> getOracle(MooreMachine<?, Character, ?, Character> target) {
-        return ((QueryAnswerer<Character, Word<Character>>) target::computeSuffixOutput).asOracle();
+    protected MooreMembershipOracle<Character, Character> getOracle(MooreMachine<?, Character, ?, Character> target) {
+        return new MooreSimulatorOracle<>(target);
     }
 
     @Override

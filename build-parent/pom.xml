@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-Copyright (C) 2013-2022 TU Dortmund
+Copyright (C) 2013-2023 TU Dortmund
 This file is part of LearnLib, http://www.learnlib.de/.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>de.learnlib</groupId>
         <artifactId>learnlib-parent</artifactId>
-        <version>0.17.0-SNAPSHOT</version>
+        <version>0.18.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -45,17 +45,15 @@ limitations under the License.
                         <excludes>
                             <!-- generated builders for learning algorithms -->
                             <exclude>**/ADTLearnerBuilder.class</exclude>
-                            <exclude>**/MealyDHCBuilder.class</exclude>
-                            <exclude>**/DTLearner*Builder.class</exclude>
-                            <exclude>**/DTLearnerVPDABuilder.class</exclude>
-                            <exclude>**/KearnsVazirani*Builder.class</exclude>
                             <exclude>**/ClassicLStar*Builder.class</exclude>
                             <exclude>**/ExtensibleLStar*Builder.class</exclude>
+                            <exclude>**/KearnsVazirani*Builder.class</exclude>
                             <exclude>**/MalerPnueli*Builder.class</exclude>
-                            <exclude>**/RivestSchapire*Builder.class</exclude>
+                            <exclude>**/MealyDHCBuilder.class</exclude>
                             <exclude>**/NLStarLearnerBuilder.class</exclude>
+                            <exclude>**/OPLearner*Builder.class</exclude>
+                            <exclude>**/RivestSchapire*Builder.class</exclude>
                             <exclude>**/TTTLearner*Builder.class</exclude>
-                            <exclude>**/TTTLearnerVPDABuilder.class</exclude>
 
                             <!-- generated refinements for oracles -->
                             <exclude>de/learnlib/filter/statistic/**/DFA*.class</exclude>
@@ -66,6 +64,7 @@ limitations under the License.
                             <exclude>de/learnlib/oracle/equivalence/DFA*.class</exclude>
                             <exclude>de/learnlib/oracle/equivalence/Mealy*.class</exclude>
                             <exclude>de/learnlib/oracle/equivalence/Moore*.class</exclude>
+                            <exclude>de/learnlib/oracle/membership/*SimulatorOracle.class</exclude>
                             <exclude>de/learnlib/oracle/property/DFA*Chain.class</exclude>
                             <exclude>de/learnlib/oracle/property/Mealy*Chain.class</exclude>
                         </excludes>
@@ -90,7 +89,7 @@ limitations under the License.
                             </configuration>
                             <dependencies>
                                 <dependency>
-                                    <groupId>de.learnlib</groupId>
+                                    <groupId>de.learnlib.tooling</groupId>
                                     <artifactId>learnlib-build-config</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -106,7 +105,7 @@ limitations under the License.
                             </configuration>
                             <dependencies>
                                 <dependency>
-                                    <groupId>de.learnlib</groupId>
+                                    <groupId>de.learnlib.tooling</groupId>
                                     <artifactId>learnlib-build-config</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -129,7 +128,7 @@ limitations under the License.
                                     <version>${checkstyle.version}</version>
                                 </dependency>
                                 <dependency>
-                                    <groupId>de.learnlib</groupId>
+                                    <groupId>de.learnlib.tooling</groupId>
                                     <artifactId>learnlib-build-config</artifactId>
                                     <version>${project.version}</version>
                                 </dependency>
@@ -234,13 +233,13 @@ limitations under the License.
                                     </annotationProcessors>
                                     <compilerArgs>
                                         <arg>-J-Xbootclasspath/p:${com.google.errorprone:javac:jar}</arg>
-                                        <arg>-AskipDefs=^de.learnlib.algorithms.adt.*|\
-                                                        ^de.learnlib.algorithms.discriminationtree.*.vpda.*|\
-                                                        ^de.learnlib.algorithms.ttt.*|\
-                                                        ^de.learnlib.datastructure.discriminationtree.*|\
+                                        <arg>-AskipDefs=^de.learnlib.algorithm.adt.*|\
+                                            ^de.learnlib.algorithm.observationpack.*.vpa.*|\
+                                            ^de.learnlib.algorithm.ttt.*|\
+                                            ^de.learnlib.datastructure.discriminationtree.*|\
                                         </arg>
-                                        <arg>-AskipUses=^de.learnlib.algorithms.adt.*|\
-                                                        ^de.learnlib.algorithms.ttt.*|\
+                                        <arg>-AskipUses=^de.learnlib.algorithm.adt.*|\
+                                                        ^de.learnlib.algorithm.ttt.*|\
                                                         ^de.learnlib.datastructure.discriminationtree.*|\
                                                         ^java.lang.ThreadLocal|\
                                                         ^net.automatalib.*|\

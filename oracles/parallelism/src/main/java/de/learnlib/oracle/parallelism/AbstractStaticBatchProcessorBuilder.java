@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
-import de.learnlib.api.oracle.parallelism.BatchProcessor;
-import de.learnlib.api.oracle.parallelism.ThreadPool.PoolPolicy;
+import de.learnlib.oracle.parallelism.ThreadPool.PoolPolicy;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -35,8 +34,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  *         (sub-) processor type
  * @param <OR>
  *         constructed oracle type
- *
- * @author Malte Isberner
  */
 public abstract class AbstractStaticBatchProcessorBuilder<Q, P extends BatchProcessor<Q>, OR> {
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import net.automatalib.word.Word;
 
 public interface MutableObservationTable<I, D> extends ObservationTable<I, D> {
 

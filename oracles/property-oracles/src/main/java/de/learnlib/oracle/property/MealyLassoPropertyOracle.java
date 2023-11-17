@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@ package de.learnlib.oracle.property;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.LassoEmptinessOracle.MealyLassoEmptinessOracle;
-import de.learnlib.api.oracle.PropertyOracle.MealyPropertyOracle;
-import net.automatalib.automata.transducers.MealyMachine;
+import de.learnlib.oracle.LassoEmptinessOracle.MealyLassoEmptinessOracle;
+import de.learnlib.oracle.PropertyOracle.MealyPropertyOracle;
+import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.modelchecking.Lasso.MealyLasso;
 import net.automatalib.modelchecking.ModelCheckerLasso.MealyModelCheckerLasso;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 /**
  * A property oracle for Mealy machines that can check lassos from the model checker.
@@ -33,8 +33,6 @@ import net.automatalib.words.Word;
  *         the output type
  * @param <P>
  *         the property type
- *
- * @author Jeroen Meijer
  */
 public class MealyLassoPropertyOracle<I, O, P>
         extends AbstractPropertyOracle<I, MealyMachine<?, I, ?, O>, P, Word<O>, MealyLasso<I, O>>

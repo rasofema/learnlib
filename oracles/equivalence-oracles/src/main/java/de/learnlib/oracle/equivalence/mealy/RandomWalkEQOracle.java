@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,13 +20,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-import de.learnlib.api.SUL;
-import de.learnlib.api.oracle.EquivalenceOracle.MealyEquivalenceOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.commons.util.collections.CollectionsUtil;
-import net.automatalib.words.Word;
-import net.automatalib.words.WordBuilder;
+import de.learnlib.logging.Category;
+import de.learnlib.oracle.EquivalenceOracle.MealyEquivalenceOracle;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.sul.SUL;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.common.util.collection.CollectionsUtil;
+import net.automatalib.word.Word;
+import net.automatalib.word.WordBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +41,6 @@ import org.slf4j.LoggerFactory;
  *         input symbol type
  * @param <O>
  *         output symbol type
- *
- * @author falkhowar
  */
 public class RandomWalkEQOracle<I, O> implements MealyEquivalenceOracle<I, O> {
 
@@ -103,7 +102,8 @@ public class RandomWalkEQOracle<I, O> implements MealyEquivalenceOracle<I, O> {
         }
 
         if (inputs.isEmpty()) {
-            LOGGER.warn("Passed empty set of inputs to equivalence oracle; no counterexample can be found!");
+            LOGGER.warn(Category.COUNTEREXAMPLE,
+                        "Passed empty set of inputs to equivalence oracle; no counterexample can be found!");
             return null;
         }
 

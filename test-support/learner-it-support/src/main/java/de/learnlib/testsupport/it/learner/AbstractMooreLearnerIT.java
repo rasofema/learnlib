@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,16 +18,17 @@ package de.learnlib.testsupport.it.learner;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle.MooreMembershipOracle;
-import de.learnlib.examples.LearningExample.MooreLearningExample;
-import de.learnlib.examples.LearningExamples;
-import de.learnlib.oracle.equivalence.SimulatorEQOracle;
-import de.learnlib.oracle.membership.SimulatorOracle.MooreSimulatorOracle;
+import de.learnlib.example.LearningExample.MooreLearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.oracle.EquivalenceOracle.MooreEquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle.MooreMembershipOracle;
+import de.learnlib.oracle.equivalence.MooreSimulatorEQOracle;
+import de.learnlib.oracle.membership.MooreSimulatorOracle;
 import de.learnlib.testsupport.it.learner.LearnerVariantList.MooreLearnerVariantList;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.MooreLearnerVariantListImpl;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.word.Word;
 import org.testng.annotations.Factory;
 
 /**
@@ -35,8 +36,6 @@ import org.testng.annotations.Factory;
  * <p>
  * Moore machine learning algorithms tested by this integration test are expected to assume membership queries yield the
  * full output word corresponding to the suffix part of the query.
- *
- * @author frohme
  */
 public abstract class AbstractMooreLearnerIT {
 
@@ -56,27 +55,30 @@ public abstract class AbstractMooreLearnerIT {
             MooreLearningExample<I, O> example) {
 
         final Alphabet<I> alphabet = example.getAlphabet();
-        final MooreMembershipOracle<I, O> mqOracle = new MooreSimulatorOracle<>(example.getReferenceAutomaton());
+        final MooreMachine<?, I, ?, O> reference = example.getReferenceAutomaton();
+        final MooreMembershipOracle<I, O> mqOracle = new MooreSimulatorOracle<>(reference);
+        final MooreEquivalenceOracle<I, O> eqOracle = new MooreSimulatorEQOracle<>(reference);
         final MooreLearnerVariantListImpl<I, O> variants = new MooreLearnerVariantListImpl<>();
-        addLearnerVariants(alphabet, mqOracle, variants);
+        addLearnerVariants(alphabet, reference.size(), mqOracle, variants);
 
-        return LearnerITUtil.createExampleITCases(example,
-                                                  variants,
-                                                  new SimulatorEQOracle<>(example.getReferenceAutomaton()));
+        return LearnerITUtil.createExampleITCases(example, variants, eqOracle);
     }
 
     /**
-     * Adds, for a given setup, all the variants of the Mealy machine learner to be tested to the specified
+     * Adds, for a given setup, all the variants of the Moore machine learner to be tested to the specified
      * {@link LearnerVariantList variant list}.
      *
      * @param alphabet
      *         the input alphabet
+     * @param targetSize
+     *         the size of the target automaton
      * @param mqOracle
      *         the membership oracle
      * @param variants
      *         list to add the learner variants to
      */
     protected abstract <I, O> void addLearnerVariants(Alphabet<I> alphabet,
+                                                      int targetSize,
                                                       MooreMembershipOracle<I, O> mqOracle,
                                                       MooreLearnerVariantList<I, O> variants);
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,10 @@
 package de.learnlib.testsupport;
 
 import de.learnlib.util.AbstractBFOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
 import net.automatalib.ts.simple.SimpleDTS;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import net.automatalib.word.Word;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -28,8 +28,6 @@ import org.testng.annotations.Test;
 
 /**
  * Class to test any {@link AbstractBFOracle}.
- *
- * @author Jeroen Meijer
  */
 public abstract class AbstractBFOracleTest<D> {
 

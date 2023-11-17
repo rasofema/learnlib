@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,12 +17,12 @@ package de.learnlib.oracle.equivalence.spa;
 
 import java.util.Collection;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.automata.spa.SPA;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.SPAAlphabet;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.ProceduralInputAlphabet;
+import net.automatalib.automaton.procedural.SPA;
+import net.automatalib.util.automaton.procedural.SPAs;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class SimulatorEQOracle<I> implements EquivalenceOracle<SPA<?, I>, I, Boolean> {
@@ -35,14 +35,14 @@ public class SimulatorEQOracle<I> implements EquivalenceOracle<SPA<?, I>, I, Boo
 
     @Override
     public @Nullable DefaultQuery<I, Boolean> findCounterExample(SPA<?, I> hypothesis, Collection<? extends I> inputs) {
-        if (!(inputs instanceof SPAAlphabet)) {
-            throw new IllegalArgumentException("Inputs are not an SPA alphabet");
+        if (!(inputs instanceof ProceduralInputAlphabet)) {
+            throw new IllegalArgumentException("Inputs are not a procedural alphabet");
         }
 
         @SuppressWarnings("unchecked")
-        final SPAAlphabet<I> alphabet = (SPAAlphabet<I>) inputs;
+        final ProceduralInputAlphabet<I> alphabet = (ProceduralInputAlphabet<I>) inputs;
 
-        final Word<I> sep = Automata.findSeparatingWord(spa, hypothesis, alphabet);
+        final Word<I> sep = SPAs.findSeparatingWord(spa, hypothesis, alphabet);
 
         if (sep == null) {
             return null;
@@ -51,4 +51,3 @@ public class SimulatorEQOracle<I> implements EquivalenceOracle<SPA<?, I>, I, Boo
         return new DefaultQuery<>(sep, spa.computeOutput(sep));
     }
 }
-

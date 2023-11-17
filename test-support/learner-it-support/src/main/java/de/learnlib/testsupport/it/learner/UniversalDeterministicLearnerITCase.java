@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,11 @@
  */
 package de.learnlib.testsupport.it.learner;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.examples.LearningExample.UniversalDeterministicLearningExample;
-import net.automatalib.automata.UniversalDeterministicAutomaton;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.Word;
+import de.learnlib.example.LearningExample.UniversalDeterministicLearningExample;
+import de.learnlib.oracle.EquivalenceOracle;
+import net.automatalib.automaton.UniversalDeterministicAutomaton;
+import net.automatalib.util.automaton.Automata;
+import net.automatalib.word.Word;
 
 public class UniversalDeterministicLearnerITCase<I, D, M extends UniversalDeterministicAutomaton<?, I, ?, ?, ?>>
         extends AbstractLearnerVariantITCase<I, D, M> {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,11 @@
  */
 package de.learnlib.testsupport.it.learner;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.examples.LearningExample.OneSEVPALearningExample;
-import net.automatalib.automata.vpda.OneSEVPA;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.Word;
+import de.learnlib.example.LearningExample.OneSEVPALearningExample;
+import de.learnlib.oracle.EquivalenceOracle;
+import net.automatalib.automaton.vpa.OneSEVPA;
+import net.automatalib.util.automaton.vpa.OneSEVPAs;
+import net.automatalib.word.Word;
 
 public class OneSEVPALearnerITCase<I> extends AbstractLearnerVariantITCase<I, Boolean, OneSEVPA<?, I>> {
 
@@ -34,8 +34,8 @@ public class OneSEVPALearnerITCase<I> extends AbstractLearnerVariantITCase<I, Bo
 
     @Override
     protected Word<I> checkEquivalence(OneSEVPA<?, I> hypothesis) {
-        return Automata.findSeparatingWord(this.example.getReferenceAutomaton(),
-                                           hypothesis,
-                                           this.example.getAlphabet());
+        return OneSEVPAs.findSeparatingWord(this.example.getReferenceAutomaton(),
+                                            hypothesis,
+                                            this.example.getAlphabet());
     }
 }

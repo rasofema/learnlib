@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,8 @@ import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
-import de.learnlib.api.oracle.OmegaMembershipOracle;
-import de.learnlib.api.query.OmegaQuery;
+import de.learnlib.oracle.OmegaMembershipOracle;
+import de.learnlib.query.OmegaQuery;
 
 /**
  * A specialized {@link AbstractDynamicBatchProcessorBuilder} for {@link OmegaMembershipOracle}s.

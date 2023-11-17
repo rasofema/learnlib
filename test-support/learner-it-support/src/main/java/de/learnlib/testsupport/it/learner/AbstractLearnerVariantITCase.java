@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,14 @@
  */
 package de.learnlib.testsupport.it.learner;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.LearningExample;
-import net.automatalib.automata.concepts.FiniteRepresentation;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.example.LearningExample;
+import de.learnlib.logging.Category;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.concept.FiniteRepresentation;
+import net.automatalib.word.Word;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -81,7 +82,8 @@ abstract class AbstractLearnerVariantITCase<I, D, M extends FiniteRepresentation
         Assert.assertNull(checkEquivalence(hypothesis), "Final hypothesis does not match reference automaton");
 
         long duration = (System.nanoTime() - start) / NANOS_PER_MILLISECOND;
-        LOGGER.info("Passed learner integration test {} ... took [{}]",
+        LOGGER.info(Category.EVENT,
+                    "Passed learner integration test {} ... took [{}]",
                     getTestName(),
                     String.format("%d.%03ds", duration / MILLIS_PER_SECOND, duration % MILLIS_PER_SECOND));
     }

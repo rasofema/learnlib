@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,31 +17,31 @@ package de.learnlib.oracle.property;
 
 import java.util.function.Function;
 
-import de.learnlib.api.oracle.EmptinessOracle.MealyEmptinessOracle;
-import de.learnlib.api.oracle.InclusionOracle.MealyInclusionOracle;
-import de.learnlib.api.oracle.LassoEmptinessOracle.MealyLassoEmptinessOracle;
-import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
-import de.learnlib.api.oracle.OmegaMembershipOracle.MealyOmegaMembershipOracle;
-import de.learnlib.api.oracle.PropertyOracle.MealyPropertyOracle;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.mealy.ExampleTinyMealy;
+import de.learnlib.example.mealy.ExampleTinyMealy;
+import de.learnlib.oracle.EmptinessOracle.MealyEmptinessOracle;
+import de.learnlib.oracle.InclusionOracle.MealyInclusionOracle;
+import de.learnlib.oracle.LassoEmptinessOracle.MealyLassoEmptinessOracle;
+import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
+import de.learnlib.oracle.OmegaMembershipOracle.MealyOmegaMembershipOracle;
+import de.learnlib.oracle.PropertyOracle.MealyPropertyOracle;
 import de.learnlib.oracle.emptiness.MealyBFEmptinessOracle;
 import de.learnlib.oracle.emptiness.MealyLassoEmptinessOracleImpl;
 import de.learnlib.oracle.equivalence.MealyBFInclusionOracle;
+import de.learnlib.oracle.membership.MealySimulatorOracle;
 import de.learnlib.oracle.membership.SimulatorOmegaOracle.MealySimulatorOmegaOracle;
-import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
-import net.automatalib.modelcheckers.ltsmin.LTSminUtil;
-import net.automatalib.modelcheckers.ltsmin.LTSminVersion;
-import net.automatalib.modelcheckers.ltsmin.ltl.LTSminLTLIOBuilder;
-import net.automatalib.modelcheckers.ltsmin.monitor.LTSminMonitorIOBuilder;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.modelchecker.ltsmin.LTSminUtil;
+import net.automatalib.modelchecker.ltsmin.LTSminVersion;
+import net.automatalib.modelchecker.ltsmin.ltl.LTSminLTLIOBuilder;
+import net.automatalib.modelchecker.ltsmin.monitor.LTSminMonitorIOBuilder;
 import net.automatalib.modelchecking.ModelChecker.MealyModelChecker;
 import net.automatalib.modelchecking.ModelCheckerLasso.MealyModelCheckerLasso;
-import net.automatalib.util.automata.builders.AutomatonBuilders;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import net.automatalib.util.automaton.builder.AutomatonBuilders;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.Test;

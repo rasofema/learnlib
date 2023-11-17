@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@ package de.learnlib.datastructure.observationtable.writer;
 import java.util.Objects;
 import java.util.function.Function;
 
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 
 public abstract class AbstractObservationTableWriter<I, D> implements ObservationTableWriter<I, D> {

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,20 +20,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.commons.util.random.RandomUtil;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.common.util.random.RandomUtil;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- * @author frohme
- */
 public class SampleSetEQOracleTest extends AbstractEQOracleTest<SuffixOutput<Character, Boolean>, Character, Boolean> {
 
     private static final Alphabet<Character> ALPHABET = Alphabets.characters('1', '6');
@@ -65,7 +62,7 @@ public class SampleSetEQOracleTest extends AbstractEQOracleTest<SuffixOutput<Cha
     }
 
     private <I> Word<I> generateTestWord(List<I> alphabet) {
-        return Word.fromList(RandomUtil.sample(alphabet, TEST_WORD_LENGTH, random));
+        return Word.fromList(RandomUtil.sample(random, alphabet, TEST_WORD_LENGTH));
     }
 
     @Test(dependsOnMethods = "testGeneratedEQQueries")

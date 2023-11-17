@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,21 +20,20 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.QueryAnswerer;
-import net.automatalib.SupportsGrowingAlphabet;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.util.automata.random.RandomAutomata;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import de.learnlib.algorithm.LearningAlgorithm;
+import de.learnlib.filter.cache.moore.MooreCacheOracle;
+import de.learnlib.filter.cache.moore.MooreCaches;
+import de.learnlib.oracle.MembershipOracle.MooreMembershipOracle;
+import de.learnlib.oracle.membership.MooreSimulatorOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.alphabet.SupportsGrowingAlphabet;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.util.automaton.random.RandomAutomata;
+import net.automatalib.word.Word;
 
-/**
- * @author frohme
- */
 public abstract class AbstractGrowingAlphabetMooreTest<L extends SupportsGrowingAlphabet<Character> & LearningAlgorithm<MooreMachine<?, Character, ?, Character>, Character, Word<Character>>>
-        extends AbstractGrowingAlphabetTest<L, MooreMachine<?, Character, ?, Character>, MembershipOracle<Character, Word<Character>>, Character, Word<Character>> {
+        extends AbstractGrowingAlphabetTest<L, MooreMachine<?, Character, ?, Character>, MooreMembershipOracle<Character, Character>, Character, Word<Character>> {
 
     @Override
     protected Alphabet<Character> getInitialAlphabet() {
@@ -55,15 +54,16 @@ public abstract class AbstractGrowingAlphabetMooreTest<L extends SupportsGrowing
     }
 
     @Override
-    protected MembershipOracle<Character, Word<Character>> getOracle(MooreMachine<?, Character, ?, Character> target) {
-        return ((QueryAnswerer<Character, Word<Character>>) target::computeSuffixOutput).asOracle();
+    protected MooreMembershipOracle<Character, Character> getOracle(MooreMachine<?, Character, ?, Character> target) {
+        return new MooreSimulatorOracle<>(target);
     }
 
     @Override
-    protected MembershipOracle<Character, Word<Character>> getCachedOracle(Alphabet<Character> alphabet,
-                                                                           MembershipOracle<Character, Word<Character>> source,
-                                                                           List<Consumer<Character>> symbolListener) {
-        // TODO: implement Moore caches
-        return source;
+    protected MooreMembershipOracle<Character, Character> getCachedOracle(Alphabet<Character> alphabet,
+                                                                          MooreMembershipOracle<Character, Character> source,
+                                                                          List<Consumer<Character>> symbolListener) {
+        final MooreCacheOracle<Character, Character> cache = MooreCaches.createCache(alphabet, source);
+        symbolListener.add(cache::addAlphabetSymbol);
+        return cache;
     }
 }

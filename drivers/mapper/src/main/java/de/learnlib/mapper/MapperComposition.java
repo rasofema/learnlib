@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +15,9 @@
  */
 package de.learnlib.mapper;
 
-import de.learnlib.api.Mapper;
-import de.learnlib.api.Mapper.AsynchronousMapper;
-import de.learnlib.api.Mapper.SynchronousMapper;
+import de.learnlib.Mapper;
+import de.learnlib.Mapper.AsynchronousMapper;
+import de.learnlib.Mapper.SynchronousMapper;
 
 /**
  * Utility class for the nested the application of two {@link Mapper mappers}.
@@ -41,8 +41,6 @@ import de.learnlib.api.Mapper.SynchronousMapper;
  *         type of the outer mapper
  * @param <INNER>
  *         type of the inner mapper
- *
- * @author frohme
  */
 class MapperComposition<AI, AO, ACI, CAO, CI, CO, OUTER extends Mapper<? super AI, ? extends AO, ACI, CAO>, INNER extends Mapper<? super ACI, ? extends CAO, ? extends CI, ? super CO>>
         implements SynchronousMapper<AI, AO, CI, CO>, AsynchronousMapper<AI, AO, CI, CO> {

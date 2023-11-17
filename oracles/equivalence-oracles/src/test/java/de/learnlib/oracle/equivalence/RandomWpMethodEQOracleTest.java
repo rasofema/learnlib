@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,17 @@ package de.learnlib.oracle.equivalence;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.examples.dfa.ExamplePaulAndMary;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.example.dfa.ExamplePaulAndMary;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.oracle.MembershipOracle;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.util.automaton.Automata;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- * @author frohme
- */
 public class RandomWpMethodEQOracleTest extends AbstractEQOracleTest<DFA<?, String>, String, Boolean> {
 
     private static final int MAX_TESTS;

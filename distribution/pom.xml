@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-Copyright (C) 2013-2022 TU Dortmund
+Copyright (C) 2013-2023 TU Dortmund
 This file is part of LearnLib, http://www.learnlib.de/.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>de.learnlib</groupId>
         <artifactId>learnlib-build-parent</artifactId>
-        <version>0.17.0-SNAPSHOT</version>
+        <version>0.18.0-SNAPSHOT</version>
         <relativePath>../build-parent/pom.xml</relativePath>
     </parent>
 
@@ -49,22 +49,17 @@ limitations under the License.
         <!-- algorithms -->
         <dependency>
             <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-aaar</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>de.learnlib</groupId>
             <artifactId>learnlib-adt</artifactId>
         </dependency>
 
         <dependency>
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-dhc</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-discrimination-tree</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-discrimination-tree-vpda</artifactId>
         </dependency>
 
         <dependency>
@@ -84,12 +79,22 @@ limitations under the License.
 
         <dependency>
             <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-observation-pack</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-observation-pack-vpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>de.learnlib</groupId>
             <artifactId>learnlib-oml</artifactId>
         </dependency>
 
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-spa</artifactId>
+            <artifactId>learnlib-procedural</artifactId>
         </dependency>
 
         <dependency>
@@ -99,7 +104,7 @@ limitations under the License.
 
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-ttt-vpda</artifactId>
+            <artifactId>learnlib-ttt-vpa</artifactId>
         </dependency>
 
         <dependency>
@@ -135,11 +140,6 @@ limitations under the License.
         </dependency>
 
         <!-- commons -->
-        <dependency>
-            <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-acex</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-counterexamples</artifactId>
@@ -192,17 +192,7 @@ limitations under the License.
             <artifactId>learnlib-drivers-simulator</artifactId>
         </dependency>
 
-        <!-- oracles -->
-        <dependency>
-            <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-emptiness-oracles</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-equivalence-oracles</artifactId>
-        </dependency>
-
+        <!-- filters -->
         <dependency>
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-cache</artifactId>
@@ -216,6 +206,17 @@ limitations under the License.
         <dependency>
             <groupId>de.learnlib</groupId>
             <artifactId>learnlib-statistics</artifactId>
+        </dependency>
+
+        <!-- oracles -->
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-emptiness-oracles</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>de.learnlib</groupId>
+            <artifactId>learnlib-equivalence-oracles</artifactId>
         </dependency>
 
         <dependency>
@@ -274,19 +275,19 @@ limitations under the License.
         </profile>
         <profile>
             <id>bundles</id>
-            <activation>
-                <property>
-                    <name>learnlib.release</name>
-                    <value>true</value>
-                </property>
-            </activation>
-
             <!--
             Additionally specify source-classified dependencies for building source assemblies.
             Again, sorted alphabetically/hierarchical to allow for a better check for completeness using a file explorer.
             -->
             <dependencies>
                 <!-- algorithms -->
+                <dependency>
+                    <groupId>de.learnlib</groupId>
+                    <artifactId>learnlib-aaar</artifactId>
+                    <version>${project.version}</version>
+                    <classifier>sources</classifier>
+                </dependency>
+
                 <dependency>
                     <groupId>de.learnlib</groupId>
                     <artifactId>learnlib-adt</artifactId>
@@ -297,20 +298,6 @@ limitations under the License.
                 <dependency>
                     <groupId>de.learnlib</groupId>
                     <artifactId>learnlib-dhc</artifactId>
-                    <version>${project.version}</version>
-                    <classifier>sources</classifier>
-                </dependency>
-
-                <dependency>
-                    <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-discrimination-tree</artifactId>
-                    <version>${project.version}</version>
-                    <classifier>sources</classifier>
-                </dependency>
-
-                <dependency>
-                    <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-discrimination-tree-vpda</artifactId>
                     <version>${project.version}</version>
                     <classifier>sources</classifier>
                 </dependency>
@@ -338,6 +325,20 @@ limitations under the License.
 
                 <dependency>
                     <groupId>de.learnlib</groupId>
+                    <artifactId>learnlib-observation-pack</artifactId>
+                    <version>${project.version}</version>
+                    <classifier>sources</classifier>
+                </dependency>
+
+                <dependency>
+                    <groupId>de.learnlib</groupId>
+                    <artifactId>learnlib-observation-pack-vpa</artifactId>
+                    <version>${project.version}</version>
+                    <classifier>sources</classifier>
+                </dependency>
+
+                <dependency>
+                    <groupId>de.learnlib</groupId>
                     <artifactId>learnlib-oml</artifactId>
                     <version>${project.version}</version>
                     <classifier>sources</classifier>
@@ -345,7 +346,7 @@ limitations under the License.
 
                 <dependency>
                     <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-spa</artifactId>
+                    <artifactId>learnlib-procedural</artifactId>
                     <version>${project.version}</version>
                     <classifier>sources</classifier>
                 </dependency>
@@ -359,7 +360,7 @@ limitations under the License.
 
                 <dependency>
                     <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-ttt-vpda</artifactId>
+                    <artifactId>learnlib-ttt-vpa</artifactId>
                     <version>${project.version}</version>
                     <classifier>sources</classifier>
                 </dependency>
@@ -401,13 +402,6 @@ limitations under the License.
                 </dependency>
 
                 <!-- commons -->
-                <dependency>
-                    <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-acex</artifactId>
-                    <version>${project.version}</version>
-                    <classifier>sources</classifier>
-                </dependency>
-
                 <dependency>
                     <groupId>de.learnlib</groupId>
                     <artifactId>learnlib-counterexamples</artifactId>
@@ -480,21 +474,7 @@ limitations under the License.
                     <classifier>sources</classifier>
                 </dependency>
 
-                <!-- oracles -->
-                <dependency>
-                    <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-emptiness-oracles</artifactId>
-                    <version>${project.version}</version>
-                    <classifier>sources</classifier>
-                </dependency>
-
-                <dependency>
-                    <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-equivalence-oracles</artifactId>
-                    <version>${project.version}</version>
-                    <classifier>sources</classifier>
-                </dependency>
-
+                <!-- filters -->
                 <dependency>
                     <groupId>de.learnlib</groupId>
                     <artifactId>learnlib-cache</artifactId>
@@ -512,6 +492,21 @@ limitations under the License.
                 <dependency>
                     <groupId>de.learnlib</groupId>
                     <artifactId>learnlib-statistics</artifactId>
+                    <version>${project.version}</version>
+                    <classifier>sources</classifier>
+                </dependency>
+
+                <!-- oracles -->
+                <dependency>
+                    <groupId>de.learnlib</groupId>
+                    <artifactId>learnlib-emptiness-oracles</artifactId>
+                    <version>${project.version}</version>
+                    <classifier>sources</classifier>
+                </dependency>
+
+                <dependency>
+                    <groupId>de.learnlib</groupId>
+                    <artifactId>learnlib-equivalence-oracles</artifactId>
                     <version>${project.version}</version>
                     <classifier>sources</classifier>
                 </dependency>
@@ -606,7 +601,7 @@ limitations under the License.
                                     <version>${buildergen.version}</version>
                                 </additionalDependency>
                                 <additionalDependency>
-                                    <groupId>de.learnlib</groupId>
+                                    <groupId>de.learnlib.tooling</groupId>
                                     <artifactId>learnlib-annotation-processor</artifactId>
                                     <version>${project.version}</version>
                                 </additionalDependency>

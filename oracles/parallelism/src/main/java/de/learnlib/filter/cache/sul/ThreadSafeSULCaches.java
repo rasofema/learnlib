@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +15,14 @@
  */
 package de.learnlib.filter.cache.sul;
 
-import de.learnlib.api.SUL;
-import de.learnlib.api.StateLocalInputSUL;
+import de.learnlib.sul.SUL;
+import de.learnlib.sul.StateLocalInputSUL;
+import net.automatalib.alphabet.Alphabet;
 import net.automatalib.incremental.mealy.dag.IncrementalMealyDAGBuilder;
 import net.automatalib.incremental.mealy.tree.IncrementalMealyTreeBuilder;
-import net.automatalib.words.Alphabet;
 
 /**
  * A factory for creating thread-safe {@link SUL} caches.
- *
- * @author frohme
  */
 public final class ThreadSafeSULCaches {
 

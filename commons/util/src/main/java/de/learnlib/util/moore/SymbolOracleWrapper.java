@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.word.Word;
 
 /**
  * Word-to-Symbol-Oracle adapter.
@@ -33,8 +33,6 @@ import net.automatalib.words.Word;
  *         input symbol type
  * @param <O>
  *         output symbol type
- *
- * @author frohme
  */
 final class SymbolOracleWrapper<I, O> implements MembershipOracle<I, O> {
 
@@ -70,7 +68,9 @@ final class SymbolOracleWrapper<I, O> implements MembershipOracle<I, O> {
 
         @Override
         public void answer(Word<O> output) {
-            assert !output.isEmpty();
+            if (output.isEmpty()) {
+                throw new IllegalArgumentException("Query answer must not be empty");
+            }
             originalQuery.answer(output.lastSymbol());
         }
 

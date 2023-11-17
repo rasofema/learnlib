@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,10 @@ package de.learnlib.testsupport;
 import java.nio.charset.StandardCharsets;
 
 import com.thoughtworks.xstream.XStream;
-import de.learnlib.api.Resumable;
+import de.learnlib.Resumable;
 
 /**
  * Utility functions for {@link Resumable} features.
- *
- * @author frohme
  */
 public final class ResumeUtils {
 
@@ -38,7 +36,7 @@ public final class ResumeUtils {
         // prevent instantiation
     }
 
-    public static <T> byte[] toBytes(T state) {
+    public static <T extends Object> byte[] toBytes(T state) {
         return X_STREAM.toXML(state).getBytes(StandardCharsets.UTF_8);
     }
 

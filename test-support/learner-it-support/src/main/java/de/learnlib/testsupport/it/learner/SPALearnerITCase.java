@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,11 @@
  */
 package de.learnlib.testsupport.it.learner;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.examples.LearningExample.SPALearningExample;
-import net.automatalib.automata.spa.SPA;
-import net.automatalib.util.automata.Automata;
-import net.automatalib.words.Word;
+import de.learnlib.example.LearningExample.SPALearningExample;
+import de.learnlib.oracle.EquivalenceOracle;
+import net.automatalib.automaton.procedural.SPA;
+import net.automatalib.util.automaton.procedural.SPAs;
+import net.automatalib.word.Word;
 
 public class SPALearnerITCase<I> extends AbstractLearnerVariantITCase<I, Boolean, SPA<?, I>> {
 
@@ -34,8 +34,8 @@ public class SPALearnerITCase<I> extends AbstractLearnerVariantITCase<I, Boolean
 
     @Override
     protected Word<I> checkEquivalence(SPA<?, I> hypothesis) {
-        return Automata.findSeparatingWord(this.example.getReferenceAutomaton(),
-                                           hypothesis,
-                                           this.example.getAlphabet());
+        return SPAs.findSeparatingWord(this.example.getReferenceAutomaton(),
+                                       hypothesis,
+                                       this.example.getAlphabet());
     }
 }

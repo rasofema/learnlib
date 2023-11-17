@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,20 +18,17 @@ package de.learnlib.oracle.membership;
 import java.util.Collections;
 import java.util.Random;
 
-import de.learnlib.api.StateLocalInputSUL;
-import de.learnlib.driver.util.StateLocalInputMealySimulatorSUL;
-import de.learnlib.examples.mealy.ExampleRandomStateLocalInputMealy;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
+import de.learnlib.driver.simulator.StateLocalInputMealySimulatorSUL;
+import de.learnlib.example.mealy.ExampleRandomStateLocalInputMealy;
+import de.learnlib.sul.StateLocalInputSUL;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.word.Word;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- * @author frohme
- */
 public class StateLocalInputSULSymbolQueryOracleTest {
 
     private ExampleRandomStateLocalInputMealy<Character, Integer> example;
@@ -81,7 +78,7 @@ public class StateLocalInputSULSymbolQueryOracleTest {
         Mockito.verify(mock, Mockito.times(0)).pre();
         Mockito.verify(mock, Mockito.times(0)).post();
 
-        final Word<Character> i1 = Word.fromCharSequence("abcabcabc");
+        final Word<Character> i1 = Word.fromString("abcabcabc");
         final Word<Integer> o1 = oracle.answerQuery(i1);
         oracle.reset(); // cleanup
 
@@ -93,7 +90,7 @@ public class StateLocalInputSULSymbolQueryOracleTest {
         Mockito.verify(mock, Mockito.times(2)).currentlyEnabledInputs();
         Mockito.verify(mock, Mockito.times(1)).step(Mockito.anyChar());
 
-        final Word<Character> i2 = Word.fromCharSequence("aaaaa");
+        final Word<Character> i2 = Word.fromString("aaaaa");
         final Word<Integer> o2 = oracle.answerQuery(i2);
         oracle.reset(); // cleanup
         oracle.reset(); // twice

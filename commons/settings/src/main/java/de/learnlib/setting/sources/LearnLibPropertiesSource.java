@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,8 @@
  */
 package de.learnlib.setting.sources;
 
-import de.learnlib.api.setting.LearnLibSettingsSource;
-import net.automatalib.commons.util.settings.AbstractClassPathFileSource;
+import de.learnlib.setting.LearnLibSettingsSource;
+import net.automatalib.common.util.setting.AbstractClassPathFileSource;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices(LearnLibSettingsSource.class)

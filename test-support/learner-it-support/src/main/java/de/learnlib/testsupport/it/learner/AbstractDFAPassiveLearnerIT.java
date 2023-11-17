@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.DefaultPassiveLearningExample;
-import de.learnlib.examples.LearningExample;
-import de.learnlib.examples.LearningExamples;
-import de.learnlib.examples.PassiveLearningExample;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.words.Alphabet;
+import de.learnlib.example.DefaultPassiveLearningExample.DefaultDFAPassiveLearningExample;
+import de.learnlib.example.LearningExample.DFALearningExample;
+import de.learnlib.example.LearningExamples;
+import de.learnlib.example.PassiveLearningExample.DFAPassiveLearningExample;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.testsupport.it.learner.PassiveLearnerVariantListImpl.DFAPassiveLearnerVariantListImpl;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.fsa.DFA;
 import org.testng.annotations.Factory;
 
 /**
@@ -37,35 +38,32 @@ import org.testng.annotations.Factory;
  * <p>
  * Subclasses can perform further sample filtering by overriding the {@link #generateSamplesInternal(Alphabet, DFA)}
  * method, e.g. if the learning algorithm is only capable of learning from positive examples.
- *
- * @author frohme
  */
 public abstract class AbstractDFAPassiveLearnerIT {
 
     @Factory
     public Object[] createExampleITCases() {
-        final List<LearningExample.DFALearningExample<?>> examples = LearningExamples.createDFAExamples();
+        final List<DFALearningExample<?>> examples = LearningExamples.createDFAExamples();
         final List<PassiveLearnerVariantITCase<?, ?, ?>> result = new ArrayList<>(examples.size());
 
-        for (LearningExample.DFALearningExample<?> example : examples) {
+        for (DFALearningExample<?> example : examples) {
             result.addAll(createAllVariantsITCase(example));
         }
 
         return result.toArray();
     }
 
-    private <I> List<PassiveLearnerVariantITCase<I, Boolean, DFA<?, I>>> createAllVariantsITCase(LearningExample.DFALearningExample<I> example) {
+    private <I> List<PassiveLearnerVariantITCase<I, Boolean, DFA<?, I>>> createAllVariantsITCase(DFALearningExample<I> example) {
 
         final Alphabet<I> alphabet = example.getAlphabet();
         final DFA<?, I> reference = example.getReferenceAutomaton();
 
         Collection<DefaultQuery<I, Boolean>> queries = generateSamplesInternal(alphabet, reference);
 
-        final PassiveLearnerVariantListImpl<DFA<?, I>, I, Boolean> variants = new PassiveLearnerVariantListImpl<>();
+        final DFAPassiveLearnerVariantListImpl<I> variants = new DFAPassiveLearnerVariantListImpl<>();
         addLearnerVariants(alphabet, variants);
 
-        final PassiveLearningExample<I, Boolean> effectiveExample =
-                new DefaultPassiveLearningExample<>(queries, alphabet);
+        final DFAPassiveLearningExample<I> effectiveExample = new DefaultDFAPassiveLearningExample<>(queries);
 
         return LearnerITUtil.createPassiveExampleITCases(effectiveExample, variants);
     }

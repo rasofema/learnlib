@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,6 @@ import de.learnlib.datastructure.discriminationtree.model.AbstractDTNode;
  *
  * @param <N>
  *         node type
- *
- * @author Malte Isberner
- * @author frohme
  */
 class NodeIterator<N extends AbstractDTNode<?, ?, ?, N>> extends AbstractIterator<N> {
 

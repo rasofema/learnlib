@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import de.learnlib.api.oracle.parallelism.ParallelOracle;
-import de.learnlib.api.oracle.parallelism.ThreadPool.PoolPolicy;
-import de.learnlib.api.query.Query;
+import de.learnlib.oracle.parallelism.ThreadPool.PoolPolicy;
+import de.learnlib.query.Query;
 import org.testng.annotations.Test;
 
 public class DynamicParallelOracleTest extends AbstractDynamicParallelOracleTest<Void> {

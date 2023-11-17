@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,32 +20,36 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.query.DefaultQuery;
-import de.learnlib.examples.LearningExample;
-import de.learnlib.examples.LearningExample.OneSEVPALearningExample;
-import de.learnlib.examples.LearningExample.SPALearningExample;
-import de.learnlib.examples.LearningExample.UniversalDeterministicLearningExample;
-import de.learnlib.examples.PassiveLearningExample;
+import de.learnlib.example.LearningExample;
+import de.learnlib.example.LearningExample.OneSEVPALearningExample;
+import de.learnlib.example.LearningExample.SBALearningExample;
+import de.learnlib.example.LearningExample.SPALearningExample;
+import de.learnlib.example.LearningExample.SPMMLearningExample;
+import de.learnlib.example.LearningExample.UniversalDeterministicLearningExample;
+import de.learnlib.example.PassiveLearningExample;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.query.DefaultQuery;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.OneSEVPALearnerVariantListImpl;
+import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.SBALearnerVariantListImpl;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.SPALearnerVariantListImpl;
-import net.automatalib.automata.UniversalAutomaton;
-import net.automatalib.automata.UniversalDeterministicAutomaton;
-import net.automatalib.automata.concepts.FiniteRepresentation;
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.automata.spa.SPA;
-import net.automatalib.automata.vpda.OneSEVPA;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.WordBuilder;
+import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.SPMMLearnerVariantListImpl;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.UniversalAutomaton;
+import net.automatalib.automaton.UniversalDeterministicAutomaton;
+import net.automatalib.automaton.concept.FiniteRepresentation;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.automaton.procedural.SBA;
+import net.automatalib.automaton.procedural.SPA;
+import net.automatalib.automaton.procedural.SPMM;
+import net.automatalib.automaton.vpa.OneSEVPA;
+import net.automatalib.word.Word;
+import net.automatalib.word.WordBuilder;
 
 /**
  * Utility class for integration tests for a learning algorithm (or "learner").
  * <p>
  * A learner integration test tests the functionality of a learning algorithm against a well-defined set of example
  * setups.
- *
- * @author Malte Isberner
  */
 public final class LearnerITUtil {
 
@@ -87,6 +91,38 @@ public final class LearnerITUtil {
                 variants,
                 eqOracle,
                 SPALearnerITCase::new);
+    }
+
+    /**
+     * Creates a list of per-example test cases for all learner variants.
+     *
+     * @return the list of test cases, one for each example
+     */
+    public static <I> List<SBALearnerITCase<I>> createExampleITCases(SBALearningExample<I> example,
+                                                                     SBALearnerVariantListImpl<I> variants,
+                                                                     EquivalenceOracle<SBA<?, I>, I, Boolean> eqOracle) {
+        // explicit generics are required for correct type-inference
+        return LearnerITUtil.<I, Boolean, SBA<?, I>, SBALearningExample<I>, SBALearnerITCase<I>>createExampleITCasesInternal(
+                example,
+                variants,
+                eqOracle,
+                SBALearnerITCase::new);
+    }
+
+    /**
+     * Creates a list of per-example test cases for all learner variants.
+     *
+     * @return the list of test cases, one for each example
+     */
+    public static <I, O> List<SPMMLearnerITCase<I, O>> createExampleITCases(SPMMLearningExample<I, O> example,
+                                                                            SPMMLearnerVariantListImpl<I, O> variants,
+                                                                            EquivalenceOracle<SPMM<?, I, ?, O>, I, Word<O>> eqOracle) {
+        // explicit generics are required for correct type-inference
+        return LearnerITUtil.<I, Word<O>, SPMM<?, I, ?, O>, SPMMLearningExample<I, O>, SPMMLearnerITCase<I, O>>createExampleITCasesInternal(
+                example,
+                variants,
+                eqOracle,
+                SPMMLearnerITCase::new);
     }
 
     /**

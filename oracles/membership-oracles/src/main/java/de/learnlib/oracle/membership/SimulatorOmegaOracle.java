@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,24 +19,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.DFAMembershipOracle;
-import de.learnlib.api.oracle.MembershipOracle.MealyMembershipOracle;
-import de.learnlib.api.oracle.OmegaMembershipOracle;
-import de.learnlib.api.oracle.OmegaQueryAnswerer;
-import de.learnlib.api.oracle.SingleQueryOmegaOracle;
-import de.learnlib.api.query.OmegaQuery;
-import de.learnlib.api.query.Query;
-import de.learnlib.oracle.membership.SimulatorOracle.DFASimulatorOracle;
-import de.learnlib.oracle.membership.SimulatorOracle.MealySimulatorOracle;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
+import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
+import de.learnlib.oracle.OmegaMembershipOracle;
+import de.learnlib.oracle.OmegaQueryAnswerer;
+import de.learnlib.oracle.SingleQueryOmegaOracle;
+import de.learnlib.query.OmegaQuery;
+import de.learnlib.query.Query;
 import de.learnlib.util.MQUtil;
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.commons.util.Pair;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.common.util.Pair;
 import net.automatalib.ts.simple.SimpleDTS;
-import net.automatalib.words.Word;
-import net.automatalib.words.WordBuilder;
+import net.automatalib.word.Word;
+import net.automatalib.word.WordBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -44,8 +42,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * <p>
  * <b>Implementation note</b>: Under the assumption that read-operations do not alter the internal state of the
  * automaton, this oracle is thread-safe.
- *
- * @author Jeroen Meijer
  *
  * @see SimulatorOracle
  *
@@ -78,7 +74,7 @@ public class SimulatorOmegaOracle<S extends Object, I, D> implements SingleQuery
     }
 
     /**
-     * Gets the {@link SimulatorOracle} used to answer {@link de.learnlib.api.query.Query}s.
+     * Gets the {@link SimulatorOracle} used to answer {@link Query}s.
      *
      * @return the SimulatorOracle.
      */
@@ -104,7 +100,7 @@ public class SimulatorOmegaOracle<S extends Object, I, D> implements SingleQuery
 
     /**
      * Returns an answer for an {@link OmegaQuery}.
-     *
+     * <p>
      * The output is obtained through the {@link SimulatorOracle}, while the states are obtained by means of creating
      * two access sequences to states in the simulated automaton.
      *

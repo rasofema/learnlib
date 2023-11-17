@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import de.learnlib.api.oracle.parallelism.ThreadPool.PoolPolicy;
 import de.learnlib.oracle.parallelism.AbstractStaticParallelOracleTest.TestOutput;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.parallelism.ThreadPool.PoolPolicy;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 
@@ -70,7 +70,7 @@ final class Utils {
     }
 
     static TestOutput extractSULOutput(Word<TestSULOutput> output) {
-        assert output.size() > 0;
+        assert !output.isEmpty();
 
         final TestSULOutput lastSym = output.lastSymbol();
         final int oracleId = lastSym.oracleId;

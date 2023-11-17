@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,11 @@ import java.util.function.Function;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 public class ObservationTableASCIIWriter<I, D> extends AbstractObservationTableWriter<I, D> {
 
-    private boolean rowSeparators;
+    private final boolean rowSeparators;
 
     public ObservationTableASCIIWriter(Function<? super Word<? extends I>, ? extends String> wordToString,
                                        Function<? super D, ? extends String> outputToString,
@@ -39,10 +39,6 @@ public class ObservationTableASCIIWriter<I, D> extends AbstractObservationTableW
     }
 
     public ObservationTableASCIIWriter(boolean rowSeparators) {
-        this.rowSeparators = rowSeparators;
-    }
-
-    public void setRowSeparators(boolean rowSeparators) {
         this.rowSeparators = rowSeparators;
     }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,36 +15,36 @@
  */
 package de.learnlib.util;
 
-import de.learnlib.api.algorithm.LearningAlgorithm;
-import de.learnlib.api.logging.LearnLogger;
-import de.learnlib.api.oracle.EquivalenceOracle;
-import de.learnlib.api.query.DefaultQuery;
+import de.learnlib.algorithm.LearningAlgorithm;
 import de.learnlib.filter.statistic.Counter;
-import de.learnlib.util.statistics.SimpleProfiler;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.automata.transducers.MooreMachine;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.logging.Category;
+import de.learnlib.oracle.EquivalenceOracle;
+import de.learnlib.query.DefaultQuery;
+import de.learnlib.util.statistic.SimpleProfiler;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.automaton.transducer.MooreMachine;
+import net.automatalib.word.Word;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * runs a learning experiment.
  *
  * @param <A> the automaton type
- *
- * @author falkhowar
  */
 public class Experiment<A extends Object> {
 
     public static final String LEARNING_PROFILE_KEY = "Learning";
     public static final String COUNTEREXAMPLE_PROFILE_KEY = "Searching for counterexample";
 
-    private static final LearnLogger LOGGER = LearnLogger.getLogger(Experiment.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Experiment.class);
     private final ExperimentImpl<?, ?> impl;
     private boolean logModels;
     private boolean profile;
-    private final Counter rounds = new Counter("learning rounds", "#");
+    private final Counter rounds = new Counter("Learning rounds", "#");
     private @Nullable A finalHypothesis;
 
     public <I, D> Experiment(LearningAlgorithm<? extends A, I, D> learningAlgorithm,
@@ -121,8 +121,8 @@ public class Experiment<A extends Object> {
 
         public A run() {
             rounds.increment();
-            LOGGER.logPhase("Starting round " + rounds.getCount());
-            LOGGER.logPhase("Learning");
+            LOGGER.info(Category.PHASE, "Starting round {}", rounds.getCount());
+            LOGGER.info(Category.PHASE, "Learning");
 
             profileStart(LEARNING_PROFILE_KEY);
             learningAlgorithm.startLearning();
@@ -132,10 +132,10 @@ public class Experiment<A extends Object> {
                 final A hyp = learningAlgorithm.getHypothesisModel();
 
                 if (logModels) {
-                    LOGGER.logModel(hyp);
+                    LOGGER.info(Category.MODEL, hyp.toString());
                 }
 
-                LOGGER.logPhase("Searching for counterexample");
+                LOGGER.info(Category.PHASE, "Searching for counterexample");
 
                 profileStart(COUNTEREXAMPLE_PROFILE_KEY);
                 DefaultQuery<I, D> ce = equivalenceAlgorithm.findCounterExample(hyp, inputs);
@@ -145,12 +145,12 @@ public class Experiment<A extends Object> {
                     return hyp;
                 }
 
-                LOGGER.logCounterexample(ce.getInput().toString());
+                LOGGER.info(Category.COUNTEREXAMPLE, ce.getInput().toString());
 
                 // next round ...
                 rounds.increment();
-                LOGGER.logPhase("Starting round " + rounds.getCount());
-                LOGGER.logPhase("Learning");
+                LOGGER.info(Category.PHASE, "Starting round {}", rounds.getCount());
+                LOGGER.info(Category.PHASE, "Learning");
 
                 profileStart(LEARNING_PROFILE_KEY);
                 final boolean refined = learningAlgorithm.refineHypothesis(ce);

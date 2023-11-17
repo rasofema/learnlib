@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ import java.io.PrintStream;
 import java.io.Writer;
 
 import de.learnlib.datastructure.observationtable.ObservationTable;
-import net.automatalib.commons.util.IOUtil;
+import net.automatalib.common.util.IOUtil;
 
 public interface ObservationTableWriter<I, D> {
 

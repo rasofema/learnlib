@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,17 @@ package de.learnlib.oracle.membership;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.learnlib.api.query.OmegaQuery;
-import de.learnlib.examples.dfa.ExamplePaulAndMary;
+import de.learnlib.example.dfa.ExamplePaulAndMary;
 import de.learnlib.oracle.membership.SimulatorOmegaOracle.DFASimulatorOmegaOracle;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.words.Word;
+import de.learnlib.query.OmegaQuery;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.word.Word;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
  * Tests the same functionality as in {@link SimulatorOracleTest}, but also tests whether the correct states are
  * visited.
- *
- * @author Jeroen Meijer
  */
 public class SimulatorOmegaOracleTest {
 

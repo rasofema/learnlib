@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 TU Dortmund
+/* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,6 @@ package de.learnlib.datastructure.discriminationtree.model;
  *         output symbol type
  * @param <N>
  *         node type
- *
- * @author Malte Isberner
  */
 public class LCAInfo<O, N> {
 
