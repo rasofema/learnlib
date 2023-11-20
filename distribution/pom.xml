@@ -129,7 +129,7 @@ limitations under the License.
 
         <dependency>
             <groupId>de.learnlib</groupId>
-            <artifactId>learnlib-continuous</artifactId>
+            <artifactId>learnlib-c3al</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -388,7 +388,7 @@ limitations under the License.
 
                 <dependency>
                     <groupId>de.learnlib</groupId>
-                    <artifactId>learnlib-continuous</artifactId>
+                    <artifactId>learnlib-c3al</artifactId>
                     <version>${project.version}</version>
                     <classifier>sources</classifier>
                 </dependency>
