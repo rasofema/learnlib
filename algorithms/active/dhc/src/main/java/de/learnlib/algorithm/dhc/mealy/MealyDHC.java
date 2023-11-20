@@ -75,6 +75,19 @@ public class MealyDHC<I, O> implements MealyLearner<I, O>,
     }
 
     /**
+     * Constructor, provided for backwards compatibility reasons.
+     *
+     * @param alphabet     the learning alphabet
+     * @param oracle       the learning membership oracle
+     * @param suffixFinder the {@link GlobalSuffixFinder suffix finder} to use for
+     *                     analyzing counterexamples
+     */
+    public MealyDHC(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> oracle,
+            GlobalSuffixFinder<? super I, ? super Word<O>> suffixFinder) {
+        this(alphabet, oracle, suffixFinder, Collections.emptyList());
+    }
+
+    /**
      * Constructor.
      *
      * @param alphabet

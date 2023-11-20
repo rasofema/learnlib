@@ -15,7 +15,8 @@
  */
 package de.learnlib.algorithm.dhc.mealy.it;
 
-import de.learnlib.algorithm.dhc.mealy.MealyDHCBuilder;
+import de.learnlib.algorithm.dhc.mealy.MealyDHC;
+
 import de.learnlib.counterexample.GlobalSuffixFinder;
 import de.learnlib.counterexample.GlobalSuffixFinders;
 import de.learnlib.oracle.MembershipOracle.MealyMembershipOracle;
@@ -30,15 +31,12 @@ public class MealyDHCIT extends AbstractMealyLearnerIT {
     protected <I, O> void addLearnerVariants(Alphabet<I> alphabet,
                                              int targetSize,
                                              MealyMembershipOracle<I, O> mqOracle,
-                                             MealyLearnerVariantList<I, O> variants) {
-        MealyDHCBuilder<I, O> builder = new MealyDHCBuilder<>();
-        builder.setAlphabet(alphabet);
-        builder.setOracle(mqOracle);
+            MealyLearnerVariantList<I, O> variants) {
 
         for (GlobalSuffixFinder<? super I, ? super Word<O>> suffixFinder : GlobalSuffixFinders.values()) {
-            builder.setSuffixFinder(suffixFinder);
             String name = "suffixFinder=" + suffixFinder.toString();
-            variants.addLearnerVariant(name, builder.create());
+            MealyDHC<I, O> learner = new MealyDHC<>(alphabet, mqOracle, suffixFinder);
+            variants.addLearnerVariant(name, learner);
         }
     }
 

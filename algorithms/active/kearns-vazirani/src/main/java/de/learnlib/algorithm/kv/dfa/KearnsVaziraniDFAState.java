@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2023 TU Dortmund
+/* Copyright (C) 2013-2022 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,41 +15,44 @@
  */
 package de.learnlib.algorithm.kv.dfa;
 
-import java.util.List;
+import java.util.Map;
 
 import de.learnlib.algorithm.kv.StateInfo;
 import de.learnlib.datastructure.discriminationtree.BinaryDTree;
 import net.automatalib.automaton.fsa.CompactDFA;
 
+
 /**
- * Class that contains all data that represent the internal state of the {@link KearnsVaziraniDFA} learner.
+ * Class that contains all data that represent the internal state of the
+ * {@link KearnsVaziraniDFA} learner.
  *
- * @param <I>
- *         The input alphabet type.
+ * @param <I> The input alphabet type.
+ *
+ * @author bainczyk
  */
 public class KearnsVaziraniDFAState<I> {
 
     private final CompactDFA<I> hypothesis;
     private final BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
-    private final List<StateInfo<I, Boolean>> stateInfos;
+    private final Map<Integer, StateInfo<I, Boolean>> stateInfos;
 
-    KearnsVaziraniDFAState(CompactDFA<I> hypothesis,
-                           BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree,
-                           List<StateInfo<I, Boolean>> stateInfos) {
+    public KearnsVaziraniDFAState(final CompactDFA<I> hypothesis,
+            final BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree,
+            final Map<Integer, StateInfo<I, Boolean>> stateInfos) {
         this.hypothesis = hypothesis;
         this.discriminationTree = discriminationTree;
         this.stateInfos = stateInfos;
     }
 
-    CompactDFA<I> getHypothesis() {
+    public CompactDFA<I> getHypothesis() {
         return hypothesis;
     }
 
-    BinaryDTree<I, StateInfo<I, Boolean>> getDiscriminationTree() {
+    public BinaryDTree<I, StateInfo<I, Boolean>> getDiscriminationTree() {
         return discriminationTree;
     }
 
-    List<StateInfo<I, Boolean>> getStateInfos() {
+    public Map<Integer, StateInfo<I, Boolean>> getStateInfos() {
         return stateInfos;
     }
 }

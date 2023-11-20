@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2023 TU Dortmund
+/* Copyright (C) 2013-2022 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,54 +15,49 @@
  */
 package de.learnlib.algorithm.kv;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
+import net.automatalib.common.util.Pair;
 import net.automatalib.word.Word;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
- * The information associated with a state: it's access sequence (or access string), and the list of incoming
- * transitions.
+ * The information associated with a state: it's access sequence (or access
+ * string), and the list of incoming transitions.
  *
- * @param <I>
- *         input symbol type
- * @param <D>
- *         data type
+ * @param <I> input symbol type
+ * @param <D> data type
+ *
+ * @author Malte Isberner
  */
 public final class StateInfo<I, D> {
-
-    public final int id;
-    public final Word<I> accessSequence;
+    public int id;
+    public Word<I> accessSequence;
     public AbstractWordBasedDTNode<I, D, StateInfo<I, D>> dtNode;
-    //private TLongList incoming;
-    private @Nullable List<Long> incoming; // TODO: replace with primitive specialization
+    private final Set<Pair<StateInfo<I, D>, I>> incoming;
 
     public StateInfo(int id, Word<I> accessSequence) {
         this.accessSequence = accessSequence.trimmed();
         this.id = id;
+        this.incoming = new HashSet<>();
     }
 
-    public void addIncoming(int sourceState, int transIdx) {
-        long encodedTrans = ((long) sourceState << Integer.SIZE) | transIdx;
-        if (incoming == null) {
-            //incoming = new TLongArrayList();
-            incoming = new ArrayList<>(); // TODO: replace with primitive specialization
-        }
-        incoming.add(encodedTrans);
+    public void addIncoming(StateInfo<I, D> sourceState, I symbol) {
+        incoming.add(Pair.of(sourceState, symbol));
     }
 
-    //public TLongList fetchIncoming() {
-    public List<Long> fetchIncoming() { // TODO: replace with primitive specialization
-        if (incoming == null || incoming.isEmpty()) {
-            //return EMPTY_LONG_LIST;
-            return Collections.emptyList(); // TODO: replace with primitive specialization
-        }
-        //TLongList result = incoming;
-        List<Long> result = incoming;
-        this.incoming = null;
-        return result;
+    public void removeIncoming(StateInfo<I, D> sourceState, I symbol) {
+        incoming.removeIf(pair -> pair.getFirst().equals(sourceState) && pair.getSecond().equals(symbol));
+    }
+
+    public Set<Pair<StateInfo<I, D>, I>> fetchIncoming() {
+        Set<Pair<StateInfo<I, D>, I>> out = new HashSet<>(incoming);
+        incoming.clear();
+        return out;
+    }
+
+    public void clearIncoming() {
+        incoming.clear();
     }
 }

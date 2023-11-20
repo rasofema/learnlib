@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2023 TU Dortmund
+/* Copyright (C) 2013-2022 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,8 +37,7 @@ public class KearnsVaziraniMealyState<I, O> {
     private final List<StateInfo<I, Word<O>>> stateInfos;
 
     KearnsVaziraniMealyState(CompactMealy<I, O> hypothesis,
-                             MultiDTree<I, Word<O>, StateInfo<I, Word<O>>> discriminationTree,
-                             List<StateInfo<I, Word<O>>> stateInfos) {
+            MultiDTree<I, Word<O>, StateInfo<I, Word<O>>> discriminationTree, List<StateInfo<I, Word<O>>> stateInfos) {
         this.hypothesis = hypothesis;
         this.discriminationTree = discriminationTree;
         this.stateInfos = stateInfos;

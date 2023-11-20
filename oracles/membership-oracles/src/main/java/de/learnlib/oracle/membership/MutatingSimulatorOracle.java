@@ -2,10 +2,10 @@ package de.learnlib.oracle.membership;
 
 import java.util.List;
 
-import net.automatalib.automata.concepts.SuffixOutput;
-import net.automatalib.automata.fsa.DFA;
-import net.automatalib.automata.transducers.MealyMachine;
-import net.automatalib.words.Word;
+import net.automatalib.automaton.concept.SuffixOutput;
+import net.automatalib.automaton.fsa.DFA;
+import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.word.Word;
 
 public class MutatingSimulatorOracle<I, D> extends SimulatorOracle<I, D> {
     private final List<? extends SuffixOutput<I, D>> automata;

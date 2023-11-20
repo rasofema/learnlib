@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2023 TU Dortmund
+/* Copyright (C) 2013-2022 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,17 +19,22 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 import com.github.misberner.buildergen.annotations.GenerateBuilder;
+
 import de.learnlib.Resumable;
 import de.learnlib.acex.AbstractBaseCounterexample;
 import de.learnlib.acex.AcexAnalyzer;
 import de.learnlib.acex.AcexAnalyzers;
-import de.learnlib.algorithm.LearningAlgorithm.DFALearner;
 import de.learnlib.algorithm.kv.StateInfo;
+import de.learnlib.algorithm.LearningAlgorithm.DFALearner;
 import de.learnlib.datastructure.discriminationtree.BinaryDTree;
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import de.learnlib.datastructure.discriminationtree.model.LCAInfo;
@@ -42,29 +47,33 @@ import net.automatalib.alphabet.SupportsGrowingAlphabet;
 import net.automatalib.automaton.fsa.CompactDFA;
 import net.automatalib.automaton.fsa.DFA;
 import net.automatalib.common.smartcollection.ArrayStorage;
+import net.automatalib.common.util.Pair;
 import net.automatalib.word.Word;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The Kearns/Vazirani algorithm for learning DFA, as described in the book "An Introduction to Computational Learning
- * Theory" by Michael Kearns and Umesh Vazirani.
+ * The Kearns/Vazirani algorithm for learning DFA, as described in the book "An
+ * Introduction to Computational Learning Theory" by Michael Kearns and Umesh
+ * Vazirani.
  *
- * @param <I>
- *         input symbol type
+ * @param <I> input symbol type
+ *
+ * @author Malte Isberner
  */
 public class KearnsVaziraniDFA<I>
         implements DFALearner<I>, SupportsGrowingAlphabet<I>, Resumable<KearnsVaziraniDFAState<I>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KearnsVaziraniDFA.class);
 
-    private final Alphabet<I> alphabet;
-    private final MembershipOracle<I, Boolean> oracle;
-    private final boolean repeatedCounterexampleEvaluation;
-    private final AcexAnalyzer ceAnalyzer;
-    private BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
-    protected List<StateInfo<I, Boolean>> stateInfos = new ArrayList<>();
-    private CompactDFA<I> hypothesis;
+    protected final Alphabet<I> alphabet;
+    protected final MembershipOracle<I, Boolean> oracle;
+    protected final boolean repeatedCounterexampleEvaluation;
+    protected final AcexAnalyzer ceAnalyzer;
+    protected BinaryDTree<I, StateInfo<I, Boolean>> discriminationTree;
+    protected Map<Integer, StateInfo<I, Boolean>> stateInfos = new HashMap<>();
+    protected CompactDFA<I> hypothesis;
 
     /**
      * Constructor.
@@ -105,6 +114,7 @@ public class KearnsVaziraniDFA<I>
         if (repeatedCounterexampleEvaluation) {
             while (refineHypothesisSingle(input, output)) {}
         }
+
         return true;
     }
 
@@ -151,8 +161,7 @@ public class KearnsVaziraniDFA<I>
                             LCAInfo<Boolean, AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>>> separatorInfo) {
         int state = stateInfo.id;
         boolean oldAccepting = hypothesis.isAccepting(state);
-        // TLongList oldIncoming = stateInfo.fetchIncoming();
-        List<Long> oldIncoming = stateInfo.fetchIncoming(); // TODO: replace with primitive specialization
+        Set<Pair<StateInfo<I, Boolean>, I>> oldIncoming = stateInfo.fetchIncoming();
 
         StateInfo<I, Boolean> newStateInfo = createState(newPrefix, oldAccepting);
 
@@ -174,34 +183,18 @@ public class KearnsVaziraniDFA<I>
         updateTransitions(oldIncoming, stateLeaf);
     }
 
-    // private void updateTransitions(TLongList transList, DTNode<I, Boolean, StateInfo<I>> oldDtTarget) {
-    private void updateTransitions(List<Long> transList,
-                                   AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> oldDtTarget) { // TODO: replace with primitive specialization
-        int numTrans = transList.size();
+    private void updateTransitions(Set<Pair<StateInfo<I, Boolean>, I>> trans,
+            AbstractWordBasedDTNode<I, Boolean, StateInfo<I, Boolean>> oldDtTarget) {
 
-        final List<Word<I>> transAs = new ArrayList<>(numTrans);
+        List<Pair<StateInfo<I, Boolean>, I>> transL = new ArrayList<>(trans);
+        final List<Word<I>> transAs = transL.stream().map(t -> t.getFirst().accessSequence.append(t.getSecond()))
+                .collect(Collectors.toList());
 
-        for (int i = 0; i < numTrans; i++) {
-            long encodedTrans = transList.get(i);
+        final List<StateInfo<I, Boolean>> succs = sift(Collections.nCopies(transL.size(), oldDtTarget), transAs);
 
-            int sourceState = (int) (encodedTrans >> Integer.SIZE);
-            int transIdx = (int) (encodedTrans);
-
-            StateInfo<I, Boolean> sourceInfo = stateInfos.get(sourceState);
-            I symbol = alphabet.getSymbol(transIdx);
-
-            transAs.add(sourceInfo.accessSequence.append(symbol));
-        }
-
-        final List<StateInfo<I, Boolean>> succs = sift(Collections.nCopies(numTrans, oldDtTarget), transAs);
-
-        for (int i = 0; i < numTrans; i++) {
-            long encodedTrans = transList.get(i);
-
-            int sourceState = (int) (encodedTrans >> Integer.SIZE);
-            int transIdx = (int) (encodedTrans);
-
-            setTransition(sourceState, transIdx, succs.get(i));
+        for (int i = 0; i < transL.size(); i++) {
+            Pair<StateInfo<I, Boolean>, I> t = transL.get(i);
+            setTransition(t.getFirst(), t.getSecond(), succs.get(i));
         }
     }
 
@@ -224,7 +217,7 @@ public class KearnsVaziraniDFA<I>
         int state = hypothesis.addIntInitialState(accepting);
         StateInfo<I, Boolean> si = new StateInfo<>(state, Word.epsilon());
         assert stateInfos.size() == state;
-        stateInfos.add(si);
+        stateInfos.put(si.id, si);
 
         return si;
     }
@@ -233,7 +226,7 @@ public class KearnsVaziraniDFA<I>
         int state = hypothesis.addIntState(accepting);
         StateInfo<I, Boolean> si = new StateInfo<>(state, accessSequence);
         assert stateInfos.size() == state;
-        stateInfos.add(si);
+        stateInfos.put(si.id, si);
 
         return si;
     }
@@ -241,7 +234,6 @@ public class KearnsVaziraniDFA<I>
     private void initState(StateInfo<I, Boolean> stateInfo) {
         int alphabetSize = alphabet.size();
 
-        int state = stateInfo.id;
         Word<I> accessSequence = stateInfo.accessSequence;
 
         final ArrayStorage<Word<I>> transAs = new ArrayStorage<>(alphabetSize);
@@ -254,13 +246,13 @@ public class KearnsVaziraniDFA<I>
         final List<StateInfo<I, Boolean>> succs = sift(transAs);
 
         for (int i = 0; i < alphabetSize; i++) {
-            setTransition(state, i, succs.get(i));
+            setTransition(stateInfo, alphabet.getSymbol(i), succs.get(i));
         }
     }
 
-    private void setTransition(int state, int symIdx, StateInfo<I, Boolean> succInfo) {
-        succInfo.addIncoming(state, symIdx);
-        hypothesis.setTransition(state, symIdx, succInfo.id);
+    private void setTransition(StateInfo<I, Boolean> state, I symbol, StateInfo<I, Boolean> succInfo) {
+        succInfo.addIncoming(state, symbol);
+        hypothesis.setTransition(state.id, alphabet.getSymbolIndex(symbol), succInfo.id);
     }
 
     private List<StateInfo<I, Boolean>> sift(List<Word<I>> prefixes) {
@@ -310,18 +302,17 @@ public class KearnsVaziraniDFA<I>
             this.hypothesis.getSuccessor(this.hypothesis.getInitialState(), symbol) == null) {
             // use new list to prevent concurrent modification exception
             final List<Word<I>> transAs = new ArrayList<>(this.stateInfos.size());
-            for (StateInfo<I, Boolean> si : this.stateInfos) {
+            for (StateInfo<I, Boolean> si : this.stateInfos.values()) {
                 transAs.add(si.accessSequence.append(symbol));
             }
 
             final List<StateInfo<I, Boolean>> succs = sift(transAs);
 
-            final Iterator<StateInfo<I, Boolean>> stateIter = this.stateInfos.iterator();
+            final Iterator<StateInfo<I, Boolean>> stateIter = this.stateInfos.values().iterator();
             final Iterator<StateInfo<I, Boolean>> leafsIter = succs.iterator();
-            final int inputIdx = this.alphabet.getSymbolIndex(symbol);
 
             while (stateIter.hasNext() && leafsIter.hasNext()) {
-                setTransition(stateIter.next().id, inputIdx, leafsIter.next());
+                setTransition(stateIter.next(), symbol, leafsIter.next());
             }
 
             // in case the new symbol added a new state (see sift method) we allow at max one additional state

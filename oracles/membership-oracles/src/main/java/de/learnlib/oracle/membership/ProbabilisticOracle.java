@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.word.Word;
 
 public class ProbabilisticOracle<I, O> implements MembershipOracle<I, Word<O>> {
     private final MembershipOracle<I, Word<O>> oracle;

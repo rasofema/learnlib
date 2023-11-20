@@ -1,5 +1,5 @@
-/* Copyright (C) 2013-2022 TU Dortmund
- * This file is part of AutomataLib, http://www.automatalib.net/.
+/* Copyright (C) 2013-2023 TU Dortmund
+ * This file is part of LearnLib, http://www.learnlib.de/.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.learnlib.api.exception;
+package de.learnlib.exception;
 
 // Thrown when a learner requests the answer to a query, however a query limit has been reached.
 public class LimitException extends RuntimeException {

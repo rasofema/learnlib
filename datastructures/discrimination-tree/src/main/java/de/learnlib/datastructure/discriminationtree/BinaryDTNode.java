@@ -32,16 +32,13 @@ import de.learnlib.datastructure.discriminationtree.model.BooleanMap;
 public class BinaryDTNode<I, D> extends AbstractWordBasedDTNode<I, Boolean, D> {
 
     public BinaryDTNode(AbstractWordBasedDTNode<I, Boolean, D> node) {
-        super(node.getData());
-        this.parent = node.getParent();
-        this.data = node.getData();
-        this.parentOutcome = node.getParentOutcome();
+        super(node.getParent(), node.getParentOutcome(), node.getData());
         this.depth = node.getDepth();
         this.discriminator = node.getDiscriminator();
         this.children = null;
-        if (node.getChildMap() != null) {
+        if (node.getChildEntries() != null) {
             this.children = new HashMap<>();
-            for (Map.Entry<Boolean, AbstractWordBasedDTNode<I, Boolean, D>> pair : node.getChildMap().entrySet()) {
+            for (Map.Entry<Boolean, AbstractWordBasedDTNode<I, Boolean, D>> pair : node.getChildEntries()) {
                 children.put(pair.getKey(), new BinaryDTNode<>(pair.getValue()));
                 children.get(pair.getKey()).setParent(this);
             }

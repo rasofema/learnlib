@@ -21,23 +21,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.automata.transducers.impl.compact.CompactMealy;
-import net.automatalib.util.automata.random.RandomAutomata;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.word.Word;
 
 public class NoiseOracle<I, O> implements MembershipOracle.MealyMembershipOracle<I, O> {
     public enum NoiseType {
-        INPUT, OUTPUT, TRANSFORMATION
+        INPUT, OUTPUT
     }
 
     private Random random;
     private NoiseType noise;
     private MembershipOracle.MealyMembershipOracle<I, O> sulOracle;
     private Double probability;
-    private CompactMealy<I, O> transMealy = null;
 
     public NoiseOracle(Alphabet<I> inputAlphabet, Alphabet<O> outputAlphabet,
             MembershipOracle.MealyMembershipOracle<I, O> sulOracle, Double probability, NoiseType noiseType,
@@ -46,9 +43,6 @@ public class NoiseOracle<I, O> implements MembershipOracle.MealyMembershipOracle
         this.random = random;
         this.probability = probability;
         this.noise = noiseType;
-        if (noiseType == NoiseType.TRANSFORMATION) {
-            transMealy = RandomAutomata.randomMealy(random, 10, inputAlphabet, outputAlphabet);
-        }
     }
 
     @Override
@@ -75,9 +69,7 @@ public class NoiseOracle<I, O> implements MembershipOracle.MealyMembershipOracle
                 input = newInput;
             }
 
-            Word<O> output = (noise == NoiseType.TRANSFORMATION && random.nextDouble() < probability)
-                    ? transMealy.computeOutput(input)
-                    : sulOracle.answerQuery(input);
+            Word<O> output = sulOracle.answerQuery(input);
             List<O> localOutputAlphabet = new LinkedList<>(output.asList());
 
             if (noise == NoiseType.OUTPUT) {

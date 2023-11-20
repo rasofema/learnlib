@@ -1,6 +1,6 @@
 package de.learnlib.datastructure.observationtable;
 
-import net.automatalib.words.Word;
+import net.automatalib.word.Word;
 
 import java.util.HashSet;
 import java.util.List;

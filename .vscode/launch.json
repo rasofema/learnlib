@@ -8,7 +8,7 @@
       "type": "java",
       "name": "Launch TreeTests",
       "request": "launch",
-      "mainClass": "de.learnlib.algorithms.lsharp.ads.TreeTests",
+      "mainClass": "de.learnlib.algorithm.lsharp.ads.TreeTests",
       "projectName": "learnlib-lsharp"
     }
   ]

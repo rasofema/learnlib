@@ -18,15 +18,16 @@
  */
 package de.learnlib.datastructure.observationtable;
 
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.DefaultQuery;
-import net.automatalib.commons.util.comparison.CmpUtil;
-import net.automatalib.words.Alphabet;
-import net.automatalib.words.Word;
-import net.automatalib.words.impl.Alphabets;
 
 import java.io.Serializable;
 import java.util.*;
+
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.DefaultQuery;
+import net.automatalib.alphabet.Alphabet;
+import net.automatalib.alphabet.Alphabets;
+import net.automatalib.common.util.comparison.CmpUtil;
+import net.automatalib.word.Word;
 
 /**
  * Dynamic Observation table class.

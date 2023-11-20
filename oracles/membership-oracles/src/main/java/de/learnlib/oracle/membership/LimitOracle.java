@@ -17,10 +17,10 @@ package de.learnlib.oracle.membership;
 
 import java.util.Collection;
 
-import de.learnlib.api.exception.LimitException;
-import de.learnlib.api.oracle.MembershipOracle;
-import de.learnlib.api.query.Query;
-import net.automatalib.words.Word;
+import de.learnlib.exception.LimitException;
+import de.learnlib.oracle.MembershipOracle;
+import de.learnlib.query.Query;
+import net.automatalib.word.Word;
 
 /**
  * A wrapper around a system under learning (SUL).
