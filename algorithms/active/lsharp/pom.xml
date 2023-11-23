@@ -62,11 +62,6 @@ limitations under the License.
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.github.kostaskougios</groupId>
-            <artifactId>cloning</artifactId>
-            <version>1.10.3</version>
-        </dependency>
 
         <dependency>
             <groupId>net.automatalib</groupId>

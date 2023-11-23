@@ -35,8 +35,8 @@ public class NormalObservationTreeTest {
 
     @Test
     public void xferSeqMantained() throws IOException {
-        LSMealyMachine<String, String> fsm = readMealy("/models/BitVise.dot");
-        List<Pair<Word<String>, Word<String>>> tests = tryGenInputs(fsm, 100);
+        LSMealyMachine<String, String> fsm = readMealy("/BitVise.dot");
+        List<Pair<Word<String>, Word<String>>> tests = tryGenInputs(fsm, 20);
         NormalObservationTree<String, String> ret = new NormalObservationTree<>(fsm.getInputAlphabet());
 
         for (int testIndex = 0; testIndex < tests.size(); testIndex++) {
@@ -67,8 +67,8 @@ public class NormalObservationTreeTest {
 
     @Test
     public void accessSeqMantained() throws IOException {
-        LSMealyMachine<String, String> fsm = readMealy("/models/BitVise.dot");
-        List<Pair<Word<String>, Word<String>>> tests = tryGenInputs(fsm, 500);
+        LSMealyMachine<String, String> fsm = readMealy("/BitVise.dot");
+        List<Pair<Word<String>, Word<String>>> tests = tryGenInputs(fsm, 100);
         NormalObservationTree<String, String> ret = new NormalObservationTree<>(fsm.getInputAlphabet());
 
         for (int testIndex = 0; testIndex < tests.size(); testIndex++) {

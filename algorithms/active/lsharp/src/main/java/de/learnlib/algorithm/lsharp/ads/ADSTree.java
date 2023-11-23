@@ -22,7 +22,6 @@ public class ADSTree<S extends Comparable<S>, I, O> implements ADS<I, O> {
         ADSNode<I, O> initialNode = this.constructADS(tree, currentBlock, sinkOut);
         Objects.requireNonNull(initialNode);
         this.initialNode = initialNode;
-        // FIXME: Confirm semantics of RC clone.
         this.currentNode = initialNode;
     }
 
@@ -169,11 +168,6 @@ public class ADSTree<S extends Comparable<S>, I, O> implements ADS<I, O> {
 
     public void resetToRoot() {
         this.currentNode = initialNode;
-    }
-
-    public List<Integer> getPrintTree() {
-        // FIXME: TODO
-        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     public Float identificationPower() {

@@ -26,7 +26,7 @@ public class LSOracle<I, O> {
     private O sinkOutput;
     private Random random;
 
-    public LSOracle(MembershipOracle<I, Word<O>> sul, NormalObservationTree<I, O> obsTree, Rule2 rule2, Rule3 rule3,
+    protected LSOracle(MembershipOracle<I, Word<O>> sul, NormalObservationTree<I, O> obsTree, Rule2 rule2, Rule3 rule3,
             Word<I> sinkState, O sinkOutput, Random random) {
         this.sul = sul;
         this.obsTree = obsTree;
@@ -274,7 +274,6 @@ public class LSOracle<I, O> {
                 nextInput = ads.nextInput(prevOutput);
             }
         } catch (ADSStatus e) {
-            // TODO: handle exception
         }
 
         ads.resetToRoot();

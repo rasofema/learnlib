@@ -53,7 +53,6 @@ public class PartitionInfo<S, I, O> {
         return Type.USELESS;
     }
 
-    // FIXME: Not sure about this translation.
     public boolean mergesAllStates() {
         Set<S> states = new HashSet<>();
         for (HashMap<S, HashSet<S>> map : this.splitMap.values()) {

@@ -16,14 +16,10 @@
 
 package de.learnlib.algorithm.lsharp.ads;
 
-import java.util.List;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface ADS<I, O> {
     public I nextInput(@Nullable O previousOutput) throws ADSStatus;
-
-    public List<Integer> getPrintTree();
 
     public Float identificationPower();
 

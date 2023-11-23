@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -12,15 +13,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.google.common.collect.HashBiMap;
 
-import com.rits.cloning.Cloner;
-
 import de.learnlib.algorithm.LearningAlgorithm.MealyLearner;
+import de.learnlib.oracle.MembershipOracle;
 import de.learnlib.query.DefaultQuery;
 import de.learnlib.util.mealy.MealyUtil;
 import net.automatalib.alphabet.Alphabet;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.common.util.Pair;
-import net.automatalib.util.automaton.equivalence.DeterministicEquivalenceTest;
 import net.automatalib.word.Word;
 
 public class LSharpMealy<I, O> implements MealyLearner<I, O> {
@@ -33,9 +32,20 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
     private HashBiMap<Word<I>, LSState> basisMap;
     private Integer round;
 
-    public LSharpMealy(LSOracle<I, O> oqOracle, Alphabet<I> inputAlphabet) {
-        this.oqOracle = oqOracle;
-        this.inputAlphabet = inputAlphabet;
+    public LSharpMealy(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> oracle, Rule2 rule2, Rule3 rule3) {
+        this(alphabet, oracle, rule2, rule3, null, null, new Random());
+    }
+
+    public LSharpMealy(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> oracle, Rule2 rule2, Rule3 rule3,
+            Word<I> sinkState, O sinkOutput) {
+        this(alphabet, oracle, rule2, rule3, sinkState, sinkOutput, new Random());
+    }
+
+    public LSharpMealy(Alphabet<I> alphabet, MembershipOracle<I, Word<O>> oracle, Rule2 rule2, Rule3 rule3,
+            Word<I> sinkState, O sinkOutput, Random random) {
+        this.oqOracle = new LSOracle<I, O>(oracle, new NormalObservationTree<>(alphabet), rule2, rule3, sinkState,
+                sinkOutput, random);
+        this.inputAlphabet = alphabet;
         this.basis = new LinkedList<>();
         basis.add(Word.epsilon());
         this.frontierToBasisMap = new HashMap<>();
@@ -45,14 +55,18 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
         this.round = 1;
     }
 
-    public void processCex(DefaultQuery<I, Word<O>> cex, LSMealyMachine<I, O> mealy) {
-        this.round += 1;
+    public boolean processCex(DefaultQuery<I, Word<O>> cex, LSMealyMachine<I, O> mealy) {
         Objects.requireNonNull(cex);
         Word<I> ceInput = cex.getInput();
         Word<O> ceOutput = cex.getOutput();
         oqOracle.addObservation(ceInput, ceOutput);
         Integer prefixIndex = MealyUtil.findMismatch(mealy, ceInput, ceOutput);
+        if (prefixIndex == MealyUtil.NO_MISMATCH) {
+            return false;
+        }
+        this.round += 1;
         this.processBinarySearch(ceInput.prefix(prefixIndex), ceOutput.prefix(prefixIndex), mealy);
+        return true;
     }
 
     public void processBinarySearch(Word<I> ceInput, Word<O> ceOutput, LSMealyMachine<I, O> mealy) {
@@ -306,10 +320,7 @@ public class LSharpMealy<I, O> implements MealyLearner<I, O> {
 
     @Override
     public boolean refineHypothesis(DefaultQuery<I, Word<O>> ceQuery) {
-        LSMealyMachine<I, O> oldHyp = (new Cloner()).deepClone(buildHypothesis());
-        processCex(ceQuery, oldHyp);
-        MealyMachine<?, I, ?, O> newHyp = getHypothesisModel();
-        return DeterministicEquivalenceTest.findSeparatingWord(oldHyp, newHyp, inputAlphabet) != null;
+        return processCex(ceQuery, buildHypothesis());
     }
 
     @Override

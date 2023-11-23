@@ -191,7 +191,6 @@ public class SplittingTree<S extends Comparable<S>, I, O> {
         bestR = helpers.bestNode.get(r);
         Objects.requireNonNull(bestR);
 
-        // FIXME: Is default false?
         boolean nextHasInjSeq = false;
         if (bestR.next != null) {
             nextHasInjSeq = get(bestR.next).sepSeq.isInjective();
