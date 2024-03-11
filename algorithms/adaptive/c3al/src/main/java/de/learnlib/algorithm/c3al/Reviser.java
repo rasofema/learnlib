@@ -62,8 +62,8 @@ public class Reviser<M extends Output<I, D>, I, D> implements MembershipOracle<I
         D answer = (isMemQuery ? memOracle : eqOracle).answerQuery(query.getInput());
         query.answer(answer);
 
-        // We have done things that changed the query count. So we update the bags and
-        // check if now we are done.
+        // We have done things that changed the query count. So we update the event
+        // handler to see if we are done.
         M finito = eventHandler.queryEvent(query);
         if (finito != null) {
             throw new LearningFinishedException();
