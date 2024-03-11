@@ -26,30 +26,30 @@ import de.learnlib.oracle.MembershipOracle;
 import de.learnlib.oracle.equivalence.AbstractTestWordEQOracle;
 import de.learnlib.query.DefaultQuery;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.automaton.CompactTransition;
-import net.automatalib.automaton.transducer.MealyMachine;
+import net.automatalib.automaton.concept.Output;
+import net.automatalib.incremental.AdaptiveConstruction;
 import net.automatalib.incremental.ConflictException;
 import net.automatalib.word.Word;
 
-// The Practically Adequate Reviser framework.
-public class C3AL<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
-    public final Reviser<Integer, I, CompactTransition<String>, O> oracle;
-    private final Function<MembershipOracle<I, Word<O>>, LearningAlgorithm.MealyLearner<I, O>> constructor;
-    private LearningAlgorithm.MealyLearner<I, O> algorithm;
+// The Conflict-Aware Active Automata Learning framework.
+public class C3AL<M extends Output<I, D>, I, D> implements LearningAlgorithm<M, I, D> {
+    public final Reviser<M, I, D> oracle;
+    private final Function<MembershipOracle<I, D>, LearningAlgorithm<M, I, D>> constructor;
+    private LearningAlgorithm<M, I, D> algorithm;
     private final Alphabet<I> alphabet;
-    private MealyMachine<?, I, ?, O> currentHyp;
-    private MealyMachine<?, I, ?, O> finalHyp;
-    private final HypEventable<I, O> newHypEvent;
+    private M currentHyp;
+    private M finalHyp;
+    private final EventHandler<M, I, D> eventHandler;
 
-    public C3AL(Function<MembershipOracle<I, Word<O>>, LearningAlgorithm.MealyLearner<I, O>> constructor,
-            MembershipOracle<I, Word<O>> memOracle, MembershipOracle<I, Word<O>> eqOracle,
-            AbstractTestWordEQOracle<MealyMachine<?, I, ?, O>, I, Word<O>> testOracle, Alphabet<I> alphabet,
-            Double revisionRatio, Boolean caching, Random random, HypEventable<I, O> newHypEvent) {
-        this.oracle = new Reviser<>(alphabet, memOracle, eqOracle, testOracle, newHypEvent, revisionRatio, caching,
+    public C3AL(Function<MembershipOracle<I, D>, LearningAlgorithm<M, I, D>> constructor,
+            MembershipOracle<I, D> memOracle, MembershipOracle<I, D> eqOracle,
+            AbstractTestWordEQOracle<M, I, D> testOracle, Alphabet<I> alphabet, AdaptiveConstruction<M, I, D> cache,
+            Double revisionRatio, Boolean caching, Random random, EventHandler<M, I, D> eventHandler) {
+        this.oracle = new Reviser<>(cache, memOracle, eqOracle, testOracle, eventHandler, revisionRatio, caching,
                 random);
         this.constructor = constructor;
         this.alphabet = alphabet;
-        this.newHypEvent = newHypEvent;
+        this.eventHandler = eventHandler;
     }
 
     @Override
@@ -67,9 +67,9 @@ public class C3AL<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
 
     private void saveHypothesis() {
         Cloner cloner = new Cloner();
-        MealyMachine<?, I, ?, O> newHyp = cloner.deepClone(algorithm.getHypothesisModel());
+        M newHyp = cloner.deepClone(algorithm.getHypothesisModel());
         currentHyp = newHyp;
-        MealyMachine<?, I, ?, O> finalHyp = newHypEvent.apply(newHyp);
+        M finalHyp = eventHandler.hypEvent(newHyp);
 
         if (finalHyp != null) {
             this.finalHyp = finalHyp;
@@ -77,15 +77,15 @@ public class C3AL<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
         }
     }
 
-    public MealyMachine<?, I, ?, O> run() {
+    public M run() {
         try {
             startLearning();
-            DefaultQuery<I, Word<O>> cex;
+            DefaultQuery<I, D> cex;
             try {
                 cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
             } catch (ConflictException e) {
                 startLearning();
-                cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+                cex = new DefaultQuery<>(Word.epsilon());
             } catch (LimitException e) {
                 return finalHyp;
             }
@@ -96,7 +96,7 @@ public class C3AL<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
                     cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
                 } catch (ConflictException e) {
                     startLearning();
-                    cex = new DefaultQuery<>(Word.epsilon(), Word.epsilon(), Word.epsilon());
+                    cex = new DefaultQuery<>(Word.epsilon());
                 } catch (LimitException e) {
                     return finalHyp;
                 }
@@ -109,7 +109,7 @@ public class C3AL<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
     }
 
     @Override
-    public boolean refineHypothesis(DefaultQuery<I, Word<O>> ceQuery) throws ConflictException, LimitException {
+    public boolean refineHypothesis(DefaultQuery<I, D> ceQuery) throws ConflictException, LimitException {
         if (ceQuery.getInput().length() == 0) {
             return false;
         }
@@ -120,7 +120,7 @@ public class C3AL<I, O> implements LearningAlgorithm.MealyLearner<I, O> {
     }
 
     @Override
-    public MealyMachine<?, I, ?, O> getHypothesisModel() {
+    public M getHypothesisModel() {
         return currentHyp;
     }
 
