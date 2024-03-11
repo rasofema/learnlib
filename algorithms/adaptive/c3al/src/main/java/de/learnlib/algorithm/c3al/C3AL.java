@@ -32,7 +32,7 @@ import net.automatalib.incremental.ConflictException;
 import net.automatalib.word.Word;
 
 // The Conflict-Aware Active Automata Learning framework.
-public class C3AL<M extends Output<I, D>, I, D> implements LearningAlgorithm<M, I, D> {
+public abstract class C3AL<M extends Output<I, D>, I, D> implements LearningAlgorithm<M, I, D> {
     public final Reviser<M, I, D> oracle;
     private final Function<MembershipOracle<I, D>, LearningAlgorithm<M, I, D>> constructor;
     private LearningAlgorithm<M, I, D> algorithm;
