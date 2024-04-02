@@ -77,6 +77,37 @@ public class Reviser<M extends Output<I, D>, I, D> implements MembershipOracle<I
         return answer;
     }
 
+    private D cacheInternalProcessQuery(Query<I, D> query, Boolean isMemQuery)
+            throws ConflictException, LimitException {
+        D answer;
+        if (caching) {
+            Pair<Boolean, D> cacheOutput = cache.lookup(query.getInput());
+            if (cacheOutput.getFirst()) {
+                answer = cacheOutput.getSecond();
+            } else {
+                answer = (isMemQuery ? memOracle : eqOracle).answerQuery(query.getInput());
+            }
+        } else {
+            answer = (isMemQuery ? memOracle : eqOracle).answerQuery(query.getInput());
+        }
+
+        query.answer(answer);
+
+        // We have done things that changed the query count. So we update the event
+        // handler to see if we are done.
+        M finito = eventHandler.queryEvent(query);
+        if (finito != null) {
+            throw new LearningFinishedException();
+        }
+
+        // Conflict detected
+        if (cache.insert(query.getInput(), answer)) {
+            throw new ConflictException("Input: " + query.getInput());
+        }
+
+        return answer;
+    }
+
     @Override
     public void processQueries(Collection<? extends Query<I, D>> queries)
             throws ConflictException, LimitException {
@@ -95,9 +126,13 @@ public class Reviser<M extends Output<I, D>, I, D> implements MembershipOracle<I
         }
     }
 
+    public boolean addCounterExampleFromUser(DefaultQuery<I, D> ceQuery) {
+        return cache.insertFromUser(ceQuery.getInput(), ceQuery.getOutput());
+    }
+
     @Override
     public @Nullable DefaultQuery<I, D> findCounterExample(M hypothesis,
-            Collection<? extends I> inputs) throws ConflictException, LimitException {
+                                                           Collection<? extends I> inputs) throws ConflictException, LimitException {
 
         Word<I> sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
         while (sepInput != null) {
@@ -118,6 +153,37 @@ public class Reviser<M extends Output<I, D>, I, D> implements MembershipOracle<I
             DefaultQuery<I, D> query = new DefaultQuery<>(
                     random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestInput() : iter.next());
             D out = internalProcessQuery(query, false);
+
+            if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
+                return new DefaultQuery<>(query.getInput(), out);
+            }
+        }
+    }
+
+    public @Nullable DefaultQuery<I, D> findCounterExampleWithCache(M hypothesis,
+            Collection<? extends I> inputs) throws ConflictException, LimitException {
+
+        Word<I> sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
+        while (sepInput != null) {
+            DefaultQuery<I, D> query = new DefaultQuery<>(sepInput);
+            D out = cacheInternalProcessQuery(query, false);
+            if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
+                return new DefaultQuery<>(query.getInput(), out);
+            }
+            sepInput = cache.findSeparatingWord(hypothesis, inputs, true);
+        }
+
+        Iterator<Word<I>> iter = testOracle.generateTestWords(hypothesis, inputs).iterator();
+
+        while (true) {
+            if (!iter.hasNext()) {
+                iter = testOracle.generateTestWords(hypothesis, inputs).iterator();
+            }
+            DefaultQuery<I, D> query = new DefaultQuery<>(
+                    random.nextFloat() < revisionRatio ? (Word<I>) cache.getOldestInput() : iter.next());
+            cacheInternalProcessQuery(query, true);
+
+            D out = query.getOutput();
 
             if (!hypothesis.computeOutput(query.getInput()).equals(out)) {
                 return new DefaultQuery<>(query.getInput(), out);

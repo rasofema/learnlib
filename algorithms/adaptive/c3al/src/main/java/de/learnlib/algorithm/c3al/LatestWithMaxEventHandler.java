@@ -37,4 +37,8 @@ public class LatestWithMaxEventHandler<M extends Output<I, D>, I, D> implements 
         }
         return null;
     }
+
+    public void reset() {
+        queryCount = 0;
+    }
 }

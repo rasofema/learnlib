@@ -34,7 +34,8 @@ import net.automatalib.automaton.concept.Output;
 import net.automatalib.automaton.fsa.DFA;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.automaton.transducer.MooreMachine;
-import net.automatalib.common.util.collection.CollectionsUtil;
+import net.automatalib.common.util.collection.CollectionUtil;
+import net.automatalib.common.util.collection.IterableUtil;
 import net.automatalib.word.Word;
 
 /**
@@ -124,6 +125,6 @@ public class CompleteExplorationEQOracle<A extends Output<I, D>, I, D> extends A
 
     @Override
     public Stream<Word<I>> generateTestWords(A hypothesis, Collection<? extends I> inputs) {
-        return Streams.stream(CollectionsUtil.allTuples(inputs, minDepth, maxDepth)).map(Word::fromList);
+        return Streams.stream(IterableUtil.allTuples(inputs, minDepth, maxDepth)).map(Word::fromList);
     }
 }

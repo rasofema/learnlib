@@ -32,7 +32,7 @@ import de.learnlib.algorithm.aaar.abstraction.ExplicitAbstractionTree;
 import de.learnlib.algorithm.aaar.generic.AbstractGenericAAARLearner;
 import de.learnlib.oracle.MembershipOracle;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.alphabet.Alphabets;
+import net.automatalib.alphabet.impl.Alphabets;
 import net.automatalib.alphabet.SupportsGrowingAlphabet;
 
 /**

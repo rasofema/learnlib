@@ -37,7 +37,7 @@ import de.learnlib.datastructure.discriminationtree.iterators.DiscriminationTree
 import de.learnlib.datastructure.discriminationtree.model.AbstractWordBasedDTNode;
 import de.learnlib.datastructure.discriminationtree.model.LCAInfo;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.automaton.fsa.CompactDFA;
+import net.automatalib.automaton.fsa.impl.CompactDFA;
 import net.automatalib.common.smartcollection.ArrayStorage;
 import net.automatalib.common.util.Pair;
 import net.automatalib.word.Word;

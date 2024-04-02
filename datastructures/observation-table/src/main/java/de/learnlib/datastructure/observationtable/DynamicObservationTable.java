@@ -25,7 +25,7 @@ import java.util.*;
 import de.learnlib.oracle.MembershipOracle;
 import de.learnlib.query.DefaultQuery;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.alphabet.Alphabets;
+import net.automatalib.alphabet.impl.Alphabets;
 import net.automatalib.common.util.comparison.CmpUtil;
 import net.automatalib.word.Word;
 
@@ -738,7 +738,7 @@ public final class DynamicObservationTable<I, D> implements MutableObservationTa
         }
 
         if (!alphabet.containsSymbol(symbol)) {
-            Alphabets.toGrowingAlphabetOrThrowException(alphabet).addSymbol(symbol);
+            alphabet.asGrowingAlphabetOrThrowException().addSymbol(symbol);
         }
         final int newAlphabetSize = this.alphabet.size();
         final int newSymbolIdx = this.alphabet.getSymbolIndex(symbol);

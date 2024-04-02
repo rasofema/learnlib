@@ -78,11 +78,12 @@ public abstract class C3AL<M extends Output<I, D>, I, D> implements LearningAlgo
     }
 
     public M run() {
+        this.eventHandler.reset();
         try {
             startLearning();
             DefaultQuery<I, D> cex;
             try {
-                cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+                cex = oracle.findCounterExampleWithCache(getHypothesisModel(), alphabet);
             } catch (ConflictException e) {
                 startLearning();
                 cex = new DefaultQuery<>(Word.epsilon());
@@ -93,7 +94,7 @@ public abstract class C3AL<M extends Output<I, D>, I, D> implements LearningAlgo
             while (cex != null) {
                 try {
                     this.refineHypothesis(cex);
-                    cex = oracle.findCounterExample(getHypothesisModel(), alphabet);
+                    cex = oracle.findCounterExampleWithCache(getHypothesisModel(), alphabet);
                 } catch (ConflictException e) {
                     startLearning();
                     cex = new DefaultQuery<>(Word.epsilon());
@@ -117,6 +118,13 @@ public abstract class C3AL<M extends Output<I, D>, I, D> implements LearningAlgo
         Boolean out = algorithm.refineHypothesis(ceQuery);
         saveHypothesis();
         return out;
+    }
+
+    public boolean refineHypothesisFromUser(DefaultQuery<I, D> ceQuery) throws ConflictException, LimitException {
+        oracle.addCounterExampleFromUser(ceQuery);
+        startLearning();
+        this.refineHypothesis(new DefaultQuery<>(Word.epsilon()));
+        return true;
     }
 
     @Override

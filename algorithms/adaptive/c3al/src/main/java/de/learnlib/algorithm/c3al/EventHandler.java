@@ -17,4 +17,6 @@ public interface EventHandler<M extends Output<I, D>, I, D> {
 
     @Nullable
     M queryEvent(Query<I, D> query);
+
+    void reset();
 }

@@ -24,7 +24,7 @@ import java.util.Objects;
 import de.learnlib.algorithm.LearningAlgorithm.MealyLearner;
 import de.learnlib.oracle.MembershipOracle;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.impl.CompactMealy;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.common.util.mapping.MutableMapping;
 import net.automatalib.word.Word;

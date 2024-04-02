@@ -18,9 +18,9 @@ package de.learnlib.algorithm.incremental.dfa;
 
 import de.learnlib.example.DefaultLearningExample;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.alphabet.FastAlphabet;
-import net.automatalib.alphabet.Symbol;
-import net.automatalib.automaton.fsa.CompactDFA;
+import net.automatalib.alphabet.impl.FastAlphabet;
+import net.automatalib.alphabet.impl.Symbol;
+import net.automatalib.automaton.fsa.impl.CompactDFA;
 import net.automatalib.automaton.fsa.MutableDFA;
 import net.automatalib.util.automaton.builder.AutomatonBuilders;
 

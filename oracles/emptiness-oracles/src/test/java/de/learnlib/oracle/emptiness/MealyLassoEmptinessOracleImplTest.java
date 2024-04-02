@@ -1,3 +1,4 @@
+
 /* Copyright (C) 2013-2023 TU Dortmund
  * This file is part of LearnLib, http://www.learnlib.de/.
  *
@@ -20,10 +21,10 @@ import java.util.Objects;
 import de.learnlib.oracle.OmegaMembershipOracle.MealyOmegaMembershipOracle;
 import de.learnlib.query.DefaultQuery;
 import de.learnlib.query.OmegaQuery;
-import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.impl.CompactMealy;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.modelchecking.Lasso;
-import net.automatalib.modelchecking.MealyLassoImpl;
+import net.automatalib.modelchecking.impl.MealyLassoImpl;
 import net.automatalib.util.automaton.builder.AutomatonBuilders;
 import net.automatalib.word.Word;
 import org.mockito.ArgumentMatchers;

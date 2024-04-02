@@ -19,7 +19,7 @@ import java.util.Map;
 
 import de.learnlib.algorithm.kv.StateInfo;
 import de.learnlib.datastructure.discriminationtree.BinaryDTree;
-import net.automatalib.automaton.fsa.CompactDFA;
+import net.automatalib.automaton.fsa.impl.CompactDFA;
 
 
 /**

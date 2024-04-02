@@ -28,9 +28,9 @@ import de.learnlib.datastructure.observationtable.ObservationTable;
 import de.learnlib.datastructure.observationtable.Row;
 import de.learnlib.oracle.MembershipOracle;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.automaton.CompactTransition;
+import net.automatalib.automaton.impl.CompactTransition;
 import net.automatalib.automaton.concept.SuffixOutput;
-import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.impl.CompactMealy;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.word.Word;
 

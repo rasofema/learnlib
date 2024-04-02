@@ -27,7 +27,7 @@ import de.learnlib.algorithm.aaar.abstraction.GenericAbstractionTree;
 import de.learnlib.algorithm.aaar.explicit.AbstractExplicitAAARLearner;
 import de.learnlib.oracle.MembershipOracle;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.alphabet.Alphabets;
+import net.automatalib.alphabet.impl.Alphabets;
 import net.automatalib.alphabet.SupportsGrowingAlphabet;
 
 /**

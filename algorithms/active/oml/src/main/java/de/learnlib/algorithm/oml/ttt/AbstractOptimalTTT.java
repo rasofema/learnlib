@@ -29,7 +29,7 @@ import de.learnlib.algorithm.oml.ttt.st.SuffixTrie;
 import de.learnlib.oracle.MembershipOracle;
 import de.learnlib.query.DefaultQuery;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.alphabet.Alphabets;
+import net.automatalib.alphabet.impl.Alphabets;
 import net.automatalib.alphabet.SupportsGrowingAlphabet;
 import net.automatalib.automaton.concept.InputAlphabetHolder;
 import net.automatalib.word.Word;
@@ -97,7 +97,7 @@ public abstract class AbstractOptimalTTT<M, I, D>
     @Override
     public void addAlphabetSymbol(I symbol) {
         if (!this.alphabet.containsSymbol(symbol)) {
-            Alphabets.toGrowingAlphabetOrThrowException(this.alphabet).addSymbol(symbol);
+            this.alphabet.asGrowingAlphabetOrThrowException().addSymbol(symbol);
         }
 
         // check if symbol is already part of ptree/hypothesis

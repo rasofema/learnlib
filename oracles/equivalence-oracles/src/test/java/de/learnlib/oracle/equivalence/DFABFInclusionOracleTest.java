@@ -19,7 +19,7 @@ import java.util.Objects;
 
 import de.learnlib.oracle.MembershipOracle.DFAMembershipOracle;
 import de.learnlib.query.DefaultQuery;
-import net.automatalib.automaton.fsa.CompactDFA;
+import net.automatalib.automaton.fsa.impl.CompactDFA;
 import net.automatalib.automaton.fsa.DFA;
 import net.automatalib.util.automaton.builder.AutomatonBuilders;
 import net.automatalib.word.Word;

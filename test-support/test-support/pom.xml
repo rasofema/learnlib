@@ -35,6 +35,7 @@
         <dependency>
             <groupId>net.automatalib</groupId>
             <artifactId>automata-core</artifactId>
+            <version>0.12.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

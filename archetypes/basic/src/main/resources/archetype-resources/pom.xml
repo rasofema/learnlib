@@ -56,6 +56,25 @@
             <groupId>net.automatalib</groupId>
             <artifactId>automata-jung-visualizer</artifactId>
             <scope>runtime</scope>
+            <version>0.12.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-core</artifactId>
+            <version>0.12.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-api</artifactId>
+            <version>0.12.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.automatalib</groupId>
+            <artifactId>automata-util</artifactId>
+            <version>0.12.0-SNAPSHOT</version>
         </dependency>
 
         <!-- provide an SLF4J implementation -->

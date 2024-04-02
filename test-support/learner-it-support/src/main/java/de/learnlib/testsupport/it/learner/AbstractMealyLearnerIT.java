@@ -31,7 +31,7 @@ import de.learnlib.oracle.membership.StateLocalInputSULOracle;
 import de.learnlib.testsupport.it.learner.LearnerVariantList.MealyLearnerVariantList;
 import de.learnlib.testsupport.it.learner.LearnerVariantListImpl.MealyLearnerVariantListImpl;
 import net.automatalib.alphabet.Alphabet;
-import net.automatalib.automaton.transducer.CompactMealy;
+import net.automatalib.automaton.transducer.impl.CompactMealy;
 import net.automatalib.automaton.transducer.MealyMachine;
 import net.automatalib.automaton.transducer.StateLocalInputMealyMachine;
 import net.automatalib.util.automaton.transducer.MealyFilter;

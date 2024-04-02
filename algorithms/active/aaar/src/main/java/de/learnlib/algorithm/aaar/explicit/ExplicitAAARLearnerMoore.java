@@ -23,7 +23,7 @@ import de.learnlib.algorithm.aaar.ExplicitInitialAbstraction;
 import de.learnlib.algorithm.aaar.TranslatingMooreMachine;
 import de.learnlib.oracle.MembershipOracle;
 import net.automatalib.alphabet.SupportsGrowingAlphabet;
-import net.automatalib.automaton.transducer.CompactMoore;
+import net.automatalib.automaton.transducer.impl.CompactMoore;
 import net.automatalib.automaton.transducer.MooreMachine;
 import net.automatalib.word.Word;
 

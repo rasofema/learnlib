@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.automatalib.alphabet.VPAlphabet;
-import net.automatalib.automaton.vpa.AbstractSEVPA;
+import net.automatalib.automaton.vpa.impl.AbstractSEVPA;
 import net.automatalib.automaton.vpa.OneSEVPA;
 import net.automatalib.automaton.vpa.StackContents;
 import net.automatalib.automaton.vpa.State;
