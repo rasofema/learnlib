@@ -120,11 +120,9 @@ public abstract class C3AL<M extends Output<I, D>, I, D> implements LearningAlgo
         return out;
     }
 
-    public boolean refineHypothesisFromUser(DefaultQuery<I, D> ceQuery) throws ConflictException, LimitException {
-        oracle.addCounterExampleFromUser(ceQuery);
+    public void restartLearning() throws ConflictException, LimitException {
         startLearning();
         this.refineHypothesis(new DefaultQuery<>(Word.epsilon()));
-        return true;
     }
 
     @Override

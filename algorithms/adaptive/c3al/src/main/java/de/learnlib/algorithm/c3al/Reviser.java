@@ -126,10 +126,6 @@ public class Reviser<M extends Output<I, D>, I, D> implements MembershipOracle<I
         }
     }
 
-    public boolean addCounterExampleFromUser(DefaultQuery<I, D> ceQuery) {
-        return cache.insertFromUser(ceQuery.getInput(), ceQuery.getOutput());
-    }
-
     @Override
     public @Nullable DefaultQuery<I, D> findCounterExample(M hypothesis,
                                                            Collection<? extends I> inputs) throws ConflictException, LimitException {
